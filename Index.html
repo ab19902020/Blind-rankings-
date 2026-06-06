@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Blind Rank Pro Ultra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;700;800;900&display=swap');
+        
+        body { margin: 0; padding: 0; background-color: #030305; color: white; overflow: hidden; overscroll-behavior: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
+        .display-font { font-family: 'Outfit', sans-serif; }
+        .body-font { font-family: 'Inter', sans-serif; }
+        
+        .glass-ultra { background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(25px) saturate(180%); -webkit-backdrop-filter: blur(25px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
+        .glass-card { background: linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.03) 100%); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7); }
+        .glass-panel { background: rgba(5, 5, 8, 0.92); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .pt-safe { padding-top: max(1.5rem, env(safe-area-inset-top)); }
+        .pb-safe { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+
+        @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
+        .anim-pop { animation: pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); } 70% { box-shadow: 0 0 0 20px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+        .anim-pulse-ring { animation: pulse-ring 2s infinite; }
+        @keyframes card-glow { 0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0)} 50%{box-shadow:0 0 22px 4px rgba(255,255,255,0.18)} }
+        .anim-card-glow { animation: card-glow 2.2s ease-in-out infinite; }
+        @keyframes slotPop { 0%{transform:scale(1.18)} 60%{transform:scale(0.94)} 100%{transform:scale(1)} }
+        .anim-slot-pop { animation: slotPop 0.32s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
+        @keyframes shimmer { 0%{opacity:0.6} 50%{opacity:1} 100%{opacity:0.6} }
+        .anim-shimmer { animation: shimmer 1.6s ease-in-out infinite; }
+        
+        .stagger-1{animation-delay:40ms}.stagger-2{animation-delay:80ms}.stagger-3{animation-delay:120ms}.stagger-4{animation-delay:160ms}.stagger-5{animation-delay:200ms}
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        const Icon = ({ path, size = 24, className = "", fill="none" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{__html: path}} /> );
+        const RefreshCw = (p) => <Icon {...p} path='<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>'/>;
+        const Share2 = (p) => <Icon {...p} path='<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>'/>;
+        const TrophyIcon = (p) => <Icon {...p} path='<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>'/>;
+        const Loader2 = (p) => <Icon {...p} path='<path d="M21 12a9 9 0 1 1-6.219-8.56"/>'/>;
+        const ChevronRight = (p) => <Icon {...p} path='<path d="m9 18 6-6-6-6"/>'/>;
+        const ArrowLeft = (p) => <Icon {...p} path='<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'/>;
+        const StarIcon = (p) => <Icon {...p} path='<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'/>;
+        const AlertCircle = (p) => <Icon {...p} path='<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'/>;
+        const PopcornIcon = (p) => <Icon {...p} path='<path d="M4 11h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9Z"/><path d="M4 11V8.5A2.5 2.5 0 0 1 6.5 6h11A2.5 2.5 0 0 1 20 8.5V11"/><path d="M8.5 6V4.5A2.5 2.5 0 0 1 11 2h2a2.5 2.5 0 0 1 2.5 2.5V6"/><path d="M12 11v10"/><path d="M8 11v10"/><path d="M16 11v10"/>'/>;
+        const DownloadIcon = (p) => <Icon {...p} path='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'/>;
+        const TvIcon = (p) => <Icon {...p} path='<rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/>'/>;
+        const PlayIcon = (p) => <Icon {...p} path='<polygon points="5 3 19 12 5 21 5 3"/>'/>;
+        const MusicIcon = (p) => <Icon {...p} path='<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'/>;
+        const TrendingUp = (p) => <Icon {...p} path='<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>'/>;
+        const UndoIcon = (p) => <Icon {...p} path='<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>'/>;
+        const RepeatIcon = (p) => <Icon {...p} path='<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>'/>;
+        const GamepadIcon = (p) => <Icon {...p} path='<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><path d="M8 10v4"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/>'/>;
+        const BurgerIcon = (p) => <Icon {...p} path='<path d="M3 11a9 9 0 0 1 18 0H3z"/><path d="M3 15h18v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2z"/><path d="M3 13h18v1H3v-1z"/>'/>;
+        const GlobeIcon = (p) => <Icon {...p} path='<circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/>'/>;
+        const MaximizeIcon = (p) => <Icon {...p} path='<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>'/>;
+        const MinimizeIcon = (p) => <Icon {...p} path='<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>'/>;
+
+        const TMDB_KEY = '3ea9e43d0b879725ac8fda707021e858';
+        
+        const THEME = { 
+            movies: { primary: '#FFB800', secondary: '#FF3D5A', shadow: 'rgba(255, 184, 0, 0.4)' }, 
+            tv: { primary: '#D946EF', secondary: '#7C3AED', shadow: 'rgba(217, 70, 239, 0.4)' },
+            sports: { primary: '#00D4FF', secondary: '#0066FF', shadow: 'rgba(0, 212, 255, 0.4)' }, 
+            music: { primary: '#FF0080', secondary: '#FFB800', shadow: 'rgba(255, 0, 128, 0.4)' },
+            games: { primary: '#00FF41', secondary: '#008F11', shadow: 'rgba(0, 255, 65, 0.4)' },
+            food: { primary: '#FF5722', secondary: '#FFC107', shadow: 'rgba(255, 87, 34, 0.4)' },
+            history: { primary: '#D4AF37', secondary: '#8B4513', shadow: 'rgba(212, 175, 55, 0.4)' },
+            utd: { primary: '#DA291C', secondary: '#000000', shadow: 'rgba(218, 41, 28, 0.4)' },
+            madrid: { primary: '#FEBE10', secondary: '#FFFFFF', shadow: 'rgba(254, 190, 16, 0.4)' },
+            barca: { primary: '#A50044', secondary: '#004D98', shadow: 'rgba(165, 0, 68, 0.4)' },
+            arsenal: { primary: '#EF0107', secondary: '#FFFFFF', shadow: 'rgba(239, 1, 7, 0.4)' },
+            chelsea: { primary: '#034694', secondary: '#C1D8FF', shadow: 'rgba(3, 70, 148, 0.4)' },
+            liverpool: { primary: '#C8102E', secondary: '#00B2A9', shadow: 'rgba(200, 16, 46, 0.4)' }
+        };
+
+        const MENU_DATA = {
+            domain: [
+                { type: 'nav', id: 'movies', name: 'MOVIES', icon: <PopcornIcon size={42} className="text-[#FFB800]" />, desc: 'FRANCHISES, CHARACTERS, GENRES', bg: 'from-[#FFB800]/20 to-[#FF3D5A]/30', border: 'border-[#FFB800]/40' },
+                { type: 'nav', id: 'tv', name: 'TV SHOWS', icon: <TvIcon size={42} className="text-[#D946EF]" />, desc: 'NETWORKS, ANIME, REALITY', bg: 'from-[#D946EF]/20 to-[#7C3AED]/30', border: 'border-[#D946EF]/40' },
+                { type: 'nav', id: 'sports', name: 'SPORTS', icon: <TrophyIcon size={42} className="text-[#00D4FF]" />, desc: 'FOOTBALL, NBA, UFC, F1', bg: 'from-[#00D4FF]/20 to-[#0066FF]/30', border: 'border-[#00D4FF]/40' },
+                { type: 'nav', id: 'music', name: 'MUSIC', icon: <MusicIcon size={42} className="text-[#FF0080]" />, desc: 'POP, RAP, ROCK, DECADES', bg: 'from-[#FF0080]/20 to-[#FFB800]/30', border: 'border-[#FF0080]/40' },
+                { type: 'nav', id: 'games', name: 'GAMING', icon: <GamepadIcon size={42} className="text-[#00FF41]" />, desc: 'CHARACTERS, CONSOLES, POKEMON', bg: 'from-[#00FF41]/20 to-[#008F11]/30', border: 'border-[#00FF41]/40' },
+                { type: 'nav', id: 'food', name: 'FOOD & BRANDS', icon: <BurgerIcon size={42} className="text-[#FF5722]" />, desc: 'FAST FOOD, SNACKS, CARS', bg: 'from-[#FF5722]/20 to-[#FFC107]/30', border: 'border-[#FF5722]/40' },
+                { type: 'nav', id: 'history', name: 'HISTORY & GEO', icon: <GlobeIcon size={42} className="text-[#D4AF37]" />, desc: 'LANDMARKS, FLAGS, FIGURES', bg: 'from-[#D4AF37]/20 to-[#8B4513]/30', border: 'border-[#D4AF37]/40' }
+            ],
+            movies: [
+                { type: 'game', id: 'm_trend', name: 'TRENDING NOW', icon: '🔥', endpoint: '/trending/movie/week?language=en-US' },
+                { type: 'game', id: 'm_pop', name: 'ALL-TIME GREATS', icon: '⭐', endpoint: '/discover/movie?sort_by=vote_count.desc&vote_average.gte=8' },
+                { type: 'nav', id: 'm_chars', name: 'CHARACTERS', icon: '🦹‍♂️', desc: 'VILLAINS, HEROES' },
+                { type: 'nav', id: 'm_franchises', name: 'FRANCHISES', icon: '🍿', desc: 'MCU, STAR WARS' },
+                { type: 'nav', id: 'm_genres', name: 'BY GENRE', icon: '🎭', desc: 'SCIFI, HORROR' },
+                { type: 'nav', id: 'm_dirs', name: 'DIRECTORS', icon: '🎬', desc: 'NOLAN, TARANTINO' },
+                { type: 'nav', id: 'm_studios', name: 'STUDIOS', icon: '🏰', desc: 'A24, DISNEY, WB' },
+                { type: 'nav', id: 'm_decades', name: 'DECADES', icon: '⏳', desc: '80s, 90s, 00s' },
+            ],
+            m_chars: [
+                { type: 'custom', id: 'mc_villains', name: 'Movie Villains', icon: '😈', queries: [ { q: "Heath Ledger", n: "The Joker", t: "person" }, { q: "Ralph Fiennes", n: "Voldemort", t: "person" }, { q: "Mads Mikkelsen", n: "Hannibal Lecter", t: "person" }, { q: "Josh Brolin", n: "Thanos", t: "person" }, { q: "Christoph Waltz", n: "Hans Landa", t: "person" }, { q: "Javier Bardem", n: "Anton Chigurh", t: "person" }, { q: "Christian Bale", n: "Patrick Bateman", t: "person" }, { q: "Tom Hiddleston", n: "Loki", t: "person" }, { q: "Willem Dafoe", n: "Green Goblin", t: "person" }, { q: "Tom Hardy", n: "Bane", t: "person" }, { q: "Rosamund Pike", n: "Amy Dunne", t: "person" }, { q: "Anthony Hopkins", n: "Hannibal", t: "person" }, { q: "Jack Nicholson", n: "Jack Torrance", t: "person" } ]},
+                { type: 'custom', id: 'mc_heroes', name: 'Movie Heroes', icon: '🦸‍♂️', queries: [ { q: "Harrison Ford", n: "Indiana Jones", t: "person" }, { q: "Keanu Reeves", n: "Neo", t: "person" }, { q: "Robert Downey Jr", n: "Iron Man", t: "person" }, { q: "Chris Evans", n: "Captain America", t: "person" }, { q: "Daniel Craig", n: "James Bond", t: "person" }, { q: "Sigourney Weaver", n: "Ellen Ripley", t: "person" }, { q: "Sylvester Stallone", n: "Rocky Balboa", t: "person" }, { q: "Hugh Jackman", n: "Wolverine", t: "person" }, { q: "Henry Cavill", n: "Superman", t: "person" }, { q: "Tom Holland", n: "Spider-Man", t: "person" }, { q: "Tom Cruise", n: "Ethan Hunt", t: "person" }, { q: "Chris Hemsworth", n: "Thor", t: "person" } ]},
+                { type: 'custom', id: 'mc_killers', name: 'Horror Killers', icon: '🔪', queries: [ { q: "Halloween 1978", n: "Michael Myers", t: "movie" }, { q: "A Nightmare on Elm Street 1984", n: "Freddy Krueger", t: "movie" }, { q: "Friday the 13th 1980", n: "Jason Voorhees", t: "movie" }, { q: "The Texas Chain Saw Massacre", n: "Leatherface", t: "movie" }, { q: "Scream 1996", n: "Ghostface", t: "movie" }, { q: "Child's Play 1988", n: "Chucky", t: "movie" }, { q: "It 2017", n: "Pennywise", t: "movie" }, { q: "Saw 2004", n: "Jigsaw", t: "movie" }, { q: "Psycho 1960", n: "Norman Bates", t: "movie" }, { q: "The Ring", n: "Samara", t: "movie" } ]},
+                { type: 'custom', id: 'mc_comedy', name: 'Comedy Legends', icon: '😂', queries: [ { q: "Jim Carrey", n: "Ace Ventura", t: "person" }, { q: "Will Ferrell", n: "Ron Burgundy", t: "person" }, { q: "Mike Myers", n: "Austin Powers", t: "person" }, { q: "Rowan Atkinson", n: "Mr. Bean", t: "person" }, { q: "Sacha Baron Cohen", n: "Borat", t: "person" }, { q: "Zach Galifianakis", n: "Alan Garner", t: "person" }, { q: "Jack Black", n: "Dewey Finn", t: "person" }, { q: "Adam Sandler", n: "Happy Gilmore", t: "person" }, { q: "Steve Carell", n: "Michael Scott", t: "person" } ]}
+            ],
+            m_franchises: [
+                { type: 'game', id: 'fr_mcu', name: 'Marvel Cinematic Universe', icon: '🦸‍♂️', endpoint: '/discover/movie?with_companies=420' },
+                { type: 'game', id: 'fr_sw', name: 'Star Wars Universe', icon: '⚔️', endpoint: '/discover/movie?with_companies=1&with_keywords=11195' },
+                { type: 'game', id: 'fr_lotr', name: 'Lord of the Rings', icon: '🧝‍♂️', endpoint: '/discover/movie?with_keywords=1190' },
+                { type: 'game', id: 'fr_bond', name: 'James Bond (007)', icon: '🕵️‍♂️', endpoint: '/discover/movie?with_keywords=10620' },
+                { type: 'game', id: 'fr_dc', name: 'DC Universe', icon: '🦇', endpoint: '/discover/movie?with_companies=12806,9993,429' },
+                { type: 'game', id: 'fr_hp', name: 'Harry Potter', icon: '⚡', endpoint: '/discover/movie?with_keywords=6956' },
+            ],
+            m_genres: [
+                { type: 'game', id: 'g_act', name: 'Action', icon: '💥', endpoint: '/discover/movie?with_genres=28&vote_count.gte=1000' },
+                { type: 'game', id: 'g_hor', name: 'Horror', icon: '🔪', endpoint: '/discover/movie?with_genres=27&vote_count.gte=1000' },
+                { type: 'game', id: 'g_com', name: 'Comedy', icon: '😂', endpoint: '/discover/movie?with_genres=35&vote_count.gte=1000' },
+                { type: 'game', id: 'g_sci', name: 'Sci-Fi', icon: '👽', endpoint: '/discover/movie?with_genres=878&vote_count.gte=1000' },
+                { type: 'game', id: 'g_rom', name: 'Romance', icon: '❤️', endpoint: '/discover/movie?with_genres=10749&vote_count.gte=1000' },
+                { type: 'game', id: 'g_dra', name: 'Drama', icon: '🍷', endpoint: '/discover/movie?with_genres=18&vote_count.gte=1500' },
+            ],
+            m_dirs: [
+                { type: 'game', id: 'd_nolan', name: 'C. Nolan', icon: '⏳', endpoint: '/discover/movie?with_crew=525' },
+                { type: 'game', id: 'd_taran', name: 'Q. Tarantino', icon: '🩸', endpoint: '/discover/movie?with_crew=138' },
+                { type: 'game', id: 'd_scors', name: 'M. Scorsese', icon: '🕴️', endpoint: '/discover/movie?with_crew=224' },
+                { type: 'game', id: 'd_spiel', name: 'S. Spielberg', icon: '🦖', endpoint: '/discover/movie?with_crew=488' },
+                { type: 'game', id: 'd_kubri', name: 'S. Kubrick', icon: '👁️', endpoint: '/discover/movie?with_crew=240' },
+                { type: 'game', id: 'd_finch', name: 'D. Fincher', icon: '📦', endpoint: '/discover/movie?with_crew=7467' },
+            ],
+            m_studios: [
+                { type: 'game', id: 's_a24', name: 'A24', icon: '✨', endpoint: '/discover/movie?with_companies=3166|41077&vote_count.gte=200' },
+                { type: 'game', id: 's_dis', name: 'Disney', icon: '🏰', endpoint: '/discover/movie?with_genres=16&with_companies=2&vote_count.gte=500' },
+                { type: 'game', id: 's_pix', name: 'Pixar', icon: '💡', endpoint: '/discover/movie?with_companies=3&vote_count.gte=500' },
+                { type: 'game', id: 's_ghi', name: 'Ghibli', icon: '🍃', endpoint: '/discover/movie?with_companies=10342' },
+                { type: 'game', id: 's_wb', name: 'Warner Bros', icon: '🛡️', endpoint: '/discover/movie?with_companies=174&vote_count.gte=1000' },
+            ],
+            m_decades: [
+                { type: 'game', id: 'dec_2020', name: '2020s', icon: '🔥', endpoint: '/discover/movie?primary_release_date.gte=2020-01-01&sort_by=popularity.desc&vote_count.gte=1000' },
+                { type: 'game', id: 'dec_2010', name: '2010s', icon: '📱', endpoint: '/discover/movie?primary_release_date.gte=2010-01-01&primary_release_date.lte=2019-12-31&sort_by=popularity.desc&vote_count.gte=2000' },
+                { type: 'game', id: 'dec_2000', name: '2000s', icon: '💿', endpoint: '/discover/movie?primary_release_date.gte=2000-01-01&primary_release_date.lte=2009-12-31&sort_by=popularity.desc&vote_count.gte=1500' },
+                { type: 'game', id: 'dec_1990', name: '90s', icon: '📼', endpoint: '/discover/movie?primary_release_date.gte=1990-01-01&primary_release_date.lte=1999-12-31&sort_by=popularity.desc&vote_count.gte=1000' },
+                { type: 'game', id: 'dec_1980', name: '80s', icon: '🕹️', endpoint: '/discover/movie?primary_release_date.gte=1980-01-01&primary_release_date.lte=1989-12-31&sort_by=popularity.desc&vote_count.gte=500' },
+            ],
+            tv: [
+                { type: 'game', id: 'tv_trend', name: 'TRENDING NOW', icon: '🔥', endpoint: '/trending/tv/week?language=en-US' },
+                { type: 'game', id: 'tv_pop', name: 'TOP RATED TV', icon: '⭐', endpoint: '/discover/tv?sort_by=vote_count.desc&vote_average.gte=8' },
+                { type: 'nav', id: 'tv_nets', name: 'NETWORKS', icon: '📡', desc: 'HBO, NETFLIX, AMC' },
+                { type: 'nav', id: 'tv_anim', name: 'ANIME', icon: '⛩️', desc: 'SHONEN, CLASSICS' },
+                { type: 'nav', id: 'tv_gens', name: 'BY GENRE', icon: '🎭', desc: 'SITCOMS, SCIFI' },
+                { type: 'nav', id: 'tv_real', name: 'REALITY TV', icon: '🎤', desc: 'DATING, COOKING' },
+            ],
+            tv_nets: [
+                { type: 'game', id: 'n_hbo', name: 'HBO Prestige', icon: '👑', endpoint: '/discover/tv?with_networks=49&vote_count.gte=500' },
+                { type: 'game', id: 'n_net', name: 'Netflix', icon: 'N', endpoint: '/discover/tv?with_networks=213&vote_count.gte=500' },
+                { type: 'game', id: 'n_amc', name: 'AMC Dramas', icon: '🧟', endpoint: '/discover/tv?with_networks=174&vote_count.gte=300' },
+                { type: 'game', id: 'n_app', name: 'Apple TV+', icon: '🍎', endpoint: '/discover/tv?with_networks=2552&vote_count.gte=100' },
+                { type: 'game', id: 'n_prim', name: 'Amazon Prime', icon: '📦', endpoint: '/discover/tv?with_networks=1024&vote_count.gte=200' },
+            ],
+            tv_anim: [
+                { type: 'game', id: 'a_shonen', name: 'Action Anime', icon: '⚔️', endpoint: '/discover/tv?with_genres=16,10759&with_original_language=ja&vote_count.gte=200' },
+                { type: 'game', id: 'a_anime', name: 'All Anime', icon: '⛩️', endpoint: '/discover/tv?with_genres=16&with_original_language=ja&vote_count.gte=300' },
+                { type: 'game', id: 'a_adult', name: 'Adult Anim', icon: '🤬', endpoint: '/discover/tv?with_genres=16&with_keywords=210024' }, 
+            ],
+            tv_gens: [
+                { type: 'game', id: 'g_sit', name: 'Sitcoms', icon: '🛋️', endpoint: '/discover/tv?with_genres=35&vote_count.gte=500' },
+                { type: 'game', id: 'g_dra', name: 'Drama', icon: '🍷', endpoint: '/discover/tv?with_genres=18&vote_count.gte=500' },
+                { type: 'game', id: 'g_sci', name: 'Sci-Fi/Fantasy', icon: '🐉', endpoint: '/discover/tv?with_genres=10765&vote_count.gte=500' },
+                { type: 'game', id: 'g_cri', name: 'Crime/Mystery', icon: '🔍', endpoint: '/discover/tv?with_genres=80,9648&vote_count.gte=300' },
+            ],
+            tv_real: [
+                { type: 'game', id: 'rt_all', name: 'All Reality', icon: '📺', endpoint: '/discover/tv?with_genres=10764&vote_count.gte=50' },
+                { type: 'game', id: 'rt_comp', name: 'Competition', icon: '🏆', endpoint: '/discover/tv?with_genres=10764&with_keywords=271217' },
+                { type: 'game', id: 'rt_date', name: 'Dating', icon: '💔', endpoint: '/discover/tv?with_genres=10764&with_keywords=10636' },
+            ],
+            sports: [
+                { type: 'nav', id: 'sp_foot_clubs', name: 'FOOTBALL CLUBS', icon: '🛡️', desc: 'MAN UTD, REAL MADRID' },
+                { type: 'nav', id: 'sp_foot', name: 'FOOTBALL LEGENDS', icon: '⚽', desc: 'PREMIER LEAGUE, LA LIGA' },
+                { type: 'nav', id: 'sp_basket', name: 'BASKETBALL', icon: '🏀', desc: 'NBA LEGENDS, TEAMS' },
+                { type: 'nav', id: 'sp_combat', name: 'COMBAT SPORTS', icon: '🥊', desc: 'UFC, BOXING, WWE' },
+                { type: 'nav', id: 'sp_amer', name: 'US SPORTS', icon: '🏈', desc: 'NFL, BASEBALL' },
+                { type: 'nav', id: 'sp_global', name: 'GLOBAL SPORTS', icon: '🌍', desc: 'F1, TENNIS, GOLF' },
+            ],
+            sp_foot_clubs: [
+                { type: 'game', id: 'fc_utd', themeOverride: 'utd', name: 'Man United', icon: '😈', roster: ["Wayne Rooney", "Ryan Giggs", "Paul Scholes", "George Best", "Eric Cantona", "Roy Keane", "Peter Schmeichel", "Rio Ferdinand", "David Beckham", "Ruud van Nistelrooy", "Nemanja Vidic", "Marcus Rashford", "Paul Pogba", "Edwin van der Sar", "Patrice Evra", "Gary Neville", "Andy Cole", "Bobby Charlton", "Denis Law", "Bryan Robson", "Denis Irwin", "Ole Gunnar Solskjaer", "Dwight Yorke", "Jaap Stam", "Nicky Butt", "Phil Neville", "Steve Bruce", "Gary Pallister", "Mark Hughes", "Teddy Sheringham", "Michael Carrick", "Darren Fletcher", "Antonio Valencia", "David de Gea", "Bruno Fernandes", "Robin van Persie", "Carlos Tevez", "Dimitar Berbatov"] },
+                { type: 'game', id: 'fc_madrid', themeOverride: 'madrid', name: 'Real Madrid', icon: '👑', roster: ["Cristiano Ronaldo", "Alfredo Di Stefano", "Raul", "Zinedine Zidane", "Iker Casillas", "Sergio Ramos", "Luka Modric", "Roberto Carlos", "Luis Figo", "Karim Benzema", "Gareth Bale", "Vinicius Junior", "Toni Kroos", "Marcelo", "Pepe", "Xabi Alonso", "Casemiro", "Ferenc Puskas", "Guti", "Hierro"] },
+                { type: 'game', id: 'fc_barca', themeOverride: 'barca', name: 'Barcelona', icon: '🔴', roster: ["Lionel Messi", "Xavi", "Andres Iniesta", "Ronaldinho", "Johan Cruyff", "Carles Puyol", "Dani Alves", "Luis Suarez", "Neymar", "Rivaldo", "Sergio Busquets", "Gerard Pique", "Samuel Eto'o", "Victor Valdes", "Jordi Alba", "Pedro", "Romario", "Stoichkov", "Deco"] },
+                { type: 'game', id: 'fc_arsenal', themeOverride: 'arsenal', name: 'Arsenal', icon: '炮', roster: ["Thierry Henry", "Dennis Bergkamp", "Patrick Vieira", "Tony Adams", "Ian Wright", "Robert Pires", "David Seaman", "Sol Campbell", "Cesc Fabregas", "Robin van Persie", "Bukayo Saka", "Jens Lehmann", "Freddie Ljungberg", "Ashley Cole", "Gilberto Silva", "Martin Keown", "Marc Overmars", "Kolo Toure"] },
+                { type: 'game', id: 'fc_chelsea', themeOverride: 'chelsea', name: 'Chelsea', icon: '🦁', roster: ["Frank Lampard", "John Terry", "Didier Drogba", "Petr Cech", "Eden Hazard", "Ashley Cole", "Gianfranco Zola", "Claude Makelele", "N'Golo Kante", "Michael Essien", "Branislav Ivanovic", "Ricardo Carvalho", "John Obi Mikel", "Joe Cole", "Cesar Azpilicueta", "Jimmy Floyd Hasselbaink", "Eidur Gudjohnsen"] },
+                { type: 'game', id: 'fc_liverpool', themeOverride: 'liverpool', name: 'Liverpool', icon: '🦅', roster: ["Steven Gerrard", "Kenny Dalglish", "Ian Rush", "Mohamed Salah", "Virgil van Dijk", "John Barnes", "Robbie Fowler", "Jamie Carragher", "Sadio Mane", "Luis Suarez", "Alisson Becker", "Trent Alexander-Arnold", "Roberto Firmino", "Michael Owen", "Kevin Keegan", "Graeme Souness", "Alan Hansen"] },
+            ],
+            sp_foot: [
+                { type: 'game', id: 'f_all', name: 'All-Time Greats', icon: '🐐', roster: ["Lionel Messi", "Cristiano Ronaldo", "Pele", "Diego Maradona", "Zinedine Zidane", "Ronaldo Nazario", "Ronaldinho", "Johan Cruyff", "Thierry Henry", "Andres Iniesta", "Paolo Maldini", "Lev Yashin", "Franz Beckenbauer", "Alfredo Di Stefano", "Michel Platini", "Gerd Muller", "Marco van Basten", "Eusebio", "Bobby Charlton", "Garrincha"] },
+                { type: 'game', id: 'f_prem', name: 'Prem Icons', icon: '🦁', roster: ["Thierry Henry", "Alan Shearer", "Wayne Rooney", "Sergio Aguero", "Steven Gerrard", "Frank Lampard", "Kevin De Bruyne", "Ryan Giggs", "Didier Drogba", "Eden Hazard", "Paul Scholes", "Roy Keane", "Eric Cantona", "Patrick Vieira", "David Silva", "John Terry", "Rio Ferdinand", "Petr Cech", "Peter Schmeichel", "Mohamed Salah"] },
+                { type: 'game', id: 'f_liga', name: 'La Liga Icons', icon: '🇪🇸', roster: ["Lionel Messi", "Cristiano Ronaldo", "Andres Iniesta", "Xavi", "Zinedine Zidane", "Ronaldinho", "Sergio Ramos", "Karim Benzema", "Luka Modric", "Luis Suarez", "Iker Casillas", "Raul", "Roberto Carlos", "Rivaldo", "Dani Alves", "Carles Puyol", "Toni Kroos", "Antoine Griezmann"] },
+            ],
+            sp_basket: [
+                { type: 'game', id: 'b_all', name: 'NBA All-Time', icon: '🐐', roster: ["Michael Jordan", "LeBron James", "Kobe Bryant", "Kareem Abdul-Jabbar", "Magic Johnson", "Larry Bird", "Shaquille O'Neal", "Tim Duncan", "Wilt Chamberlain", "Stephen Curry", "Bill Russell", "Hakeem Olajuwon", "Oscar Robertson", "Kevin Durant", "Karl Malone", "Dirk Nowitzki", "Julius Erving", "Jerry West", "Dwyane Wade", "Kevin Garnett"] },
+                { type: 'game', id: 'b_mod', name: 'Modern Stars', icon: '🔥', roster: ["LeBron James", "Stephen Curry", "Kevin Durant", "Giannis Antetokounmpo", "Nikola Jokic", "Luka Doncic", "Joel Embiid", "Jayson Tatum", "Anthony Edwards", "Devin Booker", "Shai Gilgeous-Alexander", "Damian Lillard", "Jimmy Butler", "Kawhi Leonard", "Kyrie Irving", "Ja Morant", "Zion Williamson"] },
+                { type: 'game', id: 'b_90', name: '90s & 00s', icon: '📼', roster: ["Michael Jordan", "Kobe Bryant", "Shaquille O'Neal", "Allen Iverson", "Vince Carter", "Tracy McGrady", "Kevin Garnett", "Dirk Nowitzki", "Steve Nash", "Jason Kidd", "Tim Duncan", "Paul Pierce", "Ray Allen", "Dwyane Wade", "Carmelo Anthony", "Yao Ming", "Dwight Howard", "Chris Paul"] },
+            ],
+            sp_combat: [
+                { type: 'game', id: 'c_ufc_goat', name: 'UFC GOATs', icon: '🥋', roster: ["Jon Jones", "Georges St-Pierre", "Khabib Nurmagomedov", "Anderson Silva", "Demetrious Johnson", "Amanda Nunes", "Conor McGregor", "Daniel Cormier", "Jose Aldo", "Max Holloway", "Alexander Volkanovski", "Kamaru Usman", "Israel Adesanya", "Stipe Miocic", "Ronda Rousey", "Dustin Poirier", "Justin Gaethje", "Nate Diaz"] },
+                { type: 'game', id: 'c_box', name: 'Boxing Legends', icon: '🥊', roster: ["Muhammad Ali", "Mike Tyson", "George Foreman", "Joe Frazier", "Evander Holyfield", "Lennox Lewis", "Tyson Fury", "Oleksandr Usyk", "Deontay Wilder", "Sugar Ray Robinson", "Floyd Mayweather", "Manny Pacquiao", "Roberto Duran", "Thomas Hearns", "Sugar Ray Leonard", "Julio Cesar Chavez", "Canelo Alvarez", "Roy Jones Jr"] },
+                { type: 'game', id: 'c_wwe_att', name: 'WWE Attitude', icon: '💀', roster: ["Stone Cold Steve Austin", "The Rock", "Undertaker", "Mankind", "Triple H", "Shawn Michaels", "Ric Flair", "Chris Jericho", "Kurt Angle", "Kane", "Big Show", "Edge", "Christian", "Hardy Boyz", "Dudley Boyz", "Vince McMahon", "Bret Hart", "Batista", "John Cena", "Randy Orton"] },
+            ],
+            sp_amer: [
+                { type: 'game', id: 'a_nfl_all', name: 'NFL All-Time', icon: '🏈', roster: ['Tom Brady', 'Peyton Manning', 'Aaron Rodgers', 'Patrick Mahomes', 'Jerry Rice', 'Rob Gronkowski', 'Brett Favre', 'Drew Brees', 'Lawrence Taylor', 'Jim Brown', 'Randy Moss', 'Deion Sanders', 'Joe Montana', 'Dan Marino', 'Emmitt Smith', 'Barry Sanders', 'Calvin Johnson', 'Ray Lewis', 'Ed Reed', 'Troy Polamalu'] },
+                { type: 'game', id: 'a_mlb', name: 'MLB Legends', icon: '⚾', roster: ['Babe Ruth', 'Willie Mays', 'Hank Aaron', 'Ted Williams', 'Barry Bonds', 'Ken Griffey Jr', 'Derek Jeter', 'Mike Trout', 'Shohei Ohtani', 'Albert Pujols', 'Mickey Mantle', 'Lou Gehrig', 'Jackie Robinson', 'Sandy Koufax', 'Pedro Martinez', 'Randy Johnson', 'Alex Rodriguez', 'Ichiro Suzuki'] },
+            ],
+            sp_global: [
+                { type: 'game', id: 'g_f1', name: 'Formula 1', icon: '🏎️', roster: ['Lewis Hamilton', 'Michael Schumacher', 'Ayrton Senna', 'Max Verstappen', 'Sebastian Vettel', 'Fernando Alonso', 'Niki Lauda', 'Charles Leclerc', 'Lando Norris', 'Alain Prost', 'Nigel Mansell', 'Jackie Stewart', 'Jim Clark', 'Juan Manuel Fangio', 'Nelson Piquet', 'Mika Hakkinen', 'Kimi Raikkonen', 'Jenson Button', 'Nico Rosberg', 'Carlos Sainz', 'George Russell', 'Sergio Perez', 'Daniel Ricciardo'] },
+                { type: 'game', id: 'g_ten', name: 'Tennis', icon: '🎾', roster: ['Roger Federer', 'Rafael Nadal', 'Novak Djokovic', 'Serena Williams', 'Andy Murray', 'Pete Sampras', 'Andre Agassi', 'Maria Sharapova', 'Steffi Graf', 'Carlos Alcaraz', 'Jannik Sinner', 'Daniil Medvedev', 'Bjorn Borg', 'John McEnroe', 'Jimmy Connors', 'Ivan Lendl', 'Boris Becker', 'Stefan Edberg', 'Martina Navratilova', 'Chris Evert', 'Venus Williams'] },
+                { type: 'game', id: 'g_golf', name: 'Golf', icon: '⛳', roster: ['Tiger Woods', 'Rory McIlroy', 'Jack Nicklaus', 'Arnold Palmer', 'Phil Mickelson', 'Gary Player', 'Ben Hogan', 'Sam Snead', 'Seve Ballesteros', 'Brooks Koepka', 'Scottie Scheffler', 'Jon Rahm', 'Dustin Johnson', 'Jordan Spieth', 'Justin Thomas', 'Collin Morikawa', 'Ernie Els', 'Vijay Singh', 'Greg Norman', 'Nick Faldo'] },
+            ],
+            music: [
+                { type: 'nav', id: 'mu_genres', name: 'BY GENRE', icon: '🎧', desc: 'POP, RAP, ROCK, R&B...' },
+                { type: 'nav', id: 'mu_bands', name: 'BANDS/GROUPS', icon: '🎸', desc: 'BEATLES, QUEEN...' },
+                { type: 'nav', id: 'mu_decades', name: 'BY DECADE', icon: '⏳', desc: '80s, 90s, 00s...' },
+            ],
+            mu_genres: [
+                { type: 'game', id: 'mu_pop', name: 'Pop Icons', icon: '🎤', roster: ['Michael Jackson', 'Madonna', 'Taylor Swift', 'Lady Gaga', 'Ariana Grande', 'Justin Bieber', 'Katy Perry', 'Britney Spears', 'Adele', 'Beyoncé', 'Ed Sheeran', 'Bruno Mars', 'Dua Lipa', 'Harry Styles', 'The Weeknd', 'Billie Eilish', 'Olivia Rodrigo', 'Miley Cyrus', 'Selena Gomez'] },
+                { type: 'game', id: 'mu_rap', name: 'Rap Legends', icon: '🔥', roster: ['Eminem', 'Jay-Z', 'Tupac Shakur', 'Snoop Dogg', 'Nas', 'Dr. Dre', 'Kendrick Lamar', 'J. Cole', 'Lil Wayne', '50 Cent', 'The Notorious B.I.G.', 'Ice Cube', 'Tyler, The Creator', 'Drake', 'Kanye West', 'Nicki Minaj', 'Travis Scott', 'Future', 'A$AP Rocky', 'Snoop Dogg'] },
+                { type: 'game', id: 'mu_rock', name: 'Rock Frontmen', icon: '🤘', roster: ['Freddie Mercury', 'Mick Jagger', 'Kurt Cobain', 'Paul McCartney', 'John Lennon', 'Elvis Presley', 'David Bowie', 'Jimi Hendrix', 'Elton John', 'Bruce Springsteen', 'Axl Rose', 'Ozzy Osbourne', 'Mick Fleetwood', 'Steven Tyler', 'Robert Plant', 'Bono', 'Anthony Kiedis', 'Dave Grohl'] },
+                { type: 'game', id: 'mu_rb', name: 'R&B / Soul', icon: '🎷', roster: ['Whitney Houston', 'Mariah Carey', 'Stevie Wonder', 'Aretha Franklin', 'James Brown', 'Marvin Gaye', 'Ray Charles', 'Alicia Keys', 'John Legend', 'Usher', 'Rihanna', 'Luther Vandross', 'Frank Ocean', 'SZA', 'Mary J. Blige', 'Erykah Badu', 'Lauryn Hill', 'D\'Angelo'] },
+            ],
+            mu_bands: [
+                { type: 'game', id: 'mb_all', name: 'Greatest Bands', icon: '🎸', roster: ['The Beatles', 'Queen', 'The Rolling Stones', 'Pink Floyd', 'Led Zeppelin', 'Nirvana', 'AC/DC', 'Metallica', 'U2', 'Coldplay', 'Red Hot Chili Peppers', 'Fleetwood Mac', 'Guns N\' Roses', 'The Eagles', 'Aerosmith', 'The Who', 'Black Sabbath', 'Radiohead', 'Oasis'] },
+                { type: 'game', id: 'mb_boy', name: 'Boy/Girl Groups', icon: '🕺', roster: ['One Direction', 'Backstreet Boys', 'NSYNC', 'BTS', 'Spice Girls', 'Destinys Child', 'TLC', 'BLACKPINK', 'Boyz II Men', 'Fifth Harmony', 'Jonas Brothers', 'New Edition', 'The Jackson 5', 'Pussycat Dolls', 'Little Mix', 'En Vogue'] },
+            ],
+            mu_decades: [
+                { type: 'game', id: 'md_2010', name: '2010s Hits', icon: '📱', roster: ['Taylor Swift', 'Drake', 'Adele', 'Ed Sheeran', 'Justin Bieber', 'Ariana Grande', 'Bruno Mars', 'Katy Perry', 'The Weeknd', 'Rihanna', 'Kendrick Lamar', 'Post Malone', 'Imagine Dragons', 'Maroon 5', 'Shawn Mendes', 'Camila Cabello'] },
+                { type: 'game', id: 'md_2000', name: '2000s Nostalgia', icon: '💿', roster: ['Eminem', 'Britney Spears', 'Beyoncé', 'Justin Timberlake', 'Usher', '50 Cent', 'Jay-Z', 'Pink', 'Christina Aguilera', 'Alicia Keys', 'Linkin Park', 'Avril Lavigne', 'Green Day', 'Black Eyed Peas', 'Outkast', 'Kelly Clarkson', 'Nelly', 'Shakira'] },
+                { type: 'game', id: 'md_1990', name: '90s Legends', icon: '📼', roster: ['Nirvana', 'Tupac Shakur', 'Mariah Carey', 'Celine Dion', 'The Notorious B.I.G.', 'Snoop Dogg', 'Garth Brooks', 'Shania Twain', 'TLC', 'Dr. Dre', 'Oasis', 'Radiohead', 'Spice Girls', 'Backstreet Boys', 'Pearl Jam', 'Red Hot Chili Peppers', 'Wu-Tang Clan', 'R.E.M.'] },
+            ],
+            games: [
+                { type: 'wiki', id: 'vg_chars', name: 'Gaming Icons', icon: '🍄', items: ['Mario', 'Master Chief (Halo)', 'Kratos (God of War)', 'Sonic the Hedgehog', 'Link (The Legend of Zelda)', 'Pikachu', 'Lara Croft', 'Doomguy', 'Pac-Man', 'Geralt of Rivia', 'Samus Aran', 'Cloud Strife', 'Solid Snake', 'Marcus Fenix', 'Arthur Morgan', 'Ezio Auditore', 'Nathan Drake', 'Gordon Freeman'] },
+                { type: 'wiki', id: 'vg_consoles', name: 'Consoles', icon: '🎮', items: ['PlayStation 2', 'Xbox 360', 'Nintendo 64', 'Game Boy', 'Super Nintendo Entertainment System', 'PlayStation 4', 'Nintendo Switch', 'Wii', 'Sega Genesis', 'GameCube', 'Dreamcast', 'PlayStation 5', 'Xbox Series X', 'Nintendo DS', 'PlayStation Portable', 'Xbox One', 'Sega Saturn', 'Atari 2600'] },
+                { type: 'wiki', id: 'vg_pokemon', name: 'Original Pokémon', icon: '🐉', items: ['Charizard', 'Blastoise', 'Venusaur', 'Pikachu', 'Mewtwo', 'Gengar', 'Snorlax', 'Dragonite', 'Alakazam', 'Gyarados', 'Eevee', 'Jigglypuff', 'Mew', 'Squirtle', 'Charmander', 'Bulbasaur', 'Psyduck', 'Meowth', 'Machamp', 'Arcanine', 'Lapras', 'Aerodactyl'] }
+            ],
+            food: [
+                { type: 'wiki', id: 'fd_fast', name: 'Fast Food Chains', icon: '🍔', items: ['McDonald\'s', 'Burger King', 'KFC', 'Taco Bell', 'Wendy\'s', 'Subway (restaurant)', 'Domino\'s Pizza', 'Starbucks', 'Chipotle Mexican Grill', 'Pizza Hut', 'Chick-fil-A', 'Popeyes', 'Dunkin\' Donuts', 'Dairy Queen', 'Papa John\'s', 'Sonic Drive-In', 'Arby\'s', 'Panera Bread', 'Jack in the Box', 'Five Guys'] },
+                { type: 'wiki', id: 'fd_snacks', name: 'Popular Snacks', icon: '🍿', items: ['Doritos', 'Cheetos', 'Oreo', 'Lay\'s', 'Pringles', 'Snickers', 'Skittles (candy)', 'M&M\'s', 'Reese\'s Peanut Butter Cups', 'Hershey bar', 'Kit Kat', 'Twix', 'Toblerone', 'Milky Way (chocolate bar)', 'Cheez-It', 'Ruffles', 'Tostitos', 'Sour Patch Kids', 'Starburst (candy)'] },
+                { type: 'wiki', id: 'fd_sodas', name: 'Sodas & Drinks', icon: '🥤', items: ['Coca-Cola', 'Pepsi', 'Sprite (drink)', 'Dr Pepper', 'Mountain Dew', 'Fanta', '7 Up', 'A&W Root Beer', 'Monster Energy', 'Red Bull', 'Gatorade', 'Powerade', 'Arizona Beverage Company', 'Lipton', 'Capri Sun', 'Kool-Aid', 'Canada Dry', 'Schweppes'] },
+                { type: 'wiki', id: 'bd_cars', name: 'Global Car Brands', icon: '🏎️', items: ['Toyota', 'Ford Motor Company', 'Honda', 'BMW', 'Mercedes-Benz', 'Tesla, Inc.', 'Ferrari', 'Porsche', 'Audi', 'Chevrolet', 'Volkswagen', 'Nissan', 'Hyundai', 'Subaru', 'Lexus', 'Jaguar Cars', 'Land Rover', 'Aston Martin', 'Lamborghini', 'Maserati'] }
+            ],
+            history: [
+                { type: 'wiki', id: 'hg_lands', name: 'World Landmarks', icon: '🗽', items: ['Eiffel Tower', 'Great Pyramid of Giza', 'Great Wall of China', 'Colosseum', 'Taj Mahal', 'Statue of Liberty', 'Big Ben', 'Machu Picchu', 'Mount Everest', 'Stonehenge', 'Sydney Opera House', 'Christ the Redeemer (statue)', 'Petra', 'Acropolis of Athens', 'Chichen Itza', 'Burj Khalifa', 'Golden Gate Bridge'] },
+                { type: 'wiki', id: 'hg_flags', name: 'World Flags', icon: '🌍', items: ['Flag of the United States', 'Flag of the United Kingdom', 'Flag of Japan', 'Flag of Brazil', 'Flag of Canada', 'Flag of France', 'Flag of Germany', 'Flag of Italy', 'Flag of Australia', 'Flag of India', 'Flag of Mexico', 'Flag of South Korea', 'Flag of China', 'Flag of Spain', 'Flag of Argentina', 'Flag of South Africa'] },
+                { type: 'wiki', id: 'hg_figs', name: 'Historical Figures', icon: '📜', items: ['Albert Einstein', 'Abraham Lincoln', 'Cleopatra', 'Julius Caesar', 'Leonardo da Vinci', 'Mahatma Gandhi', 'Nelson Mandela', 'Joan of Arc', 'Winston Churchill', 'Napoleon', 'William Shakespeare', 'Martin Luther King Jr.', 'Alexander the Great', 'George Washington', 'Isaac Newton', 'Galileo Galilei', 'Marie Curie', 'Wolfgang Amadeus Mozart', 'Charles Darwin'] }
+            ]
+        };
+
+        const fmt = ms => `${Math.floor(ms / 1000)}.${Math.floor((ms % 1000) / 100)}s`;
+
+        function App() {
+          const [phase, setPhase] = useState('permission'); 
+          const [navStack, setNavStack] = useState([{ id: 'domain', title: 'BLIND RANK' }]); 
+          const [loading, setLoading] = useState(false);
+          const [error, setError] = useState(null);
+          const [slots, setSlots] = useState(Array(10).fill(null));
+          const [queue, setQueue] = useState([]);
+          const [activeIndex, setActiveIndex] = useState(0);
+          const [hasStarted, setHasStarted] = useState(false); 
+          const [rolling, setRolling] = useState(false);
+          const [flashSlot, setFlashSlot] = useState(null);
+          const [challengeTitle, setChallengeTitle] = useState("BLIND RANK");
+          const [activeOverride, setActiveOverride] = useState(null);
+          const [recordStatus, setRecordStatus] = useState('idle'); 
+          const [recordedVideoUrl, setRecordedVideoUrl] = useState(null);
+          const [aiStatus, setAiStatus] = useState('waiting');
+          const [lastAction, setLastAction] = useState(null);
+          const [isFullscreen, setIsFullscreen] = useState(false);
+
+          const videoRef = useRef(null);
+          const streamRef = useRef(null); 
+          const canvasRef = useRef(null); 
+          const cardRef = useRef(null);   
+          const mediaRecorderRef = useRef(null);
+          const timerRef = useRef(null);
+          const chunksRef = useRef([]);
+          const posRef = useRef({ 
+              targetX: window.innerWidth / 2, targetY: window.innerHeight * 0.25, targetScale: 0.85, targetRot: 0,
+              detected: false, framesLost: 0,
+              domX: window.innerWidth / 2, domY: window.innerHeight * 0.25, domScale: 0.85, domRot: 0,
+              canvasX: 1080 / 2, canvasY: 1920 * 0.25, canvasScale: 0.85, canvasRot: 0,
+              box: null, vw: 1, vh: 1
+          });
+          const latestState = useRef({
+              slots: Array(10).fill(null), activeIndex: 0, queue: [], phase: 'menu', rolling: false, hasStarted: false
+          });
+          const isRecordingRef = useRef(false);
+          const tickRef = useRef(null);
+          const aiTickRef = useRef(null);
+          const startTimeRef = useRef(0);
+          const aiStatusRef = useRef('waiting');
+          
+          const resultTimeoutRef = useRef(null); 
+          const lastCategoryRef = useRef(null);  
+          const lastCategoryTypeRef = useRef(null);
+          const faceIndicatorRef = useRef(null); 
+          const progressRef = useRef(null);      
+
+          const currentNavObj = navStack[navStack.length - 1];
+          const currentMenuId = currentNavObj.id;
+          const currentMenuItems = MENU_DATA[currentMenuId] || [];
+          
+          let activeTheme = THEME.movies;
+          const topDomain = navStack[1]?.id; 
+          if (activeOverride && THEME[activeOverride]) {
+              activeTheme = THEME[activeOverride];
+          } else {
+              if (topDomain && THEME[topDomain]) activeTheme = THEME[topDomain];
+          }
+          const themeRef = useRef(activeTheme);
+
+          // Audio System
+          const initAudio = () => {
+              if (!window._audioCtx) {
+                  const AudioContext = window.AudioContext || window.webkitAudioContext;
+                  if (AudioContext) window._audioCtx = new AudioContext();
+              }
+              if (window._audioCtx && window._audioCtx.state === 'suspended') {
+                  window._audioCtx.resume();
+              }
+          };
+
+          const playSound = (type) => {
+              try {
+                  const ctx = window._audioCtx;
+                  if (!ctx || ctx.state !== 'running') return;
+                  const now = ctx.currentTime;
+                  
+                  if (type === 'thud') {
+                      const osc = ctx.createOscillator();
+                      const gain = ctx.createGain();
+                      osc.connect(gain);
+                      gain.connect(ctx.destination);
+                      osc.type = 'sine';
+                      osc.frequency.setValueAtTime(120, now);
+                      osc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+                      gain.gain.setValueAtTime(1, now);
+                      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                      osc.start(now);
+                      osc.stop(now + 0.2);
+                  } else if (type === 'swoosh') {
+                      const osc = ctx.createOscillator();
+                      const gain = ctx.createGain();
+                      osc.connect(gain);
+                      gain.connect(ctx.destination);
+                      osc.type = 'triangle';
+                      osc.frequency.setValueAtTime(300, now);
+                      osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+                      gain.gain.setValueAtTime(0, now);
+                      gain.gain.linearRampToValueAtTime(0.25, now + 0.05);
+                      gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                      osc.start(now);
+                      osc.stop(now + 0.35);
+                  } else if (type === 'cheer') {
+                      const notes = [440, 554.37, 659.25, 880]; 
+                      notes.forEach((freq, i) => {
+                          const o = ctx.createOscillator();
+                          const g = ctx.createGain();
+                          o.connect(g);
+                          g.connect(ctx.destination);
+                          o.type = 'sine';
+                          o.frequency.value = freq;
+                          g.gain.setValueAtTime(0, now + i * 0.1);
+                          g.gain.linearRampToValueAtTime(0.2, now + i * 0.1 + 0.05);
+                          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.6);
+                          o.start(now + i * 0.1);
+                          o.stop(now + i * 0.1 + 0.7);
+                      });
+                  }
+              } catch(e) {}
+          };
+
+          const toggleFullscreen = () => {
+              if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+              } else {
+                  document.exitFullscreen().catch(() => {});
+              }
+          };
+
+          useEffect(() => {
+              const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+              document.addEventListener('fullscreenchange', handleFsChange);
+              return () => document.removeEventListener('fullscreenchange', handleFsChange);
+          }, []);
+
+          useEffect(() => { 
+              latestState.current = { slots, activeIndex, queue, phase, rolling, hasStarted };
+          }, [slots, activeIndex, queue, phase, rolling, hasStarted]);
+
+          useEffect(() => { themeRef.current = activeTheme; }, [activeTheme]);
+
+          useEffect(() => {
+              if (progressRef.current) {
+                  const placed = slots.filter(Boolean).length;
+                  progressRef.current.innerText = `${placed}/10`;
+              }
+          }, [slots]);
+
+          // App Initialization Engine
+          useEffect(() => {
+            let active = true;
+            let isDetecting = false;
+            
+            async function initEngine() {
+              if (window.faceapi) {
+                  try {
+                      await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/');
+                      if (active) { setAiStatus('ready'); aiStatusRef.current = 'ready'; }
+                  } catch (e) {
+                      if (active) { setAiStatus('error'); aiStatusRef.current = 'error'; }
+                  }
+              }
+
+              aiTickRef.current = setInterval(async () => {
+                  if (!active || !videoRef.current || videoRef.current.readyState < 2 || aiStatusRef.current !== 'ready' || isDetecting) return;
+                  isDetecting = true;
+                  try {
+                      const detection = await faceapi.detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.2 }));
+                      const p = posRef.current;
+                      if (detection) {
+                          p.detected = true; p.framesLost = 0; p.box = detection.box;
+                          p.vw = videoRef.current.videoWidth; p.vh = videoRef.current.videoHeight;
+                      } else { 
+                          p.framesLost++;
+                          if (p.framesLost > 5) p.detected = false; 
+                      }
+                      if (faceIndicatorRef.current) {
+                          faceIndicatorRef.current.style.backgroundColor = p.detected ? '#4ade80' : 'rgba(255,255,255,0.25)';
+                          faceIndicatorRef.current.title = p.detected ? 'Face detected' : 'No face';
+                      }
+                  } catch (e) { console.error(e); } finally { isDetecting = false; }
+              }, 80);
+
+              tickRef.current = setInterval(() => { 
+                  if (latestState.current.phase === 'playing' && latestState.current.hasStarted && timerRef.current) {
+                      timerRef.current.innerText = fmt(Date.now() - startTimeRef.current);
+                  } 
+              }, 50);
+
+              const loop = () => {
+                  if (!active) return;
+                  const video = videoRef.current;
+                  const sw = window.innerWidth, sh = window.innerHeight;
+                  const p = posRef.current;
+                  const st = latestState.current;
+
+                  if (st.phase === 'playing') {
+                      if (video && video.videoWidth > 0 && p.detected && p.box) {
+                          const vw = p.vw, vh = p.vh;
+                          const scale = Math.max(sw / vw, sh / vh);
+                          const drawW = vw * scale, drawH = vh * scale;
+                          const offsetX = (sw - drawW) / 2, offsetY = (sh - drawH) / 2;
+                          const faceCenterX = p.box.x + p.box.width / 2;
+                          const faceTopY = p.box.y;
+                          let domX = offsetX + (faceCenterX * scale);
+                          let domY = offsetY + (faceTopY * scale);
+                          domX = sw - domX;
+                          const faceHeightDOM = p.box.height * scale;
+                          const faceWidthDOM = p.box.width * scale;
+                          domY = domY - (faceHeightDOM * 0.4);
+                          p.targetX = domX;
+                          p.targetY = Math.max(sh * 0.1, Math.min(sh * 0.9, domY)); 
+                          p.targetScale = Math.min(1.2, Math.max(0.65, faceWidthDOM / 150)); 
+                          const velX = p.targetX - p.domX;
+                          p.targetRot = Math.max(-15, Math.min(15, velX * 0.08));
+                      } else {
+                          p.targetX = sw / 2; p.targetY = sh * 0.25; p.targetScale = 0.85; p.targetRot = 0;
+                      }
+                      
+                      p.domX += (p.targetX - p.domX) * 0.25;
+                      p.domY += (p.targetY - p.domY) * 0.25;
+                      p.domScale += (p.targetScale - p.domScale) * 0.25;
+                      p.domRot += (p.targetRot - p.domRot) * 0.25;
+
+                      if (cardRef.current) {
+                          if (!st.hasStarted) {
+                              cardRef.current.classList.add('opacity-0', 'scale-50');
+                              cardRef.current.classList.remove('opacity-100');
+                          } else {
+                              cardRef.current.classList.remove('opacity-0', 'scale-50');
+                              cardRef.current.classList.add('opacity-100');
+                              cardRef.current.style.left = `${p.domX}px`;
+                              cardRef.current.style.top = `${p.domY}px`;
+                              cardRef.current.style.transform = `translate(-50%, -50%) scale(${p.domScale}) rotate(${p.domRot}deg)`;
+                          }
+                      }
+                  } else {
+                      if (cardRef.current) {
+                          cardRef.current.classList.add('opacity-0');
+                          cardRef.current.classList.remove('opacity-100');
+                      }
+                  }
+
+                  if (isRecordingRef.current && canvasRef.current && video && video.videoWidth > 0) {
+                      const canvas = canvasRef.current;
+                      const ctx = canvas.getContext('2d', { alpha: false });
+                      const CW = 1080, CH = 1920; 
+                      canvas.width = CW; canvas.height = CH;
+                      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+                      const vw = video.videoWidth, vh = video.videoHeight;
+                      const scaleC = Math.max(CW / vw, CH / vh);
+                      const cDrawW = vw * scaleC, cDrawH = vh * scaleC;
+                      const cOffsetX = (CW - cDrawW) / 2, cOffsetY = (CH - cDrawH) / 2;
+                      ctx.save(); ctx.translate(CW, 0); ctx.scale(-1, 1); 
+                      ctx.drawImage(video, cOffsetX, cOffsetY, cDrawW, cDrawH);
+                      ctx.restore();
+                      if (st.hasStarted) {
+                          let targetCx = CW / 2, targetCy = CH * 0.25;
+                          if (p.detected && p.box) {
+                              const faceCenterX = p.box.x + p.box.width / 2;
+                              const faceTopY = p.box.y;
+                              targetCx = CW - (cOffsetX + (faceCenterX * scaleC));
+                              targetCy = cOffsetY + (faceTopY * scaleC) - (p.box.height * scaleC * 0.4); 
+                              targetCy = Math.max(CH * 0.1, Math.min(CH * 0.9, targetCy));
+                          }
+                          p.canvasX += (targetCx - p.canvasX) * 0.25;
+                          p.canvasY += (targetCy - p.canvasY) * 0.25;
+                          p.canvasScale += (p.targetScale - p.canvasScale) * 0.25;
+                          const cVelX = targetCx - p.canvasX;
+                          p.canvasRot += (Math.max(-15, Math.min(15, cVelX * 0.05)) - p.canvasRot) * 0.25;
+                          const gradient = ctx.createLinearGradient(0, 0, 0, CH);
+                          gradient.addColorStop(0, 'rgba(0,0,0,0.5)'); gradient.addColorStop(0.15, 'rgba(0,0,0,0)');
+                          gradient.addColorStop(0.85, 'rgba(0,0,0,0)'); gradient.addColorStop(1, 'rgba(0,0,0,0.6)');
+                          ctx.fillStyle = gradient; ctx.fillRect(0, 0, CW, CH);
+                          const scaleX = CW / sw; const scaleY = CH / sh;
+                          const sbLeft = 16 * scaleX; 
+                          const sbTop = CH * 0.15, sbBottom = CH * 0.12;
+                          const slotH = (CH - sbTop - sbBottom) / 10;
+                          const boxSize = slotH - (12 * scaleY);
+                          const boxX = sbLeft + (36 * scaleX);
+                          ctx.fillStyle = 'rgba(255,255,255,0.15)'; 
+                          ctx.fillRect(boxX + boxSize/2 - 2, sbTop, 4, CH - sbTop - sbBottom);
+                          st.slots.forEach((slotData, i) => {
+                              const y = sbTop + i * slotH + (6 * scaleY); 
+                              ctx.fillStyle = slotData ? '#ffffff' : 'rgba(255,255,255,0.4)';
+                              ctx.font = `900 ${22 * scaleY}px "Outfit", sans-serif`; 
+                              ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                              ctx.fillText(i + 1, boxX - (12 * scaleX), y + boxSize/2);
+                              ctx.fillStyle = slotData ? 'rgba(255,255,255,0.15)' : 'rgba(3,3,5,0.6)';
+                              ctx.beginPath(); ctx.roundRect(boxX, y, boxSize, boxSize, 14 * scaleX); ctx.fill();
+                              ctx.strokeStyle = slotData ? themeRef.current.primary : 'rgba(255,255,255,0.15)';
+                              ctx.lineWidth = slotData ? 4 : 2; ctx.stroke();
+                              if (!slotData) {
+                                  ctx.fillStyle = 'rgba(255,255,255,0.3)'; 
+                                  ctx.beginPath(); ctx.arc(boxX + boxSize/2, y + boxSize/2, 4 * scaleX, 0, Math.PI*2); ctx.fill(); 
+                              }
+                              if (slotData?.imgObj && slotData.imgObj.complete) {
+                                  ctx.save(); ctx.beginPath(); ctx.roundRect(boxX + 2, y + 2, boxSize - 4, boxSize - 4, 12 * scaleX); ctx.clip();
+                                  ctx.fillStyle = '#ffffff'; ctx.fillRect(boxX + 2, y + 2, boxSize - 4, boxSize - 4); 
+                                  const iw = slotData.imgObj.width, ih = slotData.imgObj.height;
+                                  const innerSize = boxSize - 4;
+                                  const ratio = Math.max(innerSize / iw, innerSize / ih);
+                                  const drawW = iw * ratio, drawH = ih * ratio;
+                                  ctx.drawImage(slotData.imgObj, boxX + 2 + (innerSize - drawW)/2, y + 2 + (innerSize - drawH)/2, drawW, drawH); 
+                                  ctx.restore();
+                              }
+                          });
+                          const activeItem = st.queue[st.activeIndex];
+                          if (activeItem) {
+                              ctx.save();
+                              ctx.translate(p.canvasX, p.canvasY); 
+                              ctx.scale(p.canvasScale, p.canvasScale);
+                              ctx.rotate(p.canvasRot * Math.PI / 180);
+                              const cardSize = 144 * scaleX; const halfSize = cardSize / 2;
+                              ctx.shadowColor = themeRef.current.primary; ctx.shadowBlur = 50;
+                              ctx.fillStyle = '#030305'; ctx.beginPath(); ctx.roundRect(-halfSize, -halfSize, cardSize, cardSize, 32 * scaleX); ctx.fill();
+                              ctx.shadowBlur = 0; ctx.lineWidth = 6 * scaleX; ctx.strokeStyle = themeRef.current.primary; ctx.stroke();
+                              if (activeItem.imgObj && activeItem.imgObj.complete && !st.rolling) {
+                                  const imgS = cardSize - (12 * scaleX); const imgH = imgS / 2;
+                                  ctx.save(); ctx.beginPath(); ctx.roundRect(-imgH, -imgH, imgS, imgS, 24 * scaleX); ctx.clip();
+                                  ctx.fillStyle = '#ffffff'; ctx.fillRect(-imgH, -imgH, imgS, imgS); 
+                                  const iw = activeItem.imgObj.width, ih = activeItem.imgObj.height;
+                                  let dw = imgS, dh = imgS; if (iw/ih > 1) dw = dh * (iw/ih); else dh = dw / (iw/ih); 
+                                  ctx.drawImage(activeItem.imgObj, -imgH + (imgS-dw)/2, -imgH + (imgS-dh)/2, dw, dh); ctx.restore();
+                              }
+                              ctx.fillStyle = themeRef.current.primary; ctx.beginPath(); ctx.roundRect(-halfSize * 1.2, halfSize + (12 * scaleX), cardSize * 1.2, 44 * scaleX, 16 * scaleX); ctx.fill();
+                              ctx.fillStyle = '#030305'; ctx.font = `900 ${16 * scaleX}px "Outfit", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                              ctx.fillText((st.rolling ? "SELECTING..." : activeItem.name.split(' (')[0]).toUpperCase(), 0, halfSize + (34 * scaleX));
+                              ctx.restore();
+                          }
+                      }
+                  }
+                  requestAnimationFrame(loop);
+              };
+              loop();
+            }
+            initEngine();
+            return () => { active = false; if(tickRef.current) clearInterval(tickRef.current); if(aiTickRef.current) clearInterval(aiTickRef.current); };
+          }, []);
+
+          useEffect(() => {
+              if (phase === 'result' && isRecordingRef.current) stopRecordingAndCompile();
+          }, [phase]);
+
+          // NEW ROBUST PERMISSION REQUEST WITH FALLBACKS
+          const requestPermissions = async () => {
+              setError(null);
+              
+              if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                  setError("Camera API is missing. Ensure you are on a secure HTTPS connection or that your hosting platform hasn't disabled camera access via iframe settings.");
+                  return;
+              }
+
+              try {
+                  let stream;
+                  try {
+                      // Attempt 1: Optimal Video + Audio
+                      stream = await navigator.mediaDevices.getUserMedia({
+                          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+                          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                      });
+                  } catch (err1) {
+                      console.warn("Attempt 1 (Audio+Video) failed. Trying Video only...", err1);
+                      try {
+                          // Attempt 2: Optimal Video Only (fixes issues where device has no microphone)
+                          stream = await navigator.mediaDevices.getUserMedia({
+                              video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+                          });
+                      } catch (err2) {
+                          console.warn("Attempt 2 (Optimal Video) failed. Trying Basic Video...", err2);
+                          // Attempt 3: Basic Video Only (fixes strict browser resolution constraints)
+                          stream = await navigator.mediaDevices.getUserMedia({
+                              video: { facingMode: 'user' }
+                          });
+                      }
+                  }
+
+                  streamRef.current = stream;
+                  if (videoRef.current) {
+                      videoRef.current.srcObject = stream;
+                      videoRef.current.setAttribute('playsinline', 'true');
+                      videoRef.current.setAttribute('webkit-playsinline', 'true');
+                      videoRef.current.muted = true;
+                      try {
+                          await videoRef.current.play();
+                      } catch(e) { console.warn("Video play interrupted:", e); }
+                  }
+                  initAudio(); 
+                  setPhase('menu');
+              } catch (err) {
+                  console.error("Camera Permission Denied", err);
+                  
+                  let errorMsg = `Error: ${err.name} - ${err.message}`;
+                  if (err.name === 'NotAllowedError') {
+                      errorMsg = "Camera access denied. Please check your browser's site settings/permissions and allow the camera. Or the server's Permissions-Policy header is blocking it.";
+                  } else if (err.name === 'NotFoundError') {
+                      errorMsg = "No camera found on this device.";
+                  } else if (err.name === 'NotReadableError') {
+                      errorMsg = "Camera is currently in use by another application.";
+                  }
+                  
+                  setError(errorMsg);
+              }
+          };
+
+          const startRecording = async () => {
+            if (recordStatus !== 'idle' && recordStatus !== 'error') return;
+            chunksRef.current = [];
+            isRecordingRef.current = true;
+            try {
+              if (!canvasRef.current || !canvasRef.current.captureStream) throw new Error("captureStream missing");
+              const canvasStream = canvasRef.current.captureStream(30);
+              const audioTracks = streamRef.current?.getAudioTracks() || [];
+              if (audioTracks.length > 0) canvasStream.addTrack(audioTracks[0]);
+              let options;
+              const mimeTypes = ['video/webm;codecs=h264,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/webm', 'video/mp4'];
+              for (const mime of mimeTypes) {
+                  if (MediaRecorder.isTypeSupported(mime)) { options = { mimeType: mime, videoBitsPerSecond: 8000000, audioBitsPerSecond: 128000 }; break; }
+              }
+              mediaRecorderRef.current = new MediaRecorder(canvasStream, options);
+              mediaRecorderRef.current.ondataavailable = e => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
+              mediaRecorderRef.current.onstop = () => {
+                 isRecordingRef.current = false;
+                 if (chunksRef.current.length === 0) { setRecordStatus('error'); return; }
+                 const blob = new Blob(chunksRef.current, { type: mediaRecorderRef.current.mimeType || options.mimeType });
+                 setRecordedVideoUrl({ url: URL.createObjectURL(blob), ext: blob.type.includes('mp4') ? 'mp4' : 'webm' });
+                 setRecordStatus('ready'); 
+              };
+              mediaRecorderRef.current.start(100);
+              setRecordStatus('recording');
+            } catch (e) { 
+              isRecordingRef.current = false;
+              console.warn("Screen recording unsupported:", e);
+              setRecordStatus('error');
+            }
+          };
+
+          const startGameplay = () => {
+              initAudio();
+              setHasStarted(true);
+              startTimeRef.current = Date.now();
+              setRolling(true);
+              playSound('swoosh');
+              setTimeout(() => setRolling(false), 800);
+              startRecording();
+          };
+
+          const stopRecordingAndCompile = () => {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+              setRecordStatus('compiling'); 
+              mediaRecorderRef.current.stop();
+            } else {
+               if (chunksRef.current.length > 0) setRecordStatus('ready'); else setRecordStatus('error');
+            }
+          };
+
+          const processSessionAndLaunch = async (sessionPool) => {
+             setLoading(true);
+             try {
+                 const enrichedSession = [];
+                 for (let i = 0; i < sessionPool.length; i++) {
+                     if (enrichedSession.length >= 10) break;
+                     const item = sessionPool[i];
+                     if (!item || !item.img) continue;
+                     const loadedObj = await new Promise(resolve => {
+                         const img = new Image();
+                         img.crossOrigin = "anonymous";
+                         img.onload = () => resolve({ ...item, imgObj: img });
+                         img.onerror = () => resolve(null);
+                         img.src = item.img;
+                     });
+                     if (loadedObj) enrichedSession.push(loadedObj);
+                 }
+                 if (enrichedSession.length < 10) { 
+                     setError(`Not enough valid images found (${enrichedSession.length}/10). Try another category.`); 
+                     setLoading(false); 
+                     return; 
+                 }
+                 setSlots(Array(10).fill(null)); 
+                 setQueue(enrichedSession);
+                 setActiveIndex(0);
+                 setHasStarted(false); 
+                 setLastAction(null); 
+                 setRecordStatus('idle'); setRecordedVideoUrl(null);
+                 setPhase('playing');
+             } catch (e) { setError("Database sync failed."); }
+             setLoading(false);
+          };
+
+          const fetchTMDB = async (e, p=1) => { 
+              try { 
+                  const sep = e.includes('?') ? '&' : '?'; 
+                  const res = await fetch(`https://api.themoviedb.org/3${e}${sep}api_key=${TMDB_KEY}&language=en-US&page=${p}`); 
+                  return res.ok ? await res.json() : null; 
+              } catch(x) { return null; } 
+          };
+
+          const fetchWiki = async (query) => {
+              try {
+                  const cleanQuery = query.split(' (')[0]; 
+                  const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(query)}&prop=pageimages&format=json&pithumbsize=500&origin=*`);
+                  const data = await res.json();
+                  const pages = data.query.pages;
+                  const pageId = Object.keys(pages)[0];
+                  if (pageId !== "-1" && pages[pageId].thumbnail) {
+                      return pages[pageId].thumbnail.source;
+                  }
+                  const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQuery)}&utf8=&format=json&origin=*`);
+                  const searchData = await searchRes.json();
+                  if (searchData.query.search.length > 0) {
+                      const title = searchData.query.search[0].title;
+                      const res2 = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&format=json&pithumbsize=500&origin=*`);
+                      const data2 = await res2.json();
+                      const pages2 = data2.query.pages;
+                      const pageId2 = Object.keys(pages2)[0];
+                      if (pageId2 !== "-1" && pages2[pageId2].thumbnail) {
+                          return pages2[pageId2].thumbnail.source;
+                      }
+                  }
+                  return null;
+              } catch (e) { return null; }
+          };
+
+          const startPersonChallenge = async (item) => {
+            setLoading(true); setError(null); 
+            try {
+              const pool = [...item.roster].sort(() => Math.random() - 0.5);
+              const searchOrder = pool.slice(0, Math.max(15, pool.length));
+              
+              const fetchedPlayers = await Promise.all(searchOrder.map(async name => {
+                  let img = null;
+                  const res = await fetchTMDB(`/search/person?query=${encodeURIComponent(name)}`);
+                  if (res?.results?.length > 0 && res.results[0].profile_path) {
+                      img = `https://image.tmdb.org/t/p/w500${res.results[0].profile_path}`;
+                  } else {
+                      img = await fetchWiki(name);
+                  }
+                  if (img) return { id: name, name, img };
+                  return null;
+              }));
+              const validPlayers = fetchedPlayers.filter(Boolean);
+              if (validPlayers.length < 10) { setError(`Not enough images found (${validPlayers.length}/10).`); setLoading(false); return; }
+              setChallengeTitle(item.name); processSessionAndLaunch(validPlayers);
+            } catch (e) { setError("Database sync error."); setLoading(false); }
+          };
+
+          const startWikiChallenge = async (item) => {
+            setLoading(true); setError(null);
+            try {
+                const pool = [...item.items].sort(() => Math.random() - 0.5);
+                const searchOrder = pool.slice(0, Math.min(20, pool.length));
+                
+                const fetchedItems = await Promise.all(searchOrder.map(async name => {
+                    const img = await fetchWiki(name);
+                    if (img) return { id: name, name: name.split(' (')[0], img };
+                    return null;
+                }));
+                const validResults = fetchedItems.filter(Boolean);
+                if (validResults.length < 10) { setError(`Not enough data found (${validResults.length}/10). Try again.`); setLoading(false); return; }
+                
+                setChallengeTitle(item.name); processSessionAndLaunch(validResults);
+            } catch(e) { setError("Failed to load category."); setLoading(false); }
+          };
+
+          const startCustomChallenge = async (item) => {
+            setLoading(true); setError(null);
+            try {
+                const pool = [...item.queries];
+                const top3Anchors = pool.slice(0, 3);
+                const anchor = top3Anchors[Math.floor(Math.random() * Math.min(3, top3Anchors.length))];
+                const restQueries = pool.filter(q => q.n !== anchor.n).sort(() => Math.random() - 0.5);
+                const searchOrder = [anchor, ...restQueries];
+                const fetchedCustom = await Promise.all(searchOrder.map(async qObj => {
+                    let url = '';
+                    if (qObj.t === 'person') url = `/search/person?query=${encodeURIComponent(qObj.q)}`;
+                    else if (qObj.t === 'tv') url = `/search/tv?query=${encodeURIComponent(qObj.q)}`;
+                    else url = `/search/movie?query=${encodeURIComponent(qObj.q)}`;
+                    const res = await fetchTMDB(url);
+                    if (res?.results?.length > 0) {
+                        const path = res.results[0].profile_path || res.results[0].poster_path;
+                        if (path) return { id: qObj.n, name: qObj.n, img: `https://image.tmdb.org/t/p/w500${path}` };
+                    }
+                    return null;
+                }));
+                const validResults = fetchedCustom.filter(Boolean);
+                if (validResults.length < 10) { setError("Not enough data found."); setLoading(false); return; }
+                setChallengeTitle(item.name); processSessionAndLaunch(validResults);
+            } catch(e) { setError("Failed to load category."); setLoading(false); }
+          };
+
+          const startTMDBChallenge = async (item) => {
+            setLoading(true); setError(null); 
+            try {
+              const results = await Promise.all([ fetchTMDB(item.endpoint, 1), fetchTMDB(item.endpoint, 2) ]);
+              const allMedia = results.flatMap(r => r?.results || []);
+              const unique = Array.from(new Map(allMedia.filter(m => m.poster_path && (m.title || m.name)).map(m => [m.id, { id: m.id, name: m.title || m.name, img: `https://image.tmdb.org/t/p/w500${m.poster_path}` }])).values());
+              if (unique.length < 10) { setError("Not enough data found from API."); setLoading(false); return; }
+              const top3 = unique.slice(0, 3);
+              const anchor = top3[Math.floor(Math.random() * top3.length)];
+              const rest = unique.filter(m => m.id !== anchor.id).sort(() => Math.random() - 0.5);
+              const finalPool = [anchor, ...rest]; 
+              setChallengeTitle(item.name); processSessionAndLaunch(finalPool);
+            } catch (e) { setError("Error syncing with Database."); setLoading(false); }
+          };
+
+          const playAgain = () => {
+            if (!lastCategoryRef.current) return;
+            const item = lastCategoryRef.current;
+            const type = lastCategoryTypeRef.current;
+            if (type === 'person') startPersonChallenge(item);
+            else if (type === 'tmdb') startTMDBChallenge(item);
+            else if (type === 'custom') startCustomChallenge(item);
+            else if (type === 'wiki') startWikiChallenge(item);
+          };
+
+          const handleMenuClick = (item) => {
+              initAudio();
+              if (item.type === 'nav') { setNavStack([...navStack, { id: item.id, title: item.name }]); } 
+              else if (item.type === 'game') {
+                  if (item.themeOverride) setActiveOverride(item.themeOverride);
+                  lastCategoryRef.current = item;
+                  if (item.roster) { lastCategoryTypeRef.current = 'person'; startPersonChallenge(item); }
+                  else if (item.endpoint) { lastCategoryTypeRef.current = 'tmdb'; startTMDBChallenge(item); }
+              } 
+              else if (item.type === 'custom') {
+                  if (item.themeOverride) setActiveOverride(item.themeOverride);
+                  lastCategoryRef.current = item;
+                  lastCategoryTypeRef.current = 'custom';
+                  startCustomChallenge(item);
+              }
+              else if (item.type === 'wiki') {
+                  if (item.themeOverride) setActiveOverride(item.themeOverride);
+                  lastCategoryRef.current = item;
+                  lastCategoryTypeRef.current = 'wiki';
+                  startWikiChallenge(item);
+              }
+          };
+
+          const place = (i) => {
+            if (!hasStarted || slots[i] !== null || rolling || activeIndex >= queue.length) return;
+            if (navigator.vibrate) navigator.vibrate(40);
+            playSound('thud');
+            const n = [...slots]; 
+            n[i] = queue[activeIndex];
+            setSlots(n); 
+            setFlashSlot(i); setTimeout(() => setFlashSlot(null), 300);
+            setLastAction({ slotIndex: i, queueIndex: activeIndex });
+            const nextIdx = activeIndex + 1;
+            if (nextIdx >= queue.length || n.filter(x=>x).length >= queue.length) { 
+                resultTimeoutRef.current = setTimeout(() => { 
+                    resultTimeoutRef.current = null;
+                    playSound('cheer');
+                    setPhase('result'); 
+                }, 600); 
+            } else { 
+                setRolling(true);
+                setTimeout(() => playSound('swoosh'), 200);
+                setTimeout(() => { setActiveIndex(nextIdx); setRolling(false); }, 800);
+            }
+          };
+
+          const undo = () => {
+            if (!lastAction || rolling) return;
+            if (navigator.vibrate) navigator.vibrate([20, 10, 20]);
+            playSound('swoosh');
+            if (resultTimeoutRef.current) {
+                clearTimeout(resultTimeoutRef.current);
+                resultTimeoutRef.current = null;
+            }
+            const n = [...slots];
+            n[lastAction.slotIndex] = null;
+            setSlots(n);
+            setActiveIndex(lastAction.queueIndex);
+            setLastAction(null);
+            setPhase('playing');
+          };
+
+          const back = () => {
+            setError(null); setLoading(false); setActiveOverride(null);
+            if (chunksRef.current.length > 0) stopRecordingAndCompile();
+            if (navStack.length > 1) setNavStack(p => p.slice(0, -1)); 
+            else setNavStack([{ id: 'domain', title: 'BLIND RANK' }]);
+          };
+
+          return (
+            <div className="relative w-full h-[100dvh] bg-[#030305] overflow-hidden body-font select-none text-white antialiased">
+              
+              <button 
+                  onClick={toggleFullscreen} 
+                  className="fixed top-4 right-4 z-[9999] w-10 h-10 rounded-full glass-ultra border-white/20 flex items-center justify-center text-white hover:bg-white/10 active:scale-95 transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)]"
+                  title="Toggle Fullscreen"
+              >
+                  {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
+              </button>
+
+              <video 
+                ref={videoRef} 
+                autoPlay={true} 
+                playsInline={true} 
+                muted={true} 
+                className="absolute inset-0 w-full h-full object-cover z-0"
+                style={{ 
+                    opacity: phase === 'playing' ? 1 : 0.01,
+                    transform: 'scaleX(-1)',
+                    WebkitTransform: 'scaleX(-1)'
+                }} 
+              />
+              
+              <canvas ref={canvasRef} className="fixed top-[-9999px] left-[-9999px] pointer-events-none opacity-0" />
+              
+              {/* Camera Welcome & Permission Phase */}
+              {phase === 'permission' && (
+                <div className="absolute inset-0 z-[999] glass-panel flex flex-col items-center justify-center px-6 text-center animate-fade-in">
+                  <div className="w-28 h-28 mb-8 rounded-full glass-ultra flex items-center justify-center border-white/10 shadow-[0_0_40px_rgba(255,184,0,0.3)]">
+                      <GamepadIcon size={52} className="text-[#FFB800]" />
+                  </div>
+                  <h1 className="display-font text-4xl font-black tracking-[0.2em] mb-4 text-white uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">BLIND RANK</h1>
+                  <p className="body-font text-[14px] text-white/60 mb-10 max-w-[300px] leading-relaxed font-medium">
+                      To track your face and record your reactions, we need access to your camera and microphone.
+                  </p>
+                  
+                  {error && (
+                      <div className="bg-red-500/20 border border-red-500/50 text-red-100 p-4 rounded-2xl mb-8 text-[12px] font-medium max-w-sm break-words overflow-hidden leading-relaxed">
+                          {error}
+                      </div>
+                  )}
+
+                  <button 
+                      onClick={requestPermissions}
+                      className="w-full max-w-[300px] py-4 rounded-full display-font font-black text-[15px] tracking-[0.2em] text-[#030305] transition-all active:scale-95"
+                      style={{ background: 'linear-gradient(135deg, #FFB800, #FF3D5A)', boxShadow: '0 10px 40px rgba(255,184,0,0.4)' }}
+                  >
+                      ALLOW CAMERA TO PLAY
+                  </button>
+                </div>
+              )}
+
+              {(phase === 'menu' || phase === 'result') && (
+                <div 
+                    className={`absolute inset-0 ${phase === 'menu' ? 'z-10' : 'z-[55]'} mix-blend-screen opacity-60 transition-all duration-1000 pointer-events-none`}
+                    style={{ background: `radial-gradient(circle at 10% 0%, ${activeTheme.primary}33, transparent 60%), radial-gradient(circle at 90% 100%, ${activeTheme.secondary}33, transparent 60%)` }} 
+                />
+              )}
+
+              {phase === 'playing' && hasStarted && (
+                <div className="absolute top-[env(safe-area-inset-top,2rem)] inset-x-4 sm:inset-x-6 flex justify-between items-start z-50 pointer-events-auto pt-2 animate-fade-in pr-12">
+                  <div className="flex flex-col gap-2.5">
+                      <button onClick={back} className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                          <ArrowLeft size={20} />
+                      </button>
+
+                      {lastAction && !rolling && (
+                        <button onClick={undo} className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center active:scale-95 transition-all shadow-md anim-shimmer" style={{ borderColor: activeTheme.primary + '55' }}>
+                            <UndoIcon size={18} style={{ color: activeTheme.primary }} />
+                        </button>
+                      )}
+
+                      {recordStatus === 'recording' && (
+                        <div className="bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/5 shadow-md">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#FF3D5A]" />
+                          <span className="display-font text-[11px] font-black tracking-widest text-white">REC</span>
+                        </div>
+                      )}
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2">
+                      <div className="bg-black/40 backdrop-blur-md px-4 py-2.5 rounded-[16px] border border-white/10 flex flex-col items-end shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                        <span ref={timerRef} className="display-font font-black text-[15px] tracking-widest" style={{ color: activeTheme.primary }}>0.0s</span>
+                        <span className="display-font text-[9px] text-white/70 mt-0.5 font-bold tracking-widest uppercase">{challengeTitle}</span>
+                      </div>
+
+                      <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/10 shadow-md">
+                        <span ref={progressRef} className="display-font font-black text-[13px]" style={{ color: activeTheme.primary }}>0/10</span>
+                        <span className="display-font text-[9px] font-bold tracking-widest text-white/50 uppercase">PLACED</span>
+                        <div ref={faceIndicatorRef} className="w-2 h-2 rounded-full transition-colors duration-500" style={{ backgroundColor: 'rgba(255,255,255,0.25)' }} />
+                      </div>
+                  </div>
+                </div>
+              )}
+
+              {phase === 'playing' && !hasStarted && (
+                 <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <button onClick={startGameplay} className="group relative w-64 h-64 flex items-center justify-center animate-fade-in">
+                        <div className="absolute inset-0 rounded-full anim-pulse-ring" style={{ backgroundColor: activeTheme.primary }}></div>
+                        <div className="glass-card relative z-10 w-48 h-48 rounded-full flex flex-col items-center justify-center border-4 shadow-2xl active:scale-95 transition-transform" style={{ borderColor: activeTheme.primary }}>
+                             <PlayIcon size={48} className="text-white ml-2 mb-2 drop-shadow-md" fill="white" />
+                             <span className="display-font font-black text-xl tracking-widest uppercase">TAP TO START</span>
+                        </div>
+                    </button>
+                    <p className="display-font font-bold text-[11px] tracking-[0.25em] text-white/50 mt-8 uppercase animate-fade-in stagger-2">{challengeTitle}</p>
+                 </div>
+              )}
+
+              <div ref={cardRef} className="fixed z-40 pointer-events-none flex flex-col items-center transition-all duration-100 opacity-0">
+                  <div className={`relative w-[130px] h-[130px] rounded-[24px] border-[3px] shadow-[0_15px_35px_rgba(0,0,0,0.6)] flex items-center justify-center overflow-hidden bg-white/5 ${!rolling ? 'anim-card-glow' : ''}`} style={{ borderColor: activeTheme.primary }}>
+                      {queue[activeIndex] && !rolling ? (
+                          <img src={queue[activeIndex].img} className="w-full h-full object-cover bg-white" />
+                      ) : (
+                          <Loader2 className="animate-spin" size={30} style={{ color: activeTheme.primary }} />
+                      )}
+                  </div>
+                  <div className="mt-3 px-4 py-1.5 rounded-full display-font font-black text-[12px] tracking-widest uppercase shadow-lg truncate max-w-[160px]" style={{ backgroundColor: activeTheme.primary, color: '#030305' }}>
+                      {rolling ? "..." : (queue[activeIndex]?.name.split(' (')[0] || "")}
+                  </div>
+              </div>
+
+              {phase === 'playing' && hasStarted && (
+                <div className="absolute left-6 top-[15%] bottom-[12%] w-[65px] sm:w-[75px] grid grid-rows-10 gap-1.5 sm:gap-2 z-50 py-1">
+                  {slots.map((p, i) => (
+                    <div key={i} className="relative w-full h-full flex items-center">
+                        <span className="absolute -left-5 display-font font-black text-[15px] sm:text-[16px]" style={{ color: activeTheme.primary, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                            {i + 1}
+                        </span>
+                        <button
+                            onClick={() => place(i)}
+                            disabled={!!p || rolling}
+                            className={`w-full h-full rounded-[12px] sm:rounded-[14px] border-[1.5px] overflow-hidden relative flex items-center justify-center transition-all ${
+                                flashSlot === i ? 'anim-slot-pop' : ''
+                            } ${p ? 'border-white/50 bg-black/30' : 'border-white/20 bg-black/40 backdrop-blur-sm hover:border-white/40 active:scale-95'}`}
+                            style={p ? { 
+                                boxShadow: `0 0 14px 2px ${activeTheme.primary}50, 0 4px 12px rgba(0,0,0,0.5)`,
+                                borderColor: activeTheme.primary + '80'
+                            } : {}}
+                        >
+                            {p ? (
+                                <img src={p.img} className="w-full h-full object-cover bg-white" />
+                            ) : (
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                            )}
+                        </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {phase === 'menu' && (
+                <div className="absolute inset-0 z-50 flex flex-col px-4 sm:px-8 pt-safe pb-safe overflow-y-auto no-scrollbar">
+                  <div className="w-full max-w-lg mx-auto flex flex-col min-h-full py-6 pr-6">
+                    <div className="flex items-center justify-between mb-8 shrink-0 relative px-2">
+                      {navStack.length > 1 ? (
+                        <button onClick={back} className="w-12 h-12 rounded-full glass-ultra border-white/20 hover:bg-white/10 flex items-center justify-center active:scale-95 transition-all shadow-lg relative z-10">
+                          <ArrowLeft size={20} />
+                        </button>
+                      ) : (
+                         <div className="w-12 h-12 flex items-center justify-center glass-ultra rounded-full border-white/10">
+                             <TrendingUp size={20} style={{ color: activeTheme.primary }} />
+                         </div>
+                      )}
+                      <div className="absolute inset-x-0 text-center pointer-events-none flex flex-col items-center">
+                        <h1 className="display-font text-[22px] font-black tracking-[0.25em] uppercase text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
+                          {currentNavObj.title}
+                        </h1>
+                        {navStack.length > 1 && <div className="h-1 w-12 rounded-full mt-1.5 opacity-80" style={{ backgroundColor: activeTheme.primary }}></div>}
+                      </div>
+                      <div className="w-12" />
+                    </div>
+
+                    {error && (
+                      <div className="mb-6 p-4 bg-red-500/20 border border-red-500/40 rounded-[20px] flex items-start gap-3 text-red-50 anim-pop shadow-lg backdrop-blur-md">
+                        <AlertCircle size={20} className="shrink-0 mt-0.5 text-red-400" />
+                        <span className="text-[13px] font-semibold leading-tight tracking-wide">{error}</span>
+                      </div>
+                    )}
+
+                    <div className="flex-1 pb-10">
+                      {loading ? (
+                        <div className="h-64 flex flex-col items-center justify-center gap-6 animate-fade-in">
+                          <div className="relative">
+                              <Loader2 className="animate-spin" style={{ color: activeTheme.primary }} size={50} />
+                              <div className="absolute inset-0 blur-xl opacity-50" style={{ backgroundColor: activeTheme.primary }}></div>
+                          </div>
+                          <span className="display-font text-[13px] font-black uppercase tracking-[0.3em] opacity-90" style={{ color: activeTheme.primary }}>Syncing Database</span>
+                        </div>
+                      ) : (
+                        <>
+                          {currentMenuId === 'domain' && (
+                            <div className="grid grid-cols-1 gap-5 mt-2">
+                              {currentMenuItems.map((item, i) => (
+                                <button key={item.id} onClick={() => handleMenuClick(item)} 
+                                  className={`w-full flex items-center p-6 rounded-[32px] active:scale-[0.97] transition-all border shadow-[0_15px_40px_-10px_rgba(0,0,0,0.5)] group relative overflow-hidden animate-fade-in stagger-${i+1} bg-gradient-to-r ${item.bg} ${item.border} hover:border-white/50 backdrop-blur-md`}>
+                                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-white/5" />
+                                  <div className="shrink-0 w-20 h-20 rounded-full bg-black/40 flex items-center justify-center shadow-inner border border-white/10 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_currentColor]">
+                                      {item.icon}
+                                  </div>
+                                  <div className="ml-5 flex flex-col items-start text-left relative z-10 flex-1">
+                                      <span className="display-font font-black text-[22px] tracking-[0.15em] text-white drop-shadow-md">{item.name}</span>
+                                      <span className="body-font text-[11px] mt-1 font-bold tracking-[0.1em] text-white/70 uppercase leading-snug">{item.desc}</span>
+                                  </div>
+                                  <ChevronRight size={24} className="text-white/30 group-hover:text-white/70 transition-colors" />
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {currentMenuId !== 'domain' && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                  {currentMenuItems.map((item, i) => (
+                                    <button key={item.id} onClick={() => handleMenuClick(item)} 
+                                      className={`w-full flex items-center justify-between glass-ultra p-4 sm:p-5 rounded-[24px] active:scale-[0.98] transition-all hover:bg-white/10 animate-fade-in stagger-${(i%5)+1}
+                                        ${item.type === 'nav' ? 'border-white/15 bg-white/5' : 'border-white/5'} 
+                                        ${i < 2 && item.type !== 'nav' ? 'col-span-1 sm:col-span-2' : ''}`}
+                                      style={i < 2 && item.type !== 'nav' ? { background: `linear-gradient(135deg, ${activeTheme.primary}22, transparent)` } : {}}>
+                                      <div className="flex items-center gap-4">
+                                        <span className="text-2xl drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] bg-black/50 w-12 h-12 flex items-center justify-center rounded-[16px] shadow-inner border border-white/10">
+                                            {item.icon}
+                                        </span>
+                                        <div className="flex flex-col items-start text-left">
+                                          <span className="display-font font-black text-[15px] tracking-wider text-white leading-tight">{item.name}</span>
+                                          {item.desc && <span className="body-font text-[10px] font-bold tracking-[0.15em] mt-1.5 opacity-80 uppercase" style={{ color: activeTheme.primary }}>{item.desc}</span>}
+                                        </div>
+                                      </div>
+                                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-black/40 border border-white/10 shrink-0 shadow-inner">
+                                          {item.type === 'nav' ? (
+                                            <ChevronRight size={18} style={{ color: activeTheme.primary }} />
+                                          ) : (
+                                            <PlayIcon size={16} style={{ color: activeTheme.primary }} fill={activeTheme.primary} className="ml-1" />
+                                          )}
+                                      </div>
+                                    </button>
+                                  ))}
+                              </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {phase === 'result' && (
+                <div className="absolute inset-0 z-[60] glass-panel flex flex-col px-4 sm:px-10 pt-safe pb-safe overflow-y-auto no-scrollbar">
+                  <div className="flex justify-between items-end mb-10 text-left shrink-0 mt-6 pr-10 animate-fade-in">
+                    <div className="min-w-0 pr-4">
+                      <p className="display-font font-black text-[11px] tracking-[0.3em] mb-2 uppercase drop-shadow-[0_0_15px_currentColor]" style={{ color: activeTheme.primary }}>Session Complete</p>
+                      <h2 className="display-font text-3xl sm:text-4xl font-black leading-none truncate text-white uppercase block drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]">
+                        {challengeTitle}
+                      </h2>
+                    </div>
+                    <button onClick={() => { 
+                        setNavStack([{ id: 'domain', title: 'BLIND RANK' }]); 
+                        setPhase('menu'); 
+                        setActiveOverride(null);
+                        setLoading(false); 
+                        setError(null);
+                    }} className="w-14 h-14 glass-ultra border-white/30 rounded-full hover:bg-white/15 text-white active:scale-95 transition-all shadow-[0_15px_40px_rgba(0,0,0,0.5)] shrink-0 flex items-center justify-center relative z-20">
+                      <RefreshCw size={24} />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4 mb-12 flex-1">
+                    {slots.filter(p=>p).map((p, i) => (
+                      <div key={i} className={`flex items-center gap-4 p-4 rounded-[24px] border-[1.5px] transition-all animate-fade-in stagger-${(i%5)+1} ${i === 0 ? 'shadow-[0_20px_50px_rgba(0,0,0,0.6)] scale-[1.03] border-none z-10 relative' : 'glass-ultra border-white/20 hover:border-white/40'}`} style={i === 0 ? { background: `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.secondary})`, color: (topDomain !== 'movies' && topDomain !== 'tv' ? '#fff' : '#030305') } : {}}>
+                        <span className={`display-font w-8 font-black text-[28px] text-center shrink-0 ${i === 0 ? ((topDomain !== 'movies' && topDomain !== 'tv') ? 'text-white/50' : 'text-[#030305]/40') : 'text-white/30'}`}>{i + 1}</span>
+                        <div className={`w-14 h-14 rounded-[16px] overflow-hidden shrink-0 bg-white ${i === 0 ? 'border border-[#030305]/20 shadow-inner' : 'border border-white/20'}`}>
+                          {p?.imgObj && <img src={p.imgObj.src} crossOrigin="anonymous" className="w-full h-full object-cover" alt=""/>}
+                        </div>
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <p className="display-font font-black text-[15px] sm:text-[16px] uppercase tracking-widest text-left break-words line-clamp-2 leading-tight">{p?.name.split(' (')[0]}</p>
+                        </div>
+                        {i === 0 && <StarIcon size={24} fill={(topDomain !== 'movies' && topDomain !== 'tv') ? '#fff' : '#030305'} className={`ml-2 shrink-0 ${(topDomain !== 'movies' && topDomain !== 'tv') ? 'text-white' : 'text-[#030305]'}`} />}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="shrink-0 flex flex-col gap-3 mb-6 animate-fade-in stagger-5">
+                    {lastAction && (
+                      <button onClick={undo} className="w-full py-4 rounded-[24px] glass-ultra text-white display-font font-black tracking-[0.15em] text-[13px] flex items-center justify-center gap-3 active:scale-[0.98] hover:bg-white/10 transition-all border-white/20 shadow-lg">
+                        <UndoIcon size={18} /> UNDO LAST PLACEMENT
+                      </button>
+                    )}
+
+                    {recordStatus === 'error' && (
+                       <div className="w-full py-5 rounded-[24px] bg-red-500/20 border border-red-500/50 text-white display-font font-black tracking-widest text-[12px] flex items-center justify-center gap-3 text-center px-4 shadow-[0_10px_30px_rgba(255,61,90,0.2)]">
+                          <AlertCircle size={20} /> SCREEN RECORDING UNSUPPORTED
+                       </div>
+                    )}
+                    {recordStatus === 'compiling' && (
+                      <div className="w-full py-5 rounded-[24px] glass-ultra text-white display-font font-black tracking-widest text-[14px] flex items-center justify-center gap-4 opacity-90 border-white/30 shadow-xl">
+                        <Loader2 className="animate-spin text-white" size={24} /> COMPILING VIDEO...
+                      </div>
+                    )}
+                    {recordStatus === 'ready' && recordedVideoUrl && (
+                      <a href={recordedVideoUrl.url} download={`BlindRank_${Date.now()}.${recordedVideoUrl.ext}`} className="w-full py-5 rounded-[24px] display-font font-black tracking-[0.15em] text-[14px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all border border-white/30" style={{ background: `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.secondary})`, color: (topDomain !== 'movies' && topDomain !== 'tv' ? '#fff' : '#030305'), boxShadow: `0 20px 50px ${activeTheme.shadow}` }}>
+                        <DownloadIcon size={22} /> DOWNLOAD VIDEO
+                      </a>
+                    )}
+
+                    {lastCategoryRef.current && (
+                      <button onClick={playAgain} className="w-full py-5 rounded-[24px] display-font font-black tracking-[0.15em] text-[14px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all border" style={{ background: `linear-gradient(135deg, ${activeTheme.primary}22, ${activeTheme.secondary}22)`, borderColor: activeTheme.primary + '60', color: activeTheme.primary, boxShadow: `0 10px 30px ${activeTheme.shadow}` }}>
+                        <RepeatIcon size={20} /> PLAY AGAIN
+                      </button>
+                    )}
+
+                    <button onClick={() => {
+                      const text = `🏆 My Blind Rank: ${challengeTitle}\n${slots.filter(p=>p).map((p, i) => `${i + 1}. ${p?.name.split(' (')[0]}`).join('\n')}`;
+                      if (navigator.share) navigator.share({ title: 'Blind Rank', text });
+                    }} className="w-full py-5 rounded-[24px] glass-ultra text-white display-font font-black tracking-[0.15em] text-[14px] flex items-center justify-center gap-3 active:scale-[0.98] hover:bg-white/10 transition-all border-white/30 shadow-xl">
+                      <Share2 size={20} /> SHARE RANKING LIST
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
