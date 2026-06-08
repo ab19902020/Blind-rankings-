@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Official World Cup Predictor Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- True Yaw Tracking AI -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700;900&display=swap');
+        
+        body { margin: 0; padding: 0; background-color: #05050A; color: white; overflow: hidden; overscroll-behavior: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
+        .display-font { font-family: 'Outfit', sans-serif; }
+        .body-font { font-family: 'Inter', sans-serif; }
+        
+        /* Premium Glass Effects */
+        .glass-ultra { background: rgba(20, 20, 30, 0.45); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+        .glass-panel { background: linear-gradient(145deg, rgba(15, 15, 22, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); box-shadow: inset 0 1px 1px rgba(255,255,255,0.15), 0 20px 40px rgba(0,0,0,0.5); }
+        .glass-button { background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.15); box-shadow: inset 0 1px 1px rgba(255,255,255,0.2); transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
+        .glass-button:hover { background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%); border-color: rgba(255,255,255,0.3); }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .pt-safe { padding-top: max(1.5rem, env(safe-area-inset-top)); }
+        .pb-safe { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); filter: blur(10px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+        .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .animate-scale-in { animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
+        .anim-float { animation: float 6s ease-in-out infinite; }
+
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+        .shimmer-effect::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transform: skewX(-20deg); animation: shimmer 2.5s infinite; }
+
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.5); } 70% { box-shadow: 0 0 0 25px rgba(0, 212, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); } }
+        .anim-pulse-ring { animation: pulse-ring 2.5s infinite; }
+
+        /* Card Dynamics */
+        .team-card { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, filter 0.25s ease; cursor: pointer; position: relative; }
+        .team-card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 2px; background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+        .team-card:hover { transform: translateY(-4px) scale(1.02); }
+        .team-card:active { transform: scale(0.96); transition: transform 0.1s ease; }
+        .team-card.selected { transform: scale(1.08) translateY(-10px); z-index: 10; border: 3px solid #fff; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.1); }
+        .team-card.dimmed { transform: scale(0.92); opacity: 0.3; filter: grayscale(90%) blur(2px); pointer-events: none; box-shadow: none; border-color: transparent; }
+
+        .progress-bar-container { position: absolute; bottom: 0; left: 0; right: 0; height: 10px; background: rgba(0,0,0,0.8); overflow: hidden; border-radius: 0 0 30px 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+        .progress-bar { height: 100%; transition: width 0.08s linear; position: relative; }
+        .progress-bar::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5)); }
+        
+        .text-gradient { background: linear-gradient(180deg, #FFFFFF 0%, #A0A5B5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- ICONS ---
+        const Icon = ({ path, size = 24, className = "", fill="none" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{__html: path}} /> );
+        const RefreshCw = (p) => <Icon {...p} path='<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>'/>;
+        const TrophyIcon = (p) => <Icon {...p} path='<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>'/>;
+        const PlayIcon = (p) => <Icon {...p} fill="currentColor" path='<polygon points="6 3 20 12 6 21 6 3"/>'/>;
+        const DownloadIcon = (p) => <Icon {...p} path='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'/>;
+        const Loader2 = (p) => <Icon {...p} path='<path d="M21 12a9 9 0 1 1-6.219-8.56"/>'/>;
+        const AlertCircle = (p) => <Icon {...p} path='<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'/>;
+        const MaximizeIcon = (p) => <Icon {...p} path='<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>'/>;
+        const MinimizeIcon = (p) => <Icon {...p} path='<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>'/>;
+        const SettingsIcon = (p) => <Icon {...p} path='<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'/>;
+
+        // --- OFFICIAL 2026 WORLD CUP TEAMS & GROUPS ---
+        const ALL_TEAMS = {
+            'MEX': { id: 'MEX', name: 'Mexico', flag: '🇲🇽', color: '#00D4FF' }, 'RSA': { id: 'RSA', name: 'South Africa', flag: '🇿🇦', color: '#FFB800' },
+            'KOR': { id: 'KOR', name: 'South Korea', flag: '🇰🇷', color: '#FF007A' }, 'CZE': { id: 'CZE', name: 'Czechia', flag: '🇨🇿', color: '#00D4FF' },
+            'CAN': { id: 'CAN', name: 'Canada', flag: '🇨🇦', color: '#FF007A' }, 'BIH': { id: 'BIH', name: 'Bosnia', flag: '🇧🇦', color: '#00D4FF' },
+            'QAT': { id: 'QAT', name: 'Qatar', flag: '🇶🇦', color: '#9D00FF' }, 'SUI': { id: 'SUI', name: 'Switzerland', flag: '🇨🇭', color: '#FF007A' },
+            'BRA': { id: 'BRA', name: 'Brazil', flag: '🇧🇷', color: '#00E676' }, 'MAR': { id: 'MAR', name: 'Morocco', flag: '🇲🇦', color: '#FF007A' },
+            'HAI': { id: 'HAI', name: 'Haiti', flag: '🇭🇹', color: '#00D4FF' }, 'SCO': { id: 'SCO', name: 'Scotland', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', color: '#00D4FF' },
+            'USA': { id: 'USA', name: 'USA', flag: '🇺🇸', color: '#00D4FF' }, 'PAR': { id: 'PAR', name: 'Paraguay', flag: '🇵🇾', color: '#FF007A' },
+            'AUS': { id: 'AUS', name: 'Australia', flag: '🇦🇺', color: '#FFB800' }, 'TUR': { id: 'TUR', name: 'Türkiye', flag: '🇹🇷', color: '#FF007A' },
+            'GER': { id: 'GER', name: 'Germany', flag: '🇩🇪', color: '#FFFFFF' }, 'CUW': { id: 'CUW', name: 'Curaçao', flag: '🇨🇼', color: '#00D4FF' },
+            'CIV': { id: 'CIV', name: 'Côte d\'Ivoire', flag: '🇨🇮', color: '#FFB800' }, 'ECU': { id: 'ECU', name: 'Ecuador', flag: '🇪🇨', color: '#FFB800' },
+            'NED': { id: 'NED', name: 'Netherlands', flag: '🇳🇱', color: '#FF7A00' }, 'JPN': { id: 'JPN', name: 'Japan', flag: '🇯🇵', color: '#FF007A' },
+            'SWE': { id: 'SWE', name: 'Sweden', flag: '🇸🇪', color: '#FFB800' }, 'TUN': { id: 'TUN', name: 'Tunisia', flag: '🇹🇳', color: '#FF007A' },
+            'BEL': { id: 'BEL', name: 'Belgium', flag: '🇧🇪', color: '#FF007A' }, 'EGY': { id: 'EGY', name: 'Egypt', flag: '🇪🇬', color: '#FF007A' },
+            'IRN': { id: 'IRN', name: 'IR Iran', flag: '🇮🇷', color: '#00E676' }, 'NZL': { id: 'NZL', name: 'New Zealand', flag: '🇳🇿', color: '#FFFFFF' },
+            'ESP': { id: 'ESP', name: 'Spain', flag: '🇪🇸', color: '#FF007A' }, 'CPV': { id: 'CPV', name: 'Cabo Verde', flag: '🇨🇻', color: '#00D4FF' },
+            'KSA': { id: 'KSA', name: 'Saudi Arabia', flag: '🇸🇦', color: '#00E676' }, 'URU': { id: 'URU', name: 'Uruguay', flag: '🇺🇾', color: '#00D4FF' },
+            'FRA': { id: 'FRA', name: 'France', flag: '🇫🇷', color: '#00D4FF' }, 'SEN': { id: 'SEN', name: 'Senegal', flag: '🇸🇳', color: '#00E676' },
+            'IRQ': { id: 'IRQ', name: 'Iraq', flag: '🇮🇶', color: '#00E676' }, 'NOR': { id: 'NOR', name: 'Norway', flag: '🇳🇴', color: '#FF007A' },
+            'ARG': { id: 'ARG', name: 'Argentina', flag: '🇦🇷', color: '#00D4FF' }, 'ALG': { id: 'ALG', name: 'Algeria', flag: '🇩🇿', color: '#00E676' },
+            'AUT': { id: 'AUT', name: 'Austria', flag: '🇦🇹', color: '#FF007A' }, 'JOR': { id: 'JOR', name: 'Jordan', flag: '🇯🇴', color: '#FFFFFF' },
+            'POR': { id: 'POR', name: 'Portugal', flag: '🇵🇹', color: '#00E676' }, 'COD': { id: 'COD', name: 'Congo DR', flag: '🇨🇩', color: '#00D4FF' },
+            'UZB': { id: 'UZB', name: 'Uzbekistan', flag: '🇺🇿', color: '#00D4FF' }, 'COL': { id: 'COL', name: 'Colombia', flag: '🇨🇴', color: '#FFB800' },
+            'ENG': { id: 'ENG', name: 'England', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', color: '#FF007A' }, 'CRO': { id: 'CRO', name: 'Croatia', flag: '🇭🇷', color: '#FF007A' },
+            'GHA': { id: 'GHA', name: 'Ghana', flag: '🇬🇭', color: '#FFB800' }, 'PAN': { id: 'PAN', name: 'Panama', flag: '🇵🇦', color: '#FF007A' }
+        };
+
+        const OFFICIAL_GROUPS = {
+            A: ['MEX', 'RSA', 'KOR', 'CZE'], B: ['CAN', 'BIH', 'QAT', 'SUI'],
+            C: ['BRA', 'MAR', 'HAI', 'SCO'], D: ['USA', 'PAR', 'AUS', 'TUR'],
+            E: ['GER', 'CUW', 'CIV', 'ECU'], F: ['NED', 'JPN', 'SWE', 'TUN'],
+            G: ['BEL', 'EGY', 'IRN', 'NZL'], H: ['ESP', 'CPV', 'KSA', 'URU'],
+            I: ['FRA', 'SEN', 'IRQ', 'NOR'], J: ['ARG', 'ALG', 'AUT', 'JOR'],
+            K: ['POR', 'COD', 'UZB', 'COL'], L: ['ENG', 'CRO', 'GHA', 'PAN']
+        };
+
+        const PHASE_NAMES = {
+            'groups': 'GROUP STAGE', 'r32': 'ROUND OF 32', 'r16': 'ROUND OF 16',
+            'qf': 'QUARTER FINALS', 'sf': 'SEMI FINALS', 'bronze': 'BRONZE FINAL', 'final': 'WORLD CUP FINAL'
+        };
+
+        function App() {
+          const [phase, setPhase] = useState('permission'); 
+          const [mode, setMode] = useState('standard');
+          const [error, setError] = useState(null);
+          const [isFullscreen, setIsFullscreen] = useState(false);
+          const [recordStatus, setRecordStatus] = useState('idle');
+          const [recordedVideoUrl, setRecordedVideoUrl] = useState(null);
+
+          const [tournamentPhase, setTournamentPhase] = useState('groups');
+          const [matchList, setMatchList] = useState([]);
+          const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+          const [globalMatchCount, setGlobalMatchCount] = useState(0);
+          const [standings, setStandings] = useState({});
+          const [winner, setWinner] = useState(null);
+          
+          const [groupResultsData, setGroupResultsData] = useState(null);
+          const [knockoutMatches, setKnockoutMatches] = useState(null);
+
+          const [matchCooldown, setMatchCooldown] = useState(false);
+          const matchCooldownEndRef = useRef(0);
+
+          const [selectionProgress, setSelectionProgress] = useState({ left: 0, right: 0 });
+          const [selectionLock, setSelectionLock] = useState(null); 
+          const [scoreInputActive, setScoreInputActive] = useState(false);
+          const [matchScore, setMatchScore] = useState({ left: 0, right: 0 });
+
+          const videoRef = useRef(null);
+          const bgVideoRef = useRef(null);
+          const streamRef = useRef(null); 
+          const canvasRef = useRef(null); 
+          const mediaRecorderRef = useRef(null);
+          const chunksRef = useRef([]);
+          
+          const isRecordingRef = useRef(false);
+          const tickRef = useRef(null);
+          const aiTickRef = useRef(null);
+          const isProcessingPickRef = useRef(false);
+          
+          const posRef = useRef({ noseRatio: 0.5, detected: false, framesLost: 0 });
+          
+          const latestState = useRef({ phase, mode, tournamentPhase, matchList, currentMatchIndex, globalMatchCount, standings, selectionLock, scoreInputActive, selectionProgress, winner, matchScore, matchCooldown, groupResultsData });
+          useEffect(() => { latestState.current = { phase, mode, tournamentPhase, matchList, currentMatchIndex, globalMatchCount, standings, selectionLock, scoreInputActive, selectionProgress, winner, matchScore, matchCooldown, groupResultsData }; });
+
+          // 2.5s Match Cooldown Logic
+          useEffect(() => {
+              if (phase === 'playing') {
+                  setMatchCooldown(true);
+                  matchCooldownEndRef.current = Date.now() + 2500;
+                  const timer = setTimeout(() => {
+                      setMatchCooldown(false);
+                  }, 2500);
+                  return () => clearTimeout(timer);
+              }
+          }, [currentMatchIndex, tournamentPhase, phase]);
+
+          const initAudio = () => {
+              if (!window._audioCtx) {
+                  const AudioContext = window.AudioContext || window.webkitAudioContext;
+                  if (AudioContext) window._audioCtx = new AudioContext();
+              }
+              if (window._audioCtx && window._audioCtx.state === 'suspended') window._audioCtx.resume();
+          };
+
+          const playSound = (type) => {
+              try {
+                  const ctx = window._audioCtx;
+                  if (!ctx || ctx.state !== 'running') return;
+                  const now = ctx.currentTime;
+                  if (type === 'thud') {
+                      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                      osc.connect(gain); gain.connect(ctx.destination);
+                      osc.type = 'sine'; osc.frequency.setValueAtTime(120, now); osc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+                      gain.gain.setValueAtTime(1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                      osc.start(now); osc.stop(now + 0.2);
+                  } else if (type === 'swoosh') {
+                      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                      osc.connect(gain); gain.connect(ctx.destination);
+                      osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+                      gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.25, now + 0.05); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                      osc.start(now); osc.stop(now + 0.35);
+                  } else if (type === 'pop') {
+                      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                      osc.connect(gain); gain.connect(ctx.destination);
+                      osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+                      gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                      osc.start(now); osc.stop(now + 0.1);
+                  } else if (type === 'cheer') {
+                      const notes = [440, 554.37, 659.25, 880, 1108.73]; 
+                      notes.forEach((freq, i) => {
+                          const o = ctx.createOscillator(); const g = ctx.createGain();
+                          o.connect(g); g.connect(ctx.destination);
+                          o.type = 'triangle'; o.frequency.value = freq;
+                          g.gain.setValueAtTime(0, now + i * 0.08); g.gain.linearRampToValueAtTime(0.2, now + i * 0.08 + 0.05); g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 1.0);
+                          o.start(now + i * 0.08); o.stop(now + i * 0.08 + 1.2);
+                      });
+                  }
+              } catch(e) {}
+          };
+
+          const toggleFullscreen = () => {
+              if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+              else document.exitFullscreen().catch(() => {});
+          };
+
+          useEffect(() => {
+              const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+              document.addEventListener('fullscreenchange', handleFsChange);
+              return () => document.removeEventListener('fullscreenchange', handleFsChange);
+          }, []);
+
+          const rankTeams = (a, b, currentStandings) => {
+              const stA = currentStandings[a.id]; const stB = currentStandings[b.id];
+              if (stA.pts !== stB.pts) return stB.pts - stA.pts;
+              if (stA.gd !== stB.gd) return stB.gd - stA.gd;
+              return stB.gf - stA.gf;
+          };
+
+          const getWinners = (matches) => matches.map(m => {
+              const scoreA = m.scoreA !== undefined ? m.scoreA : (m.winningSide === 'left' ? 1 : 0);
+              const scoreB = m.scoreB !== undefined ? m.scoreB : (m.winningSide === 'right' ? 1 : 0);
+              if (scoreA === scoreB) return m.winningSide === 'left' ? m.teamA : m.teamB; 
+              return scoreA > scoreB ? m.teamA : m.teamB;
+          });
+
+          const getLosers = (matches) => matches.map(m => {
+              const scoreA = m.scoreA !== undefined ? m.scoreA : (m.winningSide === 'left' ? 1 : 0);
+              const scoreB = m.scoreB !== undefined ? m.scoreB : (m.winningSide === 'right' ? 1 : 0);
+              if (scoreA === scoreB) return m.winningSide === 'left' ? m.teamB : m.teamA;
+              return scoreA > scoreB ? m.teamB : m.teamA;
+          });
+
+          const createPairs = (teams, phaseName) => {
+              const m = [];
+              for(let i=0; i<teams.length; i+=2) m.push({ phase: phaseName, teamA: teams[i], teamB: teams[i+1] });
+              return m;
+          };
+
+          const generateTournament = () => {
+              const matches = [];
+              const initialStandings = {};
+              
+              Object.values(ALL_TEAMS).forEach(t => { initialStandings[t.id] = { pts: 0, gf: 0, ga: 0, gd: 0, played: 0 }; });
+
+              const groupOrder = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+              
+              groupOrder.forEach(g => {
+                  const t = OFFICIAL_GROUPS[g];
+                  matches.push({ phase: 'groups', groupLetter: g, teamA: ALL_TEAMS[t[0]], teamB: ALL_TEAMS[t[1]] });
+                  matches.push({ phase: 'groups', groupLetter: g, teamA: ALL_TEAMS[t[2]], teamB: ALL_TEAMS[t[3]] });
+              });
+              
+              groupOrder.forEach(g => {
+                  const t = OFFICIAL_GROUPS[g];
+                  matches.push({ phase: 'groups', groupLetter: g, teamA: ALL_TEAMS[t[3]], teamB: ALL_TEAMS[t[1]] });
+                  matches.push({ phase: 'groups', groupLetter: g, teamA: ALL_TEAMS[t[0]], teamB: ALL_TEAMS[t[2]] });
+              });
+              
+              groupOrder.forEach(g => {
+                  const t = OFFICIAL_GROUPS[g];
+                  matches.push({ phase: 'groups', groupLetter: g, teamA: ALL_TEAMS[t[3]], teamB: ALL_TEAMS[t[0]] });
+                  matches.push({ phase: 'groups', groupLetter: g, teamA: ALL_TEAMS[t[1]], teamB: ALL_TEAMS[t[2]] });
+              });
+              
+              setTournamentPhase('groups'); setMatchList(matches); setCurrentMatchIndex(0); setGlobalMatchCount(0);
+              setStandings(initialStandings); setWinner(null); resetMatchState();
+          };
+
+          const transitionPhase = (currentStandings, currentMatchList, currentPhase) => {
+              if (currentPhase === 'groups') {
+                  const groupMap = {}; Object.values(ALL_TEAMS).forEach(t => groupMap[t.id] = t);
+                  const groups = {};
+                  currentMatchList.forEach(m => {
+                      if (!groups[m.groupLetter]) groups[m.groupLetter] = new Set();
+                      groups[m.groupLetter].add(m.teamA.id); groups[m.groupLetter].add(m.teamB.id);
+                  });
+
+                  let advancers = []; let thirdPlaces = [];
+                  const sortedGroups = {};
+
+                  Object.keys(groups).forEach(letter => {
+                      const teams = Array.from(groups[letter]).map(id => groupMap[id]);
+                      teams.sort((a,b) => rankTeams(a, b, currentStandings));
+                      advancers.push(teams[0]); advancers.push(teams[1]); thirdPlaces.push(teams[2]);
+                      sortedGroups[letter] = teams;
+                  });
+
+                  thirdPlaces.sort((a,b) => rankTeams(a, b, currentStandings));
+                  const bestThirdsSet = new Set(thirdPlaces.slice(0, 8).map(t => t.id));
+
+                  // Compile data for Group Results screen
+                  const compiledGroups = {};
+                  Object.keys(sortedGroups).forEach(letter => {
+                      compiledGroups[letter] = sortedGroups[letter].map((team, idx) => {
+                          let status = 'out';
+                          if (idx < 2) status = 'top2';
+                          else if (idx === 2 && bestThirdsSet.has(team.id)) status = 'best3rd';
+                          return { team, status, stats: currentStandings[team.id] };
+                      });
+                  });
+
+                  const top32 = [...advancers, ...thirdPlaces.slice(0, 8)];
+                  top32.sort((a,b) => rankTeams(a,b, currentStandings));
+
+                  const r32Matches = [];
+                  for(let i=0; i<16; i++) { r32Matches.push({ phase: 'r32', teamA: top32[i], teamB: top32[31-i] }); }
+                  
+                  setGroupResultsData(compiledGroups);
+                  setKnockoutMatches(r32Matches);
+                  setPhase('group-results');
+                  resetMatchState();
+                  playSound('cheer');
+              } else if (currentPhase === 'r32') {
+                  const winners = getWinners(currentMatchList);
+                  setTournamentPhase('r16'); setMatchList(createPairs(winners, 'r16')); setCurrentMatchIndex(0);
+                  resetMatchState(); playSound('swoosh');
+              } else if (currentPhase === 'r16') {
+                  const winners = getWinners(currentMatchList);
+                  setTournamentPhase('qf'); setMatchList(createPairs(winners, 'qf')); setCurrentMatchIndex(0);
+                  resetMatchState(); playSound('swoosh');
+              } else if (currentPhase === 'qf') {
+                  const winners = getWinners(currentMatchList);
+                  setTournamentPhase('sf'); setMatchList(createPairs(winners, 'sf')); setCurrentMatchIndex(0);
+                  resetMatchState(); playSound('swoosh');
+              } else if (currentPhase === 'sf') {
+                  const winners = getWinners(currentMatchList); const losers = getLosers(currentMatchList);
+                  setTournamentPhase('bronze'); 
+                  setMatchList([
+                      { phase: 'bronze', teamA: losers[0], teamB: losers[1] },
+                      { phase: 'final', teamA: winners[0], teamB: winners[1] }
+                  ]); setCurrentMatchIndex(0);
+                  resetMatchState(); playSound('swoosh');
+              } else if (currentPhase === 'bronze') {
+                  setTournamentPhase('final'); setCurrentMatchIndex(1);
+                  resetMatchState(); playSound('swoosh');
+              } else if (currentPhase === 'final') {
+                  const finalWinner = getWinners([currentMatchList[1]])[0];
+                  setWinner(finalWinner); setPhase('result');
+                  setTimeout(stopRecordingAndCompile, 2500); playSound('cheer');
+              }
+          };
+
+          useEffect(() => {
+            let active = true; let isDetecting = false; let animFrameId;
+            
+            async function initEngine() {
+              if (window.faceapi) {
+                  try { 
+                      await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/'); 
+                      await faceapi.nets.faceLandmark68TinyNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/');
+                  } catch (e) { setError("Failed to load face detection models."); }
+              }
+
+              aiTickRef.current = setInterval(async () => {
+                  if (!active || !videoRef.current || videoRef.current.readyState < 2 || isDetecting) return;
+                  const st = latestState.current;
+                  if (st.phase !== 'playing' || st.selectionLock || st.scoreInputActive || st.matchCooldown) return;
+
+                  isDetecting = true;
+                  try {
+                      const detection = await faceapi.detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.2 })).withFaceLandmarks(true);
+                      const p = posRef.current;
+                      
+                      if (detection) {
+                          p.detected = true; p.framesLost = 0;
+                          const leftJaw = detection.landmarks.positions[0]; const rightJaw = detection.landmarks.positions[16]; const nose = detection.landmarks.positions[30];
+                          const faceWidth = rightJaw.x - leftJaw.x;
+                          p.noseRatio = (nose.x - leftJaw.x) / faceWidth; 
+                      } else { 
+                          p.framesLost++; if (p.framesLost > 5) p.detected = false; 
+                      }
+                  } catch (e) { console.error(e); } finally { isDetecting = false; }
+              }, 80);
+
+              const THRESHOLD = 100; const FILL_SPEED = 2.5; const DECAY_SPEED = 4;
+
+              tickRef.current = setInterval(() => { 
+                  if (!active) return;
+                  const st = latestState.current; const p = posRef.current;
+
+                  if (st.phase === 'playing' && !st.selectionLock && !st.scoreInputActive && !st.matchCooldown && p.detected) {
+                      let newLeft = st.selectionProgress.left; let newRight = st.selectionProgress.right;
+
+                      if (p.noseRatio > 0.58) { 
+                          newLeft = Math.min(THRESHOLD, newLeft + FILL_SPEED); newRight = Math.max(0, newRight - DECAY_SPEED);
+                      } else if (p.noseRatio < 0.42) { 
+                          newRight = Math.min(THRESHOLD, newRight + FILL_SPEED); newLeft = Math.max(0, newLeft - DECAY_SPEED);
+                      } else {
+                          newLeft = Math.max(0, newLeft - DECAY_SPEED); newRight = Math.max(0, newRight - DECAY_SPEED);
+                      }
+
+                      setSelectionProgress({ left: newLeft, right: newRight });
+
+                      if (newLeft >= THRESHOLD) handlePick('left');
+                      else if (newRight >= THRESHOLD) handlePick('right');
+                  } else if (!p.detected && !st.selectionLock && !st.matchCooldown) {
+                       setSelectionProgress(prev => ({ left: Math.max(0, prev.left - DECAY_SPEED), right: Math.max(0, prev.right - DECAY_SPEED) }));
+                  }
+              }, 30);
+
+              const drawLoop = () => {
+                  if (!active) return;
+                  const video = videoRef.current; const st = latestState.current;
+                  
+                  if (isRecordingRef.current && canvasRef.current && video && video.videoWidth > 0) {
+                      const canvas = canvasRef.current; const ctx = canvas.getContext('2d', { alpha: false });
+                      const CW = 1080, CH = 1920; canvas.width = CW; canvas.height = CH;
+                      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+                      const vw = video.videoWidth, vh = video.videoHeight;
+                      
+                      const scaleCover = Math.max(CW / vw, CH / vh);
+                      const bgDrawW = vw * scaleCover, bgDrawH = vh * scaleCover;
+                      const bgOffsetX = (CW - bgDrawW) / 2, bgOffsetY = (CH - bgDrawH) / 2;
+                      
+                      ctx.save(); ctx.translate(CW, 0); ctx.scale(-1, 1); 
+                      ctx.filter = 'blur(30px) brightness(0.6) saturate(1.2)'; ctx.globalAlpha = 1.0;
+                      ctx.drawImage(video, bgOffsetX, bgOffsetY, bgDrawW, bgDrawH);
+                      ctx.filter = 'none'; ctx.globalAlpha = 1.0;
+
+                      const scaleContain = Math.min(CW / vw, CH / vh);
+                      const fgDrawW = vw * scaleContain, fgDrawH = vh * scaleContain;
+                      const fgOffsetX = (CW - fgDrawW) / 2, fgOffsetY = (CH - fgDrawH) / 2;
+                      ctx.drawImage(video, fgOffsetX, fgOffsetY, fgDrawW, fgDrawH);
+                      ctx.restore();
+
+                      const gradient = ctx.createLinearGradient(0, 0, 0, CH);
+                      gradient.addColorStop(0, 'rgba(5,5,10,0.85)'); gradient.addColorStop(0.25, 'rgba(5,5,10,0.1)');
+                      gradient.addColorStop(0.65, 'rgba(5,5,10,0.1)'); gradient.addColorStop(1, 'rgba(5,5,10,0.95)');
+                      ctx.fillStyle = gradient; ctx.fillRect(0, 0, CW, CH);
+
+                      if (st.phase === 'playing' && st.matchList[st.currentMatchIndex]) {
+                          const match = st.matchList[st.currentMatchIndex];
+                          
+                          ctx.fillStyle = '#ffffff'; ctx.font = `900 70px "Outfit", sans-serif`;
+                          ctx.textAlign = 'center'; ctx.textBaseline = 'top'; 
+                          ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 30;
+                          
+                          let phaseLabel = PHASE_NAMES[st.tournamentPhase];
+                          if (st.tournamentPhase === 'groups') phaseLabel = `GROUP ${match.groupLetter}`;
+                          ctx.fillText(phaseLabel, CW / 2, 120);
+                          
+                          ctx.fillStyle = '#00D4FF'; ctx.font = `800 38px "Outfit", sans-serif`;
+                          ctx.fillText(`MATCH ${st.globalMatchCount + 1} OF 104`, CW / 2, 210);
+
+                          const cardSize = 380; const cardY = CH * 0.65; 
+                          const leftCardX = CW / 2 - cardSize - 50; const rightCardX = CW / 2 + 50;
+
+                          const drawCard = (team, x, y, isLeft, isSelected, progress) => {
+                              ctx.save();
+                              if (isSelected) {
+                                  ctx.translate(x - 20, y - 20); ctx.scale(1.1, 1.1); x=0; y=0;
+                                  ctx.shadowColor = team.color; ctx.shadowBlur = 60;
+                              } else if (st.selectionLock && !isSelected) {
+                                  ctx.translate(x + 10, y + 10); ctx.scale(0.95, 0.95); x=0; y=0; ctx.globalAlpha = 0.4;
+                              }
+                              
+                              const cardGrad = ctx.createLinearGradient(x, y, x, y+cardSize);
+                              cardGrad.addColorStop(0, 'rgba(30,30,40,0.9)'); cardGrad.addColorStop(1, 'rgba(10,10,15,0.95)');
+                              ctx.fillStyle = cardGrad;
+                              ctx.beginPath(); ctx.roundRect(x, y, cardSize, cardSize, 48); ctx.fill();
+                              
+                              ctx.lineWidth = isSelected ? 12 : 4; 
+                              ctx.strokeStyle = isSelected ? '#ffffff' : 'rgba(255,255,255,0.15)'; 
+                              ctx.stroke(); ctx.shadowBlur = 0;
+
+                              ctx.font = `150px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                              ctx.fillText(team.flag, x + cardSize/2, y + cardSize/2 - 40);
+
+                              ctx.fillStyle = '#ffffff'; ctx.font = `900 46px "Outfit", sans-serif`;
+                              ctx.fillText(team.name.toUpperCase(), x + cardSize/2, y + cardSize - 80);
+
+                              if (st.selectionLock && (st.scoreInputActive || st.mode === 'score')) {
+                                  ctx.fillStyle = '#FFB800'; ctx.font = `900 65px "Outfit", sans-serif`;
+                                  const score = isLeft ? st.matchScore.left : st.matchScore.right;
+                                  ctx.fillText(score, x + cardSize/2, y + 60);
+                              }
+
+                              if (!st.selectionLock && progress > 0) {
+                                  const pWidth = (progress / 100) * cardSize;
+                                  ctx.fillStyle = team.color;
+                                  ctx.beginPath(); ctx.roundRect(x, y + cardSize - 16, pWidth, 16, {bl: 0, br: 48, tl: 0, tr: 0}); ctx.fill();
+                              }
+                              ctx.restore();
+                          };
+
+                          drawCard(match.teamA, leftCardX, cardY, true, st.selectionLock === 'left', st.selectionProgress.left);
+                          drawCard(match.teamB, rightCardX, cardY, false, st.selectionLock === 'right', st.selectionProgress.right);
+
+                          if (!st.selectionLock) {
+                              ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(CW/2, cardY + cardSize/2, 65, 0, Math.PI*2); ctx.fill();
+                              ctx.fillStyle = '#05050A'; ctx.font = `900 48px "Outfit", sans-serif`;
+                              ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                              ctx.fillText("VS", CW/2, cardY + cardSize/2 + 5);
+                          }
+                      } else if (st.phase === 'group-results' && st.groupResultsData) {
+                          // Beautiful Group Standings on Canvas for Video Export
+                          ctx.fillStyle = 'rgba(5,5,10,0.95)'; ctx.fillRect(0, 0, CW, CH);
+                          
+                          ctx.fillStyle = '#ffffff'; ctx.font = `900 60px "Outfit", sans-serif`;
+                          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                          ctx.shadowColor = 'rgba(0,212,255,0.8)'; ctx.shadowBlur = 30;
+                          ctx.fillText("FINAL GROUP STANDINGS", CW/2, 80);
+                          ctx.shadowBlur = 0;
+
+                          const cols = 3; const rows = 4;
+                          const boxW = 310; const boxH = 360;
+                          const startX = (CW - (cols * boxW + (cols-1)*30)) / 2;
+                          const startY = 180;
+
+                          const letters = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+                          letters.forEach((letter, i) => {
+                              const col = i % cols; const row = Math.floor(i / cols);
+                              const x = startX + col * (boxW + 30);
+                              const y = startY + row * (boxH + 30);
+
+                              ctx.fillStyle = 'rgba(20,20,30,0.95)';
+                              ctx.beginPath(); ctx.roundRect(x, y, boxW, boxH, 24); ctx.fill();
+                              ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; ctx.stroke();
+
+                              ctx.fillStyle = '#00D4FF'; ctx.font = `800 28px "Outfit", sans-serif`;
+                              ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                              ctx.fillText(`GROUP ${letter}`, x + boxW/2, y + 15);
+
+                              const groupTeams = st.groupResultsData[letter];
+                              if (groupTeams) {
+                                  groupTeams.forEach((item, idx) => {
+                                      const ty = y + 70 + idx * 65;
+
+                                      if (item.status === 'top2') {
+                                          ctx.fillStyle = 'rgba(0, 230, 118, 0.15)';
+                                      } else if (item.status === 'best3rd') {
+                                          ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
+                                      } else {
+                                          ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+                                      }
+                                      ctx.beginPath(); ctx.roundRect(x + 10, ty, boxW - 20, 55, 12); ctx.fill();
+
+                                      ctx.fillStyle = item.status === 'out' ? 'rgba(255,255,255,0.4)' : '#ffffff';
+                                      ctx.font = `600 24px "Outfit", sans-serif`;
+                                      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                                      ctx.fillText(`${item.team.flag} ${item.team.name.substring(0, 11)}`, x + 20, ty + 27);
+
+                                      ctx.font = `800 22px "Outfit", sans-serif`;
+                                      ctx.textAlign = 'right';
+                                      ctx.fillText(`${item.stats.pts}p`, x + boxW - 20, ty + 27);
+                                  });
+                              }
+                          });
+
+                      } else if (st.phase === 'result') {
+                          ctx.fillStyle = '#ffffff'; ctx.font = `900 85px "Outfit", sans-serif`;
+                          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                          ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 40;
+                          ctx.fillText("2026 CHAMPION", CW/2, CH/2 - 220);
+                          
+                          if (st.winner) {
+                              ctx.font = `280px sans-serif`; ctx.fillText(st.winner.flag, CW/2, CH/2);
+                              ctx.font = `900 110px "Outfit", sans-serif`; ctx.fillText(st.winner.name.toUpperCase(), CW/2, CH/2 + 220);
+                          }
+                      }
+                  }
+                  animFrameId = requestAnimationFrame(drawLoop);
+              };
+              drawLoop();
+            }
+            initEngine();
+            return () => { 
+                active = false; 
+                if(tickRef.current) clearInterval(tickRef.current); 
+                if(aiTickRef.current) clearInterval(aiTickRef.current); 
+                if(animFrameId) cancelAnimationFrame(animFrameId);
+            };
+          }, []); 
+
+          const requestPermissions = async () => {
+              setError(null); initAudio(); playSound('pop');
+              try {
+                  const stream = await navigator.mediaDevices.getUserMedia({
+                      video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
+                      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                  });
+                  streamRef.current = stream;
+                  
+                  if (videoRef.current) {
+                      videoRef.current.srcObject = stream;
+                      videoRef.current.setAttribute('playsinline', 'true'); videoRef.current.setAttribute('webkit-playsinline', 'true');
+                      videoRef.current.muted = true;
+                      try { await videoRef.current.play(); } catch(e) {}
+                  }
+                  if (bgVideoRef.current) {
+                      bgVideoRef.current.srcObject = stream;
+                      bgVideoRef.current.setAttribute('playsinline', 'true'); bgVideoRef.current.setAttribute('webkit-playsinline', 'true');
+                      bgVideoRef.current.muted = true;
+                      try { await bgVideoRef.current.play(); } catch(e) {}
+                  }
+                  setPhase('menu');
+              } catch (err) { setError("Camera access denied. Please allow camera access and reload."); }
+          };
+
+          const startRecording = async () => {
+            if (recordStatus !== 'idle' && recordStatus !== 'error') return;
+            chunksRef.current = []; isRecordingRef.current = true;
+            try {
+              if (!canvasRef.current || !canvasRef.current.captureStream) throw new Error("captureStream missing");
+              const canvasStream = canvasRef.current.captureStream(30);
+              const audioTracks = streamRef.current?.getAudioTracks() || [];
+              if (audioTracks.length > 0) canvasStream.addTrack(audioTracks[0]);
+              let options;
+              const mimeTypes = ['video/webm;codecs=h264,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/webm', 'video/mp4'];
+              for (const mime of mimeTypes) { if (MediaRecorder.isTypeSupported(mime)) { options = { mimeType: mime, videoBitsPerSecond: 4000000, audioBitsPerSecond: 128000 }; break; } }
+              mediaRecorderRef.current = new MediaRecorder(canvasStream, options);
+              mediaRecorderRef.current.ondataavailable = e => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
+              mediaRecorderRef.current.onstop = () => {
+                 isRecordingRef.current = false;
+                 if (chunksRef.current.length === 0) { setRecordStatus('error'); return; }
+                 const blob = new Blob(chunksRef.current, { type: mediaRecorderRef.current.mimeType || options.mimeType });
+                 setRecordedVideoUrl({ url: URL.createObjectURL(blob), ext: blob.type.includes('mp4') ? 'mp4' : 'webm' });
+                 setRecordStatus('ready'); 
+              };
+              mediaRecorderRef.current.start(100);
+              setRecordStatus('recording');
+            } catch (e) { isRecordingRef.current = false; setRecordStatus('error'); }
+          };
+
+          const stopRecordingAndCompile = () => {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+              setRecordStatus('compiling'); mediaRecorderRef.current.stop();
+            } else {
+               if (chunksRef.current.length > 0) setRecordStatus('ready'); else setRecordStatus('error');
+            }
+          };
+
+          const startGameplay = (selectedMode) => {
+              initAudio(); playSound('swoosh');
+              setMode(selectedMode);
+              generateTournament();
+              setPhase('playing');
+              startRecording();
+          };
+
+          const handlePick = (side) => {
+              const st = latestState.current;
+              if (isProcessingPickRef.current || st.matchCooldown) return;
+              isProcessingPickRef.current = true; 
+              
+              playSound('thud');
+              if (navigator.vibrate) navigator.vibrate(50);
+              setSelectionLock(side);
+              
+              setSelectionProgress(side === 'left' ? { left: 100, right: 0 } : { left: 0, right: 100 });
+              
+              if (st.mode === 'score') {
+                  setMatchScore({ left: side === 'left' ? 2 : 0, right: side === 'right' ? 2 : 0 });
+                  setTimeout(() => { setScoreInputActive(true); playSound('pop'); }, 400);
+              } else {
+                  setTimeout(() => advanceMatch(side), 700);
+              }
+          };
+
+          const confirmScoreAndAdvance = () => {
+              playSound('pop'); setScoreInputActive(false);
+              setTimeout(() => advanceMatch(latestState.current.selectionLock), 400);
+          };
+
+          const advanceMatch = (winningSide) => {
+              try {
+                  const st = latestState.current;
+                  const currentMatch = st.matchList[st.currentMatchIndex];
+                  const newStandings = { ...st.standings };
+
+                  let scoreA = st.mode === 'score' ? st.matchScore.left : (winningSide === 'left' ? 1 : 0);
+                  let scoreB = st.mode === 'score' ? st.matchScore.right : (winningSide === 'right' ? 1 : 0);
+
+                  if (st.tournamentPhase === 'groups') {
+                      const tA = currentMatch.teamA.id; const tB = currentMatch.teamB.id;
+                      newStandings[tA].played += 1; newStandings[tB].played += 1;
+                      newStandings[tA].gf += scoreA; newStandings[tA].ga += scoreB; newStandings[tA].gd += (scoreA - scoreB);
+                      newStandings[tB].gf += scoreB; newStandings[tB].ga += scoreA; newStandings[tB].gd += (scoreB - scoreA);
+                      
+                      if (scoreA > scoreB) { newStandings[tA].pts += 3; }
+                      else if (scoreB > scoreA) { newStandings[tB].pts += 3; }
+                      else { newStandings[tA].pts += 1; newStandings[tB].pts += 1; }
+                  }
+
+                  const updatedMatches = [...st.matchList];
+                  updatedMatches[st.currentMatchIndex] = { ...currentMatch, winningSide, scoreA, scoreB };
+                  
+                  setStandings(newStandings);
+                  setGlobalMatchCount(prev => prev + 1);
+
+                  if (st.currentMatchIndex + 1 < st.matchList.length) {
+                      setMatchList(updatedMatches);
+                      setCurrentMatchIndex(prev => prev + 1);
+                      resetMatchState();
+                  } else {
+                      transitionPhase(newStandings, updatedMatches, st.tournamentPhase);
+                  }
+              } catch(e) {
+                  resetMatchState();
+              }
+          };
+
+          const resetMatchState = () => {
+              setSelectionLock(null);
+              setSelectionProgress({ left: 0, right: 0 });
+              setMatchScore({ left: 0, right: 0 });
+              setScoreInputActive(false);
+              setTimeout(() => { isProcessingPickRef.current = false; }, 50);
+          };
+
+          const currentMatchData = matchList[currentMatchIndex] || null;
+
+          return (
+            <div className="relative w-full h-[100dvh] bg-[#05050A] overflow-hidden body-font select-none text-white antialiased">
+              
+              <button onClick={toggleFullscreen} className="fixed top-4 right-4 z-[9999] w-10 h-10 rounded-full glass-ultra flex items-center justify-center text-white/80 hover:text-white transition-all shadow-xl hover:scale-105 active:scale-95">
+                  {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
+              </button>
+
+              {/* Enhanced Background with dynamic tint overlays */}
+              <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" style={{ opacity: (phase === 'playing' || phase === 'group-results') ? 1 : 0.15 }}>
+                  <video ref={bgVideoRef} autoPlay playsInline muted webkit-playsinline="true" className="absolute inset-0 w-full h-full object-cover blur-[40px] opacity-50 scale-125 saturate-150 mix-blend-screen" style={{ transform: 'scaleX(-1)', WebkitTransform: 'scaleX(-1)' }} />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/40 via-transparent to-fuchsia-900/30 mix-blend-color"></div>
+                  <video ref={videoRef} autoPlay playsInline muted webkit-playsinline="true" className="absolute inset-0 w-full h-full object-cover z-10" style={{ transform: 'scaleX(-1)', WebkitTransform: 'scaleX(-1)' }} />
+              </div>
+              <div className="absolute inset-0 z-10 pointer-events-none bg-[radial-gradient(ellipse_at_center,_transparent_0%,_#05050A_100%)]" style={{ opacity: (phase === 'playing' || phase === 'group-results') ? 0.7 : 0.95 }}></div>
+              <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-[#05050A]/80 via-transparent to-[#05050A]/90" style={{ opacity: (phase === 'playing' || phase === 'group-results') ? 1 : 0 }}></div>
+              <canvas ref={canvasRef} className="fixed top-[-9999px] left-[-9999px] pointer-events-none opacity-0" />
+              
+              {/* --- PERMISSION PHASE --- */}
+              {phase === 'permission' && (
+                <div className="absolute inset-0 z-[999] flex flex-col items-center justify-center px-6 text-center animate-fade-in relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-50 bg-[radial-gradient(circle_at_50%_0%,rgba(0,212,255,0.15),transparent_60%)] anim-mesh pointer-events-none"></div>
+                  <div className="absolute top-1/4 w-[500px] h-[500px] bg-[#00D4FF]/10 blur-[100px] rounded-full pointer-events-none mix-blend-screen anim-float"></div>
+                  <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-[#FF007A]/10 blur-[100px] rounded-full pointer-events-none mix-blend-screen anim-float" style={{animationDelay: '-3s'}}></div>
+
+                  <div className="w-32 h-32 mb-8 rounded-[36px] glass-ultra flex items-center justify-center shadow-[0_0_80px_rgba(0,212,255,0.3)] relative z-10 border border-white/20">
+                      <div className="absolute inset-0 rounded-[36px] anim-pulse-ring bg-[#00D4FF] mix-blend-screen opacity-40"></div>
+                      <TrophyIcon size={64} className="text-[#00D4FF] drop-shadow-[0_0_20px_rgba(0,212,255,0.8)] relative z-10" />
+                  </div>
+                  
+                  <h1 className="display-font text-5xl sm:text-6xl font-black tracking-[0.05em] mb-2 uppercase drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] relative z-10 text-gradient">
+                      WORLD CUP
+                  </h1>
+                  <div className="relative z-10 mb-12 inline-block">
+                    <p className="display-font text-[15px] sm:text-[17px] text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] via-white to-[#FF007A] tracking-[0.4em] font-bold uppercase drop-shadow-md">
+                        OFFICIAL 2026 FORMAT
+                    </p>
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+                  </div>
+                  
+                  <p className="body-font text-[15px] text-white/70 mb-14 max-w-[340px] leading-relaxed font-medium relative z-10 drop-shadow-md">
+                      The true 104 matches. 48 Teams. Allow camera access to play using true-yaw head tracking and record your full prediction.
+                  </p>
+
+                  {error && <div className="bg-red-500/20 border border-red-500/40 text-red-100 p-4 rounded-[20px] mb-8 text-[13px] font-semibold max-w-sm relative z-10 shadow-lg backdrop-blur-md">{error}</div>}
+
+                  <button onClick={requestPermissions} className="w-full max-w-[340px] py-[22px] rounded-full display-font font-black text-[17px] tracking-[0.25em] text-white transition-all hover:scale-[1.03] active:scale-95 relative z-10 shadow-[0_15px_50px_rgba(0,212,255,0.3)] bg-gradient-to-r from-[#00D4FF] to-[#0077FF] border border-white/30 overflow-hidden shimmer-effect">
+                      <span className="relative z-10 drop-shadow-md">START ENGINE</span>
+                  </button>
+                </div>
+              )}
+
+              {/* --- MENU PHASE --- */}
+              {phase === 'menu' && (
+                <div className="absolute inset-0 z-[999] flex flex-col items-center justify-center px-6 text-center animate-fade-in relative overflow-hidden bg-[#05050A]/40 backdrop-blur-2xl">
+                    <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,122,0.15),transparent_70%)] anim-mesh pointer-events-none"></div>
+
+                    <h2 className="display-font text-4xl font-black tracking-[0.2em] mb-12 text-gradient drop-shadow-2xl">SELECT MODE</h2>
+                    
+                    <div className="flex flex-col gap-6 w-full max-w-[360px] relative z-10">
+                        <button onClick={() => startGameplay('standard')} className="glass-button relative group w-full p-6 rounded-[32px] overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-[#00D4FF]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <div className="flex items-center gap-5 relative z-10">
+                                <div className="w-16 h-16 rounded-[20px] bg-black/60 border border-white/10 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(0,212,255,0.2)] group-hover:shadow-[0_0_30px_rgba(0,212,255,0.4)] transition-shadow">
+                                    <PlayIcon size={30} className="text-[#00D4FF] ml-1" />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="display-font font-black text-2xl tracking-[0.1em] text-white group-hover:text-[#00D4FF] transition-colors">STANDARD</h3>
+                                    <p className="text-[13px] text-white/50 font-medium mt-1 leading-tight">Fast-paced. Head tilt or tap to pick winners.</p>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button onClick={() => startGameplay('score')} className="glass-button relative group w-full p-6 rounded-[32px] overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-[#FF007A]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <div className="flex items-center gap-5 relative z-10">
+                                <div className="w-16 h-16 rounded-[20px] bg-black/60 border border-white/10 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,0,122,0.2)] group-hover:shadow-[0_0_30px_rgba(255,0,122,0.4)] transition-shadow">
+                                    <SettingsIcon size={30} className="text-[#FF007A]" />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="display-font font-black text-2xl tracking-[0.1em] text-white group-hover:text-[#FF007A] transition-colors">SCORE MODE</h3>
+                                    <p className="text-[13px] text-white/50 font-medium mt-1 leading-tight">Pick winner, then enter the exact score manually.</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+              )}
+
+              {/* --- GROUP RESULTS STAGE PHASE --- */}
+              {phase === 'group-results' && groupResultsData && (
+                  <div className="absolute inset-0 z-[60] flex flex-col pt-safe pb-safe px-4 animate-fade-in bg-[#05050A]/80 backdrop-blur-xl overflow-hidden">
+                      <h2 className="display-font text-3xl sm:text-4xl font-black text-center mt-6 mb-6 text-gradient drop-shadow-md shrink-0 uppercase tracking-wider">Group Stage Final Standings</h2>
+                      
+                      <div className="flex-1 overflow-y-auto no-scrollbar pb-[120px]">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-[1200px] mx-auto w-full">
+                              {['A','B','C','D','E','F','G','H','I','J','K','L'].map(letter => (
+                                  <div key={letter} className="glass-panel p-4 rounded-[24px] border border-white/10 shadow-lg">
+                                      <h3 className="display-font font-black text-xl text-[#00D4FF] mb-3 text-center tracking-widest">GROUP {letter}</h3>
+                                      <div className="flex flex-col gap-2">
+                                          {groupResultsData[letter].map((item, idx) => (
+                                              <div key={idx} className={`flex items-center justify-between px-3 py-2.5 rounded-[12px] transition-colors
+                                                  ${item.status === 'top2' ? 'bg-[#00E676]/15 border border-[#00E676]/30' : 
+                                                    item.status === 'best3rd' ? 'bg-[#00D4FF]/15 border border-[#00D4FF]/30' : 
+                                                    'bg-white/5 opacity-40 border border-transparent'}`}>
+                                                  <div className="flex items-center gap-2.5">
+                                                      <span className="text-2xl drop-shadow-md">{item.team.flag}</span>
+                                                      <span className={`font-bold text-[14px] uppercase ${item.status !== 'out' ? 'text-white' : 'text-white/60'}`}>{item.team.name}</span>
+                                                  </div>
+                                                  <div className="font-black text-[15px] flex items-center justify-end w-12 text-right">
+                                                      {item.stats.pts}p
+                                                  </div>
+                                              </div>
+                                          ))}
+                                      </div>
+                                  </div>
+                              ))}
+                          </div>
+                      </div>
+
+                      <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-0 right-0 px-6 flex justify-center z-50">
+                          <button onClick={() => {
+                              setTournamentPhase('r32');
+                              setMatchList(knockoutMatches);
+                              setCurrentMatchIndex(0);
+                              setPhase('playing');
+                          }} className="w-full max-w-sm py-[22px] rounded-full bg-gradient-to-r from-[#00D4FF] to-[#0077FF] text-white display-font font-black text-[15px] sm:text-[16px] tracking-[0.2em] shadow-[0_15px_40px_rgba(0,212,255,0.4)] border border-white/30 hover:scale-[1.03] active:scale-95 transition-all shimmer-effect overflow-hidden relative">
+                              <span className="relative z-10">CONTINUE TO KNOCKOUTS</span>
+                          </button>
+                      </div>
+                  </div>
+              )}
+
+              {/* --- GAMEPLAY PHASE --- */}
+              {phase === 'playing' && currentMatchData && (
+                <div className="absolute inset-0 z-40 flex flex-col justify-between pt-[max(env(safe-area-inset-top),_8vh)] pb-[5vh] pointer-events-none animate-fade-in">
+                    
+                    {/* Header Top - Broadcast Style */}
+                    <div className="text-center px-4 pt-4">
+                        <h2 className="display-font text-5xl sm:text-6xl font-black tracking-widest uppercase drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] text-gradient">
+                            {tournamentPhase === 'groups' ? `GROUP ${currentMatchData.groupLetter}` : PHASE_NAMES[tournamentPhase]}
+                        </h2>
+                        <div className="inline-flex items-center gap-2.5 mt-4 glass-ultra px-5 py-2 rounded-full border border-white/20 shadow-[0_10px_20px_rgba(0,0,0,0.5)]">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#00D4FF] shadow-[0_0_10px_#00D4FF] anim-pulse-ring"></div>
+                            <span className="display-font font-bold text-[14px] tracking-[0.2em] text-white uppercase">
+                                MATCH {globalMatchCount + 1} OF 104
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Instruction / Cooldown Alert */}
+                    {matchCooldown && !selectionLock && (
+                         <div className="absolute top-[28%] left-1/2 -translate-x-1/2 glass-panel border border-[#FFB800]/50 px-8 py-3.5 rounded-full flex items-center gap-3 shadow-[0_0_30px_rgba(255,184,0,0.3)] z-50 animate-fade-in">
+                             <span className="display-font text-[14px] sm:text-[16px] font-black tracking-widest uppercase text-center text-[#FFB800]">GET READY...</span>
+                         </div>
+                    )}
+                    {!matchCooldown && !selectionLock && globalMatchCount === 0 && (
+                         <div className="absolute top-[28%] left-1/2 -translate-x-1/2 glass-panel border border-white/20 px-8 py-3.5 rounded-full flex items-center gap-3 animate-pulse shadow-2xl z-50">
+                             <span className="display-font text-[13px] sm:text-[14px] font-bold tracking-widest uppercase text-center text-[#00D4FF]">TILT HEAD OR TAP TO PICK WINNER</span>
+                         </div>
+                    )}
+
+                    {/* --- THE CARDS OVERLAY --- */}
+                    <div className="flex-1 flex flex-col justify-end pb-[14vh]">
+                        <div className="flex justify-center items-end gap-5 sm:gap-12 w-full max-w-[650px] mx-auto px-5 relative h-[38vh]">
+                            
+                            {/* VS Center Marker */}
+                            {!selectionLock && (
+                                <div className="absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.4)] z-0 pointer-events-none anim-float">
+                                    <span className="display-font font-black text-2xl sm:text-3xl tracking-tighter">VS</span>
+                                    <div className="absolute inset-0 rounded-full border-2 border-black/10 m-1"></div>
+                                </div>
+                            )}
+
+                            {/* Team A (Left) */}
+                            <div onClick={() => handlePick('left')}
+                                className={`pointer-events-auto team-card relative w-[44%] aspect-[9/10] max-w-[190px] rounded-[32px] sm:rounded-[40px] overflow-hidden glass-panel border-[2px] border-white/10 flex flex-col items-center justify-center p-4 shadow-[0_20px_40px_rgba(0,0,0,0.6)]
+                                ${selectionLock === 'left' ? 'selected' : (selectionLock ? 'dimmed' : 'anim-float')}`} style={{ animationDelay: '0s' }}>
+                                
+                                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
+                                <div className="text-6xl sm:text-[85px] drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)] mb-3 pointer-events-none relative z-10">{currentMatchData.teamA.flag}</div>
+                                <h3 className="display-font font-black text-xl sm:text-2xl text-center break-words w-full px-1 leading-tight uppercase pointer-events-none relative z-10 drop-shadow-md">
+                                    {currentMatchData.teamA.name}
+                                </h3>
+                                {!selectionLock && (
+                                    <div className="progress-bar-container pointer-events-none"><div className="progress-bar bg-[#00D4FF]" style={{ width: `${selectionProgress.left}%`, boxShadow: `0 0 20px #00D4FF` }}></div></div>
+                                )}
+                                {selectionLock && (scoreInputActive || mode === 'score') && (
+                                    <div className="absolute top-4 left-4 display-font font-black text-5xl text-[#FFB800] drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)] pointer-events-none">{matchScore.left}</div>
+                                )}
+                            </div>
+
+                            {/* Team B (Right) */}
+                            <div onClick={() => handlePick('right')}
+                                className={`pointer-events-auto team-card relative w-[44%] aspect-[9/10] max-w-[190px] rounded-[32px] sm:rounded-[40px] overflow-hidden glass-panel border-[2px] border-white/10 flex flex-col items-center justify-center p-4 shadow-[0_20px_40px_rgba(0,0,0,0.6)]
+                                ${selectionLock === 'right' ? 'selected' : (selectionLock ? 'dimmed' : 'anim-float')}`} style={{ animationDelay: '-3s' }}>
+                                
+                                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
+                                <div className="text-6xl sm:text-[85px] drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)] mb-3 pointer-events-none relative z-10">{currentMatchData.teamB.flag}</div>
+                                <h3 className="display-font font-black text-xl sm:text-2xl text-center break-words w-full px-1 leading-tight uppercase pointer-events-none relative z-10 drop-shadow-md">
+                                    {currentMatchData.teamB.name}
+                                </h3>
+                                {!selectionLock && (
+                                    <div className="progress-bar-container pointer-events-none"><div className="progress-bar bg-[#FF007A]" style={{ width: `${selectionProgress.right}%`, boxShadow: `0 0 20px #FF007A` }}></div></div>
+                                )}
+                                {selectionLock && (scoreInputActive || mode === 'score') && (
+                                    <div className="absolute top-4 right-4 display-font font-black text-5xl text-[#FFB800] drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)] pointer-events-none">{matchScore.right}</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom Score Input Controls */}
+                    <div className="absolute bottom-[safe-area-inset-bottom] left-0 right-0 h-[16vh] flex items-end justify-center pb-8 pointer-events-auto z-50">
+                        {scoreInputActive && (
+                            <div className="glass-panel border border-white/20 p-5 rounded-[40px] flex flex-col gap-4 animate-scale-in shadow-[0_30px_60px_rgba(0,0,0,0.8)] w-full max-w-sm mx-auto mx-4 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#00D4FF]/10 to-[#FF007A]/10 pointer-events-none"></div>
+                                <div className="flex justify-between items-center px-4 relative z-10">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <button onClick={() => {playSound('pop'); setMatchScore(s => ({...s, left: s.left + 1}))}} className="w-12 h-12 rounded-full glass-ultra text-2xl font-black active:scale-95 hover:bg-white/10 hover:border-white/40 transition-all">+</button>
+                                        <button onClick={() => {playSound('pop'); setMatchScore(s => ({...s, left: Math.max(0, s.left - 1)}))}} className="w-12 h-12 rounded-full glass-ultra text-2xl font-black active:scale-95 hover:bg-white/10 hover:border-white/40 transition-all">-</button>
+                                    </div>
+                                    <div className="display-font font-black tracking-[0.2em] text-[14px] text-white/70 uppercase text-center drop-shadow-md">
+                                        Set Score<br/>
+                                        {tournamentPhase === 'groups' && <span className="text-[11px] text-[#00D4FF] tracking-wider mt-1 block">(Draws Allowed)</span>}
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <button onClick={() => {playSound('pop'); setMatchScore(s => ({...s, right: s.right + 1}))}} className="w-12 h-12 rounded-full glass-ultra text-2xl font-black active:scale-95 hover:bg-white/10 hover:border-white/40 transition-all">+</button>
+                                        <button onClick={() => {playSound('pop'); setMatchScore(s => ({...s, right: Math.max(0, s.right - 1)}))}} className="w-12 h-12 rounded-full glass-ultra text-2xl font-black active:scale-95 hover:bg-white/10 hover:border-white/40 transition-all">-</button>
+                                    </div>
+                                </div>
+                                <button onClick={confirmScoreAndAdvance} className="w-full py-4 rounded-full bg-white text-black display-font font-black text-[16px] tracking-[0.25em] uppercase shadow-[0_0_30px_rgba(255,255,255,0.4)] active:scale-95 hover:scale-[1.02] transition-transform relative z-10">
+                                    CONFIRM
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+              )}
+
+              {/* --- RESULTS PHASE --- */}
+              {phase === 'result' && (
+                <div className="absolute inset-0 z-[60] glass-panel flex flex-col px-6 pt-safe pb-safe overflow-y-auto no-scrollbar relative animate-fade-in">
+                    <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_50%_50%,rgba(0,212,255,0.2),transparent_70%)] anim-mesh pointer-events-none"></div>
+
+                    <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-12">
+                        <div className="w-20 h-20 mb-6 rounded-[24px] glass-ultra flex items-center justify-center shadow-[0_0_40px_rgba(255,215,0,0.3)]">
+                            <TrophyIcon size={40} className="text-[#FFD700] drop-shadow-[0_0_15px_rgba(255,215,0,0.8)]" />
+                        </div>
+                        <p className="display-font font-black text-[15px] tracking-[0.5em] mb-6 text-[#00D4FF] uppercase drop-shadow-lg">2026 World Champion</p>
+                        
+                        {winner && (
+                            <div className="relative mb-10">
+                                <div className="absolute inset-0 bg-white/20 blur-[100px] rounded-full scale-150 mix-blend-screen pointer-events-none"></div>
+                                <div className="text-[140px] drop-shadow-[0_30px_50px_rgba(0,0,0,0.9)] relative z-10 anim-float" style={{ animationDuration: '4s' }}>
+                                    {winner.flag}
+                                </div>
+                            </div>
+                        )}
+                        
+                        <h2 className="display-font text-6xl sm:text-7xl font-black uppercase text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] mb-14 text-gradient">
+                            {winner?.name}
+                        </h2>
+
+                        <div className="w-full max-w-sm flex flex-col gap-5">
+                            {recordStatus === 'error' && (
+                               <div className="w-full py-4 rounded-[28px] bg-red-500/20 border border-red-500/50 text-white display-font font-black tracking-[0.2em] text-[13px] flex items-center justify-center gap-3 backdrop-blur-md">
+                                  <AlertCircle size={20} /> RECORDING FAILED
+                               </div>
+                            )}
+                            {recordStatus === 'compiling' && (
+                              <div className="w-full py-5 rounded-[28px] glass-ultra border border-[#00D4FF]/40 text-[#00D4FF] display-font font-black tracking-[0.2em] text-[14px] flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(0,212,255,0.2)]">
+                                <Loader2 className="animate-spin" size={24} /> COMPILING VIDEO...
+                              </div>
+                            )}
+                            {recordStatus === 'ready' && recordedVideoUrl && (
+                              <a href={recordedVideoUrl.url} download={`WorldCupPredictor_${Date.now()}.${recordedVideoUrl.ext}`} className="w-full py-6 rounded-[28px] display-font font-black tracking-[0.2em] text-[15px] flex flex-col items-center justify-center gap-2 active:scale-[0.98] transition-all bg-gradient-to-r from-[#00D4FF] to-[#0077FF] shadow-[0_15px_40px_rgba(0,212,255,0.4)] shimmer-effect overflow-hidden relative">
+                                <div className="flex items-center gap-3 relative z-10"><DownloadIcon size={22} /> SAVE PREDICTION VIDEO</div>
+                              </a>
+                            )}
+                            
+                            <button onClick={() => { setPhase('menu'); setMatchList([]); setRecordStatus('idle'); }} className="glass-button w-full py-5 rounded-[28px] text-white/80 hover:text-white display-font font-black tracking-[0.2em] text-[14px] flex items-center justify-center gap-3 active:scale-95 mt-2">
+                                <RefreshCw size={20} /> PLAY AGAIN
+                            </button>
+                        </div>
+                    </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />)
+    </script>
+</body>
+</html>
+
+
