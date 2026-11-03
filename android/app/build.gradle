@@ -1,0 +1,45 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.blindrank.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.blindrank.app'
+        minSdk 29
+        targetSdk 35
+        versionCode (System.getenv('GITHUB_RUN_NUMBER') ? Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER')) + 1 : 2)
+        versionName '2.0.0'
+    }
+
+    signingConfigs {
+        // Shared TEST key so every build installs over the last one.
+        // For the Play Store, create a private upload key and keep it out of the repo.
+        test {
+            storeFile file('blindrank-test.jks')
+            storePassword 'blindrank'
+            keyAlias 'blindrank'
+            keyPassword 'blindrank'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.test
+        }
+        debug { signingConfig signingConfigs.test }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    androidResources { noCompress += ['js', 'css', 'json', 'bin', 'woff2'] }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+}

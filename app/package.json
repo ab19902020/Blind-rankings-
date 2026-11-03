@@ -1,0 +1,17 @@
+{
+  "name": "blind-rank",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs dist",
+    "build:android": "node build.mjs ../android/app/src/main/assets/www"
+  },
+  "dependencies": {
+    "@fontsource/nunito-sans": "5.1.0",
+    "@vladmandic/face-api": "1.7.12",
+    "esbuild": "0.24.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  }
+}
