@@ -510,11 +510,13 @@ async function growTmdb(g) {
     const id = await tmdbIdFor('person', g.person); if (!id) return [];
     const tv = g.media === 'tv';
     const r = await tmdb(`/person/${id}/${tv ? 'tv' : 'movie'}_credits`);
-    const list = (g.job ? (r?.crew || []).filter(c => c.job === g.job) : (r?.cast || []).filter(c => !/^(Himself|Herself|Self)\b/i.test(c.character || '')))
-      .filter(m => m.poster_path && (m.vote_count || 0) >= (g.minVotes ?? 150))
+    // Only films they actually lead (top-billed), never cameos or voice bits; directors' features only.
+    const list = (g.job ? (r?.crew || []).filter(c => c.job === g.job) : (r?.cast || []).filter(c => !/^(Himself|Herself|Self)\b/i.test(c.character || '') && (c.order ?? 99) <= (g.maxOrder ?? 3)))
+      .filter(m => m.poster_path && (m.vote_count || 0) >= (g.minVotes ?? 150) && !(m.genre_ids || []).includes(99))
       .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+    const det = await mapLimit(list, 6, m => tmdb(`/movie/${m.id}`));
     const seen = new Set(); const out = [];
-    for (const m of list) { const n = m.title || m.name; if (!seen.has(n)) { seen.add(n); out.push([n, tPoster(m.poster_path)]); } }
+    list.forEach((m, i) => { const n = m.title || m.name; if (!seen.has(n) && (det[i]?.runtime || 0) >= 60) { seen.add(n); out.push([n, tPoster(m.poster_path)]); } });
     return out;
   }
   let path = g.tmdb;
@@ -528,6 +530,11 @@ async function growTmdb(g) {
     if (!ids.length) return [];
     path += `&with_companies=${ids.join('|')}`;
   }
+  if (g.notKeyword) {
+    const ids = (await Promise.all(arr(g.notKeyword).map(k => tmdbIdFor('keyword', k)))).filter(Boolean);
+    if (ids.length) path += `&without_keywords=${ids.join('|')}`;
+  }
+  if (path.startsWith('/discover/movie') && !path.includes('with_runtime')) path += '&with_runtime.gte=60'; // no shorts
   return (await tmdbList(path, g.pages || 6)).pool;
 }
 
