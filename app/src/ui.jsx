@@ -69,7 +69,7 @@ export function NavRow({ item, onClick, count, style }) {
   );
 }
 
-const DOMAIN_LABEL = { movies: 'Movies', tv: 'TV', anime: 'Anime', actors: 'Celebs', sports: 'Sports', creators: 'Creators', music: 'Music', games: 'Gaming', nature: 'Nature', food: 'Food', history: 'History', myths: 'Myths' };
+const DOMAIN_LABEL = { movies: 'Movies', tv: 'TV', anime: 'Anime', actors: 'Celebs', sports: 'Sports', creators: 'Creators', music: 'Music', games: 'Gaming', nature: 'Nature', food: 'Food', history: 'History', myths: 'Myths', cars: 'Cars', places: 'Places' };
 export const themeLabel = d => DOMAIN_LABEL[d] || '';
 
 export function FeatureBanner({ item, domain, onClick, kicker = 'Featured' }) {

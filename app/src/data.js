@@ -7,6 +7,12 @@
 //   films:   'Title|Year'  (TMDB movie search, year-checked)
 //   shows:   'Title' or 'Title|Year' (TMDB TV search)
 //   people:  'Actor' or 'Actor|Character shown' (TMDB person photo)
+//
+// Extra fields the catalog builder understands
+//   img:    'person' | 'artist' | 'logo' | 'flag'  — what a correct picture looks like
+//   league: 'nfl' | 'nba' | 'mlb' | 'nhl' | 'wnba' — use official ESPN headshots
+//   region: 'us' | 'uk'                            — shown in the USA / UK hubs
+import { extendMenu } from './data-more.js';
 
 export const THEME = {
   movies: { primary: '#FFB800', secondary: '#FF3D5A' },
@@ -411,3 +417,26 @@ export const MENU_DATA = {
     wiki('m_cryptids', 'Cryptids & Legends', '👁️', ['Bigfoot', 'Loch Ness Monster', 'Mothman', 'Yeti', 'Kraken', 'Jersey Devil', 'Jackalope', 'Slender Man', 'Mongolian death worm', 'Thunderbird (mythology)|Thunderbird', 'Kappa (folklore)|Kappa', 'Skinwalker', 'Bunyip', 'Ogopogo', 'Beast of Bodmin Moor', 'Flatwoods monster', 'Dover Demon']),
   ],
 };
+
+/* ---------- expansion pack + picture rules ---------- */
+extendMenu(MENU_DATA);
+
+(function tagCatalog() {
+  const LOGO = new Set(['f_pl_clubs', 'f_eu_clubs', 'b_teams', 'g_f1t', 'car_brands', 'fd_fast']);
+  const FLAG = new Set(['f_nations', 'hg_flags']);
+  const PERSON = new Set(['hg_figs', 'hg_royals', 'hg_pres']);
+  const BY_DOMAIN = { sports: 'person', music: 'artist', creators: 'person', actors: 'person' };
+  const UK = new Set(['tc_ukcom', 'tc_ukdrama', 'ct_uk', 'rt_uk', 'uk_grime', 'uk_britpop', 'uk_pop', 'pl_uk', 'hg_royals', 'f_eng', 'f_lionesses', 'l_brit', 'a_brits', 'al_uk', 'g_darts', 'g_snooker', 'g_cricket', 'fd_choc', 'fd_snacks', 'fd_drinks', 'n_bbc', 'f_prem']);
+  const US = new Set(['hg_pres', 'a_nfl_all', 'a_mlb', 'ct_nick', 'ct_disney', 'n_hbo', 'n_amc']);
+  const visit = (menuId, dom, seen = new Set()) => {
+    if (seen.has(menuId)) return; seen.add(menuId);
+    for (const it of MENU_DATA[menuId] || []) {
+      if (it.type === 'nav') { visit(it.id, dom, seen); continue; }
+      if (it.type === 'wiki' && !it.img) it.img = LOGO.has(it.id) ? 'logo' : FLAG.has(it.id) ? 'flag' : PERSON.has(it.id) ? 'person' : BY_DOMAIN[dom];
+      if (!it.img) delete it.img;
+      if (!it.region && UK.has(it.id)) it.region = 'uk';
+      if (!it.region && US.has(it.id)) it.region = 'us';
+    }
+  };
+  for (const d of MENU_DATA.domain) visit(d.id, d.id);
+})();

@@ -1,0 +1,37 @@
+name: Catalog preview
+
+# Builds the catalog on feature branches and prints the picture report,
+# without publishing anything. Lets data changes be checked before merging.
+on:
+  push:
+    branches: ['ccr-**']
+    paths: ['app/src/data.js', 'app/src/data-more.js', 'app/build-catalog.mjs', '.github/workflows/catalog-preview.yml']
+  workflow_dispatch:
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build catalog
+        working-directory: app
+        run: node build-catalog.mjs catalog.json
+      - name: Picture report
+        working-directory: app
+        run: |
+          cat catalog-report.md
+          echo; echo "### Categories with missing pictures"
+          node -e 'const r=require("./catalog-report.json"); for (const x of r) if (x.missing.length) console.log(`${x.ok?"ok ":"DROP"} ${x.id} ${x.found} | ${x.missing.join(" ; ")}`)'
+          echo; echo "### Creator picture sources"
+          node -e 'const r=require("./catalog-report.json"); for (const x of r) if (/^cr_/.test(x.id) && x.picks) console.log(x.id, Object.entries(x.picks).map(([k,v])=>k+"="+v).join(", "))'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: catalog-preview
+          path: |
+            app/catalog.json
+            app/catalog-report.md
+            app/catalog-report.json

@@ -11,46 +11,70 @@ export async function fetchTMDB(endpoint, page = 1) {
   } catch (e) { return null; }
 }
 
-/** 'Wikipedia Title|Display' -> { title, name } */
+/** 'Wikipedia Title|Display|@channel' -> { title, name } */
 export function parseWikiItem(s) {
   const [title, display] = s.split('|');
-  return { title, name: display || title.replace(/ \([^)]*\)$/, '') };
+  const name = display || title.replace(/ \([^)]*\)$/, '');
+  return { title: title || name, name };
 }
 
-async function wikiBatch(titles) {
+const norm = s => (s || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, 'and').replace(/[^a-z0-9]/g, '');
+const stripParen = s => (s || '').replace(/\s*\([^)]*\)\s*$/, '');
+// Never show a signature, logo or placeholder as somebody's photo.
+const BAD_ANY = /(signature|autograph|_sig[._ -]|\bsig\.svg|signatur|placeholder|no[_ -]?image|question[_ ]book|ambox|silhouette)/i;
+const BAD_PERSON = /(logo|wordmark|\.svg|map[_ .]|locator|flag[_ ]of|coat[_ ]of[_ ]arms|crest|emblem|poster|cover[_ ]art)/i;
+const fileOk = (url, kind) => {
+  if (!url) return false;
+  const f = decodeURIComponent(url.split('/').pop());
+  return !BAD_ANY.test(f) && !((kind === 'person' || kind === 'artist') && BAD_PERSON.test(f));
+};
+
+async function wikiBatch(titles, kind) {
   // pilicense=any so posters, logos, crests and character art are included.
-  const url = `${WIKI}&action=query&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=600&pilimit=50&pilicense=any&titles=${encodeURIComponent(titles.join('|'))}`;
+  const url = `${WIKI}&action=query&redirects=1&prop=pageimages|pageprops&ppprop=disambiguation&piprop=thumbnail&pithumbsize=600&pilimit=50&pilicense=any&titles=${encodeURIComponent(titles.join('|'))}`;
   const data = await (await fetch(url)).json();
   const q = data.query || {};
-  const norm = {}; (q.normalized || []).forEach(n => { norm[n.from] = n.to; });
-  const redir = {}; (q.redirects || []).forEach(r => { redir[r.from] = r.to; });
-  const byTitle = {}; (q.pages || []).forEach(p => { if (p.thumbnail) byTitle[p.title] = p.thumbnail.source; });
+  const norm2 = {}; (q.normalized || []).forEach(n => { norm2[n.from] = n.to; });
+  const redir = {}; (q.redirects || []).forEach(r => { redir[r.from] = r; });
+  const byTitle = {}; (q.pages || []).forEach(p => { if (p.thumbnail && !(p.pageprops && 'disambiguation' in p.pageprops)) byTitle[p.title] = p.thumbnail.source; });
+  const person = kind === 'person' || kind === 'artist';
   const out = {};
-  for (const t of titles) { let k = norm[t] || t; k = redir[k] || k; out[t] = byTitle[k] || null; }
+  for (const t of titles) {
+    let k = norm2[t] || t; const r = redir[k];
+    if (r) { if (person && r.tofragment) { out[t] = null; continue; } k = r.to; }
+    const img = byTitle[k] || null;
+    out[t] = img && fileOk(img, kind) ? img : null;
+  }
   return out;
 }
 
-async function wikiSearch(query) {
+// Search only counts when the article title IS the name we asked for — never "first result".
+async function wikiSearch(title, kind) {
   try {
-    const url = `${WIKI}&action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=1&prop=pageimages&piprop=thumbnail&pithumbsize=600&pilicense=any`;
+    const url = `${WIKI}&action=query&generator=search&gsrsearch=${encodeURIComponent(title.replace(/[()]/g, ' '))}&gsrlimit=5&prop=pageimages|pageprops&ppprop=disambiguation&piprop=thumbnail&pithumbsize=600&pilicense=any`;
     const data = await (await fetch(url)).json();
-    return (data.query?.pages || [])[0]?.thumbnail?.source || null;
+    const want = norm(stripParen(title));
+    const p = (data.query?.pages || []).sort((a, b) => (a.index || 0) - (b.index || 0))
+      .find(p => p.thumbnail && !(p.pageprops && 'disambiguation' in p.pageprops) && norm(stripParen(p.title)) === want);
+    return p && fileOk(p.thumbnail.source, kind) ? p.thumbnail.source : null;
   } catch (e) { return null; }
 }
 
 /** titles -> { title: imageUrl|null } */
-export async function wikiResolve(titles, cache) {
+export async function wikiResolve(titles, cache, kind) {
   const result = {};
   const need = titles.filter(t => { if (cache && cache.has(t)) { result[t] = cache.get(t); return false; } return true; });
   for (let i = 0; i < need.length; i += 50) {
-    try { Object.assign(result, await wikiBatch(need.slice(i, i + 50))); } catch (e) {}
+    try { Object.assign(result, await wikiBatch(need.slice(i, i + 50), kind)); } catch (e) {}
   }
   const misses = need.filter(t => !result[t]);
-  // Search fallback for anything not matched exactly — a few at a time to stay polite.
   for (let i = 0; i < misses.length; i += 3) {
-    await Promise.all(misses.slice(i, i + 3).map(async t => { result[t] = await wikiSearch(t.replace(/[()]/g, ' ')); }));
+    await Promise.all(misses.slice(i, i + 3).map(async t => { result[t] = await wikiSearch(t, kind); }));
   }
   if (cache) for (const t of need) if (result[t]) cache.set(t, result[t]);
+  // Two picks can never share a picture.
+  const seen = new Set();
+  for (const t of titles) { const u = result[t]; if (!u) continue; const k = decodeURIComponent(u.split('/').pop()).replace(/^\d+px-/, ''); if (seen.has(k)) result[t] = null; else seen.add(k); }
   return result;
 }
 
@@ -62,9 +86,11 @@ export async function tmdbImage(q) {
   if (q.y && !(res?.results?.length)) res = await fetchTMDB(`/search/${kind}?query=${encodeURIComponent(q.q)}`);
   const list = res?.results || [];
   // Prefer an exact title match, then the most popular result.
-  const lower = q.q.toLowerCase();
-  const exact = list.find(r => ((r.title || r.name || '') + '').toLowerCase() === lower);
-  const r = exact || list[0];
+  const N = norm(q.q);
+  const names = r => [r.title, r.name, r.original_title, r.original_name].filter(Boolean).map(norm);
+  const exact = list.filter(r => names(r).includes(N)).sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+  // People must match exactly; films/shows may use a year-matched close title.
+  const r = exact[0] || (kind !== 'person' && q.y ? list.find(r => names(r).some(n => n.includes(N) || N.includes(n))) : null);
   const path = r && (kind === 'person' ? r.profile_path : r.poster_path);
   return path ? `${TMDB_IMG}w500${path}` : null;
 }

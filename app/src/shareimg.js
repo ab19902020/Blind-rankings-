@@ -4,7 +4,8 @@ import { displayName, inkOn, safeSecondary } from './catalog.js';
 
 const W = 1080, H = 1920, FONT = "'Nunito Sans', system-ui, sans-serif";
 const rr = (c, x, y, w, h, r) => { c.beginPath(); c.roundRect(x, y, w, h, r); };
-function cover(c, img, x, y, w, h) {
+function cover(c, img, x, y, w, h, fit) {
+  if (fit === 'contain') { const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height; c.fillStyle = '#F4F4F6'; c.fillRect(x, y, w, h); const p = Math.min(w, h) * 0.1, s = Math.min((w - p * 2) / iw, (h - p * 2) / ih); c.drawImage(img, x + (w - iw * s) / 2, y + (h - ih * s) / 2, iw * s, ih * s); return; }
   const s = Math.max(w / img.naturalWidth, h / img.naturalHeight); const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
   c.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2 * 0.5, dw, dh);
 }
@@ -30,7 +31,7 @@ export async function renderRankImage(record, theme) {
   // #1 hero card
   const cw = 420, ch = 520, cx = (W - cw) / 2, cy = 380;
   c.save(); c.shadowColor = 'rgba(255,179,0,0.6)'; c.shadowBlur = 60; rr(c, cx, cy, cw, ch, 34); c.fillStyle = '#111'; c.fill(); c.restore();
-  c.save(); rr(c, cx, cy, cw, ch, 34); c.clip(); if (imgs[0]) cover(c, imgs[0], cx, cy, cw, ch);
+  c.save(); rr(c, cx, cy, cw, ch, 34); c.clip(); if (imgs[0]) cover(c, imgs[0], cx, cy, cw, ch, record.fit);
   g = c.createLinearGradient(0, cy + ch * 0.55, 0, cy + ch); g.addColorStop(0, 'transparent'); g.addColorStop(1, 'rgba(0,0,0,0.85)'); c.fillStyle = g; c.fillRect(cx, cy, cw, ch); c.restore();
   rr(c, cx, cy, cw, ch, 34); c.lineWidth = 8; g = c.createLinearGradient(cx, cy, cx + cw, cy + ch); g.addColorStop(0, '#FFE58A'); g.addColorStop(1, '#F59E0B'); c.strokeStyle = g; c.stroke();
   rr(c, cx - 22, cy - 22, 96, 96, 26); c.fillStyle = g; c.fill();
@@ -44,7 +45,7 @@ export async function renderRankImage(record, theme) {
     rr(c, 70, y, W - 140, rowH - 14, 22); c.fillStyle = 'rgba(255,255,255,0.06)'; c.fill();
     c.lineWidth = 2; c.strokeStyle = 'rgba(255,255,255,0.10)'; c.stroke();
     c.textAlign = 'center'; c.fillStyle = i < 3 ? ['#FFD45C', '#D7DAE5', '#E7B48F'][i] : prim; c.font = `900 italic 44px ${FONT}`; c.fillText(String(i + 1), 128, y + 58);
-    c.save(); rr(c, 180, y + 7, 68, 68, 14); c.clip(); if (imgs[i]) cover(c, imgs[i], 180, y + 7, 68, 68); c.restore();
+    c.save(); rr(c, 180, y + 7, 68, 68, 14); c.clip(); if (imgs[i]) cover(c, imgs[i], 180, y + 7, 68, 68, record.fit); c.restore();
     c.textAlign = 'left'; c.fillStyle = '#fff'; c.font = `800 38px ${FONT}`; c.fillText(p.name, 276, y + 54, W - 380);
   });
 

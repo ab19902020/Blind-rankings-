@@ -5,7 +5,7 @@ on:
     - cron: '23 3 * * *'   # every night, 03:23 UTC
   push:
     branches: [app-v2]
-    paths: ['app/src/data.js', 'app/build-catalog.mjs']
+    paths: ['app/src/data.js', 'app/src/data-more.js', 'app/build-catalog.mjs']
   workflow_dispatch:
 
 permissions:

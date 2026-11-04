@@ -20,7 +20,7 @@ export const DOMAIN_META = {
   places:   { tagline: 'Cities, islands, wonders',     tertiary: '#22D3EE' },
 };
 
-const KEEP_UPPER = new Set(['TV', 'NBA', 'UFC', 'F1', 'US', 'MCU', '007', 'A24', 'WWE', 'NFL', 'MLB', 'DC', 'HBO', 'CN', 'AMC', 'K-POP', 'R&B', 'GOATS', 'GOAT']);
+const KEEP_UPPER = new Set(['TV', 'NBA', 'UFC', 'F1', 'US', 'UK', 'USA', 'BBC', 'ITV', 'NCIS', 'CSI', 'ESPN', 'NHL', 'WNBA', 'SNL', 'MLS', 'MCU', '007', 'A24', 'WWE', 'NFL', 'MLB', 'DC', 'HBO', 'CN', 'AMC', 'K-POP', 'R&B', 'GOATS', 'GOAT']);
 export function displayName(name = '') {
   if (name !== name.toUpperCase()) return name;
   return name.split(' ').map(w => {
@@ -31,6 +31,9 @@ export function displayName(name = '') {
 }
 
 export const cleanName = (n = '') => n.split(' (')[0];
+
+/** Logos and flags are shown whole ('contain'); photos and posters fill the card. */
+export const fitFor = (item = {}) => (item.fit === 'contain' || item.img === 'logo' || item.img === 'flag' ? 'contain' : 'cover');
 
 // Build an index of every playable challenge and which domain it belongs to.
 const leaves = [];
@@ -126,26 +129,48 @@ export function poolSize(item) {
   return item.type === 'custom' ? item.queries.length : item.type === 'wiki' ? item.items.length : null;
 }
 
-// Deterministic daily challenge — same for everyone on the same day.
-export function dailyChallenge(date = new Date()) {
+/* ---------- regions (UK / USA) ---------- */
+export const REGIONS = { us: { flag: '🇺🇸', name: 'USA', long: 'the USA' }, uk: { flag: '🇬🇧', name: 'UK', long: 'the UK' } };
+const otherRegion = r => (r === 'uk' ? 'us' : 'uk');
+// Hide the *other* country's local stuff from daily picks; global categories stay.
+const forRegion = (list, region) => (region ? list.filter(l => l.item.region !== otherRegion(region)) : list);
+export const regionLeaves = region => leaves.filter(l => l.item.region === region);
+
+/** A daily-rotating set of picks made for one country. */
+export function regionPicks(region, n = 10, date = new Date()) {
+  let seed = date.getFullYear() * 500 + date.getMonth() * 40 + date.getDate() + (region === 'uk' ? 7 : 0);
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const pool = regionLeaves(region).filter(l => l.item.type !== 'game');
+  const out = []; const doms = {};
+  for (const l of [...pool].sort(() => rnd() - 0.5)) {
+    if ((doms[l.domain] || 0) >= 2) continue; // spread across worlds
+    doms[l.domain] = (doms[l.domain] || 0) + 1; out.push(l);
+    if (out.length >= n) break;
+  }
+  return out;
+}
+
+// Deterministic daily challenge — same for everyone in a country on the same day.
+export function dailyChallenge(date = new Date(), region) {
   const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
   let h = 2166136261;
   for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return leaves[Math.abs(h) % leaves.length];
+  const pool = forRegion(leaves, region);
+  return pool[Math.abs(h) % pool.length];
 }
 
-export function randomChallenge(excludeItem) {
-  const pool = leaves.filter(l => l.item !== excludeItem);
+export function randomChallenge(excludeItem, region) {
+  const pool = forRegion(leaves, region).filter(l => l.item !== excludeItem);
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
 export { MENU_DATA };
 
 // A daily rotating set of featured challenges (same for everyone on the day).
-export function featuredToday(n = 8, date = new Date()) {
+export function featuredToday(n = 8, date = new Date(), region) {
   let seed = date.getFullYear() * 400 + date.getMonth() * 32 + date.getDate();
   const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
-  const pool = leaves.filter(l => l.item.type !== 'game');
+  const pool = forRegion(leaves, region).filter(l => l.item.type !== 'game');
   const out = []; const used = new Set(); const doms = new Set();
   while (out.length < n && used.size < pool.length) {
     const l = pool[Math.floor(rnd() * pool.length)];

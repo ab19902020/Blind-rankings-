@@ -24,8 +24,15 @@ function loadFaceApi() {
 
 function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
 
-function drawCover(ctx, img, x, y, w, h) {
+function drawCover(ctx, img, x, y, w, h, fit) {
   const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  if (fit === 'contain') {
+    // Logos and flags: show the whole thing on a light card instead of cropping it.
+    ctx.fillStyle = '#F4F4F6'; ctx.fillRect(x, y, w, h);
+    const pad = Math.min(w, h) * 0.1, s = Math.min((w - pad * 2) / iw, (h - pad * 2) / ih), dw = iw * s, dh = ih * s;
+    ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    return;
+  }
   const s = Math.max(w / iw, h / ih); const dw = iw * s, dh = ih * s;
   ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2 * 0.6, dw, dh);
 }
@@ -149,7 +156,7 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
       if (s) {
         ctx.fillStyle = '#111'; ctx.fill(); ctx.shadowBlur = 0;
         ctx.save(); rr(ctx, x, y, w, h, 18); ctx.clip();
-        if (s.imgObj) drawCover(ctx, s.imgObj, x, y, w, h);
+        if (s.imgObj) drawCover(ctx, s.imgObj, x, y, w, h, st.fit);
         const sg = ctx.createLinearGradient(0, y, 0, y + h); sg.addColorStop(0.55, 'rgba(0,0,0,0)'); sg.addColorStop(1, 'rgba(0,0,0,0.7)');
         ctx.fillStyle = sg; ctx.fillRect(x, y, w, h);
         ctx.restore();
@@ -192,7 +199,7 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
       const bg = ctx.createLinearGradient(-H, -H, H, H); bg.addColorStop(0, prim); bg.addColorStop(1, sec);
       ctx.lineWidth = 12; ctx.strokeStyle = bg; ctx.stroke(); ctx.shadowBlur = 0;
       ctx.save(); rr(ctx, -H + 12, -H + 12, S - 24, S - 24, 30); ctx.clip();
-      if (!st.rolling && active.imgObj) drawCover(ctx, active.imgObj, -H + 12, -H + 12, S - 24, S - 24);
+      if (!st.rolling && active.imgObj) drawCover(ctx, active.imgObj, -H + 12, -H + 12, S - 24, S - 24, st.fit);
       else {
         const qg = ctx.createLinearGradient(-H, -H, H, H); qg.addColorStop(0, '#1b1b22'); qg.addColorStop(1, '#0d0d12');
         ctx.fillStyle = qg; ctx.fillRect(-H, -H, S, S);

@@ -11,4 +11,13 @@ export function save(key, value) {
   try { localStorage.setItem(PREFIX + key, JSON.stringify(value)); } catch (e) {}
 }
 
-export const DEFAULT_SETTINGS = { sound: true, haptics: true, record: true, countdown: true };
+function guessRegion() {
+  try {
+    const lang = (navigator.language || '').toLowerCase();
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (lang.endsWith('-gb') || tz === 'Europe/London' || tz === 'Europe/Belfast') return 'uk';
+  } catch (e) {}
+  return 'us';
+}
+
+export const DEFAULT_SETTINGS = { sound: true, haptics: true, record: true, countdown: true, region: guessRegion() };

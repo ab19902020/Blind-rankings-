@@ -8,8 +8,8 @@ function persistentMap(key, limit = 2000) {
   const flush = () => { clearTimeout(t); t = setTimeout(() => { const o = {}; let n = 0; for (const [k, v] of m) { if (n++ > limit) break; o[k] = v; } save(key, o); }, 500); };
   return { has: k => m.has(k), get: k => m.get(k), set: (k, v) => { m.set(k, v); flush(); } };
 }
-const wikiCache = persistentMap('wikiimg3');
-const tmdbCache = persistentMap('tmdbimg1');
+const wikiCache = persistentMap('wikiimg4');
+const tmdbCache = persistentMap('tmdbimg2');
 
 export const itemKey = item => `${item.type === 'pool' ? 'p' : item.type}:${item.id}`;
 
@@ -69,7 +69,7 @@ async function poolFor(item, need = 999) {
   if (item.type === 'pool') return item.pool.map(([name, img]) => ({ id: name, name, img: expandImg(img) }));
   if (item.type === 'wiki') {
     const parsed = item.items.map(parseWikiItem);
-    const imgs = await wikiResolve(parsed.map(p => p.title), wikiCache);
+    const imgs = await wikiResolve(parsed.map(p => p.title), wikiCache, item.img);
     return parsed.filter(p => imgs[p.title]).map(p => ({ id: p.title, name: p.name, img: imgs[p.title] }));
   }
   if (item.type === 'custom') {
@@ -101,7 +101,7 @@ export async function loadDeck(item, onProgress) {
 }
 
 /* ---------------- challenge thumbnails (rows / banners) ---------------- */
-const thumbCache = load('thumbs3', {});
+const thumbCache = load('thumbs4', {});
 const inflight = {};
 let active = 0; const waiting = [];
 const slot = () => new Promise(r => { if (active < 4) { active++; r(); } else waiting.push(r); });
@@ -137,12 +137,12 @@ export function thumbFor(item) {
         }
       } else if (item.type === 'wiki') {
         const a = parseWikiItem(item.items[0]).title, b = parseWikiItem(item.items[1]).title;
-        const imgs = await wikiResolve([a, b], wikiCache);
+        const imgs = await wikiResolve([a, b], wikiCache, item.img);
         url = imgs[a] || imgs[b] || null;
       }
     } catch (e) {}
     release();
-    if (url) { thumbCache[key] = url; save('thumbs3', thumbCache); }
+    if (url) { thumbCache[key] = url; save('thumbs4', thumbCache); }
     delete inflight[key];
     return url;
   })();

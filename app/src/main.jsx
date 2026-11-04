@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
-import { themeFor, randomChallenge, cleanName, displayName, ALL_CHALLENGES } from './catalog.js';
+import { themeFor, randomChallenge, cleanName, displayName, ALL_CHALLENGES, fitFor } from './catalog.js';
 import { createEngine } from './engine.js';
 import { initAudio, playSound, setSoundEnabled } from './audio.js';
 import { load, save, DEFAULT_SETTINGS } from './storage.js';
@@ -24,6 +24,7 @@ function App() {
   const [history, setHistory] = useState(() => load('history', []));
   const [video, setVideo] = useState({ status: 'off' });
   const [toast, setToast] = useState(null);
+  const [discoverFilter, setDiscoverFilter] = useState('all');
 
   const videoRef = useRef(null), canvasRef = useRef(null), cardRef = useRef(null);
   const streamRef = useRef(null), engineRef = useRef(null), gameRef = useRef({ phase: 'idle', slots: [], queue: [] });
@@ -127,7 +128,7 @@ function App() {
     const info = leafInfo(item);
     setStack(s => [...s.filter(x => x.name === 'category'), { name: 'ready', item, domain: domain || info.domain, group: info.group }]);
   };
-  const quick = () => { const r = randomChallenge(); openReady(r.item, r.domain); };
+  const quick = () => { const r = randomChallenge(null, settings.region); openReady(r.item, r.domain); };
 
   const startGame = () => {
     if (!deckRef.current) return;
@@ -141,7 +142,7 @@ function App() {
     markSeen(g.item, slots);
     const record = {
       id: Date.now().toString(36), title: g.item.name, itemId: g.item.id, domain: g.domain,
-      themeKey: g.item.themeOverride || g.domain, date: Date.now(), timeMs,
+      themeKey: g.item.themeOverride || g.domain, date: Date.now(), timeMs, fit: fitFor(g.item),
       picks: slots.map(s => ({ name: cleanName(s.name), img: s.img })),
     };
     setHistory(h => { const n = [record, ...h].slice(0, 60); save('history', n); return n; });
@@ -208,8 +209,9 @@ function App() {
         <div className="screen" style={{ zIndex: 5, ...themeVars(themeFor('brand')) }}>
           <div className="ambient"><i className="a1" /><i className="a2" /></div>
           <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', minHeight: 0 }} key={tab}>
-            {tab === 'home' && <HomeTab camOn={camState === 'on'} onSettings={() => { tap(); setSheet(true); }} onPlay={openReady} onDomain={openDomain} onQuick={quick} />}
-            {tab === 'discover' && <DiscoverTab onPlay={openReady} />}
+            {tab === 'home' && <HomeTab camOn={camState === 'on'} onSettings={() => { tap(); setSheet(true); }} onPlay={openReady} onDomain={openDomain} onQuick={quick}
+              region={settings.region} onRegion={r => { tap(); setSetting('region', r); }} onRegionHub={() => { tap(); setDiscoverFilter(settings.region); setTab('discover'); }} />}
+            {tab === 'discover' && <DiscoverTab onPlay={openReady} initialFilter={discoverFilter} />}
             {tab === 'rankings' && <RankingsTab history={history} onBrowse={() => setTab('discover')} onOpen={rec => { tap(); push({ name: 'history', record: rec }); }} />}
           </div>
           <nav className="tabbar">

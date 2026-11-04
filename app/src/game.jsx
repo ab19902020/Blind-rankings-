@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { cleanName, displayName } from './catalog.js';
+import { cleanName, displayName, fitFor } from './catalog.js';
 import { RankCardArt } from './art.jsx';
 import { Confetti, themeVars } from './ui.jsx';
 import { initAudio, playSound } from './audio.js';
@@ -51,7 +51,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
   // Share live state with the render engine.
   gameRef.current = {
     phase: phase === 'done' ? 'result' : phase === 'pre' ? 'idle' : phase,
-    slots, queue: deck, activeIndex: active, rolling, count, theme, title, caption: caption && caption.text,
+    slots, queue: deck, activeIndex: active, rolling, count, theme, title, caption: caption && caption.text, fit: fitFor(item),
   };
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
   const placed = slots.filter(Boolean).length;
 
   return (
-    <div className="game" style={themeVars(theme)}>
+    <div className={`game ${fitFor(item) === 'contain' ? 'fit-contain' : ''}`} style={themeVars(theme)}>
       <div className="hud">
         <button className="icon-btn glass" onClick={exit} aria-label="Quit"><Ic.Close size={22} sw={2.6} /></button>
         <div className="hud-title"><span>{title}</span></div>
@@ -195,7 +195,7 @@ export function ResultScreen({ record, theme, video, onHome, onAgain, onShareLis
     </div>
   );
   return (
-    <div className="screen enter-up" style={themeVars(theme)}>
+    <div className={`screen enter-up ${record.fit === 'contain' ? 'fit-contain' : ''}`} style={themeVars(theme)}>
       <div className="ambient"><i className="a1" style={{ background: '#FFB300', opacity: 0.25 }} /><i className="a2" /></div>
       {!fromHistory && <Confetti run colors={['#FFD45C', '#FFB300', theme.primary, '#FFFFFF', '#FF3D7F', '#22D3EE']} />}
       <div className="scroll" style={{ position: 'relative', zIndex: 2 }}>

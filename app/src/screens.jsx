@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MENU_DATA, ALL_CHALLENGES, countChallenges, displayName, themeFor, dailyChallenge, DOMAIN_META, safeSecondary, featuredToday, sourceLabel, searchText, catalogInfo } from './catalog.js';
+import { MENU_DATA, ALL_CHALLENGES, countChallenges, displayName, themeFor, dailyChallenge, DOMAIN_META, safeSecondary, featuredToday, sourceLabel, searchText, catalogInfo, REGIONS, regionPicks, regionLeaves } from './catalog.js';
 import { loadDeck, cachedThumb } from './api.js';
 import { RankCardArt, PopcornArt, GamepadArt, CreatorArt, DomainArt, HEADER_ART, JerseyArt } from './art.jsx';
 import { ChallengeRow, FeatureBanner, Switch, Sheet, themeVars, itemTheme, themeLabel, useThumb, Ambient } from './ui.jsx';
@@ -73,9 +73,11 @@ export function Wordmark() {
 }
 
 /* ======================= Home ======================= */
-export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick }) {
-  const daily = useMemo(() => dailyChallenge(), []);
-  const featured = useMemo(() => featuredToday(8).filter(l => l.item !== daily.item), []);
+export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick, region, onRegion, onRegionHub }) {
+  const daily = useMemo(() => dailyChallenge(new Date(), region), [region]);
+  const featured = useMemo(() => featuredToday(8, new Date(), region).filter(l => l.item !== daily.item), [region]);
+  const local = useMemo(() => regionPicks(region, 10), [region]);
+  const R = REGIONS[region] || REGIONS.us;
   const [dref, durl] = useThumb(daily.item);
   return (
     <div className="scroll">
@@ -103,6 +105,18 @@ export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick }) {
         <div className="carousel">
           {featured.map((l, i) => <FeatureCard key={l.item.id} leaf={l} delay={i * 50} onClick={() => onPlay(l.item, l.domain)} />)}
         </div>
+
+        {local.length > 0 && <>
+          <div className="region-head">
+            <button className="region-title" onClick={onRegionHub}>{R.flag} Made for {R.long} <Ic.Chevron size={16} sw={3} /></button>
+            <div className="region-toggle" role="group" aria-label="Region">
+              {Object.entries(REGIONS).map(([k, r]) => <button key={k} className={k === region ? 'on' : ''} onClick={() => onRegion(k)} aria-pressed={k === region}>{r.flag} {r.name}</button>)}
+            </div>
+          </div>
+          <div className="carousel">
+            {local.map((l, i) => <FeatureCard key={region + l.item.id} leaf={l} delay={i * 40} onClick={() => onPlay(l.item, l.domain)} />)}
+          </div>
+        </>}
 
         <div className="section-label">Pick your world</div>
         <div className="tiles">
@@ -149,13 +163,15 @@ function FeatureCard({ leaf, onClick, delay }) {
 }
 
 /* ======================= Discover ======================= */
-export function DiscoverTab({ onPlay }) {
+export function DiscoverTab({ onPlay, initialFilter = 'all' }) {
   const [q, setQ] = useState('');
-  const [dom, setDom] = useState('all');
+  const [dom, setDom] = useState(initialFilter);
+  useEffect(() => setDom(initialFilter), [initialFilter]);
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     let l = ALL_CHALLENGES;
-    if (dom !== 'all') l = l.filter(x => x.domain === dom);
+    if (REGIONS[dom]) l = regionLeaves(dom);
+    else if (dom !== 'all') l = l.filter(x => x.domain === dom);
     if (s) l = l.filter(x => (searchText(x.item) + ' ' + (x.group?.name || '') + ' ' + themeLabel(x.domain)).toLowerCase().includes(s));
     return l;
   }, [q, dom]);
@@ -171,13 +187,14 @@ export function DiscoverTab({ onPlay }) {
         </div>
         <div className="chips">
           <button className={`chip ${dom === 'all' ? 'on' : ''}`} onClick={() => setDom('all')}>All</button>
+          {Object.entries(REGIONS).map(([k, r]) => <button key={k} className={`chip ${dom === k ? 'on' : ''}`} onClick={() => setDom(k)}>{r.flag} {r.name}</button>)}
           {MENU_DATA.domain.map(d => (
             <button key={d.id} className={`chip ${dom === d.id ? 'on' : ''}`} style={dom === d.id ? themeVars(themeFor(d.id)) : undefined} onClick={() => setDom(d.id)}>{themeLabel(d.id)}</button>
           ))}
         </div>
         <div className="rows" style={{ marginTop: 18 }}>
           {list.length === 0 && <div className="empty"><b>Nothing found</b>Try a player, a film or a category name.</div>}
-          {list.slice(0, 80).map((l, i) => (
+          {list.slice(0, 120).map((l, i) => (
             <ChallengeRow key={l.domain + l.item.id + i} item={l.item} group={l.group} domain={l.domain} showDomain onClick={() => onPlay(l.item, l.domain)} style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }} />
           ))}
         </div>
@@ -438,6 +455,11 @@ export function SettingsSheet({ settings, setSetting, camState, camWanted, onEna
       </div>
       <h4>Gameplay</h4>
       <div className="group">
+        <button className="opt" onClick={() => setSetting('region', settings.region === 'uk' ? 'us' : 'uk')}>
+          <Ic.Globe size={22} />
+          <span className="ot">Region<span className="os">Picks local categories for your home screen</span></span>
+          <span className="region-pill">{(REGIONS[settings.region] || REGIONS.us).flag} {(REGIONS[settings.region] || REGIONS.us).name}</span>
+        </button>
         {row('countdown', <Ic.Timer size={22} />, '3-2-1 countdown')}
         {row('sound', <Ic.Volume size={22} />, 'Sound effects')}
         {row('haptics', <Ic.Vibrate size={22} />, 'Haptics')}
