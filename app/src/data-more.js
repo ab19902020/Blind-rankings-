@@ -475,12 +475,12 @@ export const GROW = {
   cr_beauty: { occ: ['beauty vlogger', 'makeup artist', 'YouTuber'], sex: 'f', where: '?item wdt:P101 ?fw . VALUES ?fwL { "cosmetics"@en "beauty"@en "fashion"@en } ?fw rdfs:label ?fwL .' },
 
   // ---- Food
-  fd_fast: { inst: CHAIN, human: false }, fd_dish: { inst: ['dish', 'national dish', 'food'], human: false }, fd_dessert: { inst: ['dessert', 'cake', 'pastry', 'confectionery'], human: false },
-  fd_choc: { inst: ['chocolate bar', 'candy bar', 'brand of chocolate'], human: false }, fd_candy: { inst: ['candy', 'confectionery', 'gummy candy', 'brand'], human: false },
+  fd_fast: { inst: CHAIN, human: false }, fd_dish: { inst: ['dish', 'national dish'], human: false }, fd_dessert: { inst: ['dessert', 'cake', 'pastry', 'frozen dessert', 'pudding'], human: false },
+  fd_choc: { inst: ['chocolate bar', 'candy bar', 'brand of chocolate'], human: false }, fd_candy: { inst: ['candy', 'gummy candy', 'lollipop', 'hard candy', 'chewing gum', 'brand of confectionery'], human: false },
   fd_drinks: { inst: ['soft drink', 'cola', 'energy drink', 'carbonated soft drink', 'brand of soft drink'], country: ['uk', 'us', 'ie'], minLinks: 12, human: false }, fd_cereal: { inst: ['breakfast cereal', 'brand of breakfast cereal'], human: false },
-  fd_us_fast: { inst: CHAIN, country: 'us', human: false }, fd_us_sit: { inst: CHAIN, country: 'us', human: false }, fd_us_candy: { inst: ['candy bar', 'chocolate bar', 'candy', 'confectionery'], country: 'us', human: false },
-  fd_us_soda: { inst: ['soft drink', 'cola', 'root beer', 'carbonated soft drink'], country: 'us', minLinks: 10, human: false }, fd_us_food: { inst: ['dish', 'food'], country: 'us', human: false },
-  fd_uk_food: { inst: ['dish', 'food'], country: 'uk', human: false }, fd_coffee: { inst: ['coffeehouse chain', 'coffeehouse', 'doughnut shop', 'bakery chain'], country: ['us', 'uk', 'ca', 'au', 'ie'], human: false },
+  fd_us_fast: { inst: CHAIN, country: 'us', human: false }, fd_us_sit: { inst: CHAIN, country: 'us', human: false }, fd_us_candy: { inst: ['candy bar', 'chocolate bar', 'candy', 'gummy candy', 'lollipop', 'brand of confectionery'], country: 'us', human: false },
+  fd_us_soda: { inst: ['soft drink', 'cola', 'root beer', 'carbonated soft drink'], country: 'us', minLinks: 10, human: false }, fd_us_food: { inst: ['dish', 'national dish'], country: 'us', human: false },
+  fd_uk_food: { inst: ['dish', 'national dish'], country: 'uk', human: false }, fd_coffee: { inst: ['coffeehouse chain', 'coffeehouse', 'doughnut shop', 'bakery chain'], country: ['us', 'uk', 'ca', 'au', 'ie'], human: false },
   fd_pizza_chains: { inst: ['pizza chain', 'pizzeria chain', 'pizzeria'], country: ['us', 'uk', 'ca', 'au', 'ie'], human: false },
 
   // ---- Nature, cars, places, history, myths
@@ -490,7 +490,7 @@ export const GROW = {
   car_muscle: { sub: ['muscle car', 'pony car'], human: false }, car_trucks: { sub: ['pickup truck', 'full-size pickup truck', 'mid-size pickup truck'], human: false },
   car_ev: { sub: ['electric car', 'battery electric vehicle'], human: false }, car_hot: { sub: ['hot hatch'], human: false },
   car_usbrands: { inst: ['automobile manufacturer', 'automobile marque', 'car brand'], country: 'us', human: false },
-  pl_cities: { inst: ['big city', 'city', 'megacity', 'global city', 'metropolis'], human: false }, pl_uk: { inst: ['city', 'big city', 'town', 'cathedral city'], country: 'uk', human: false },
+  pl_cities: { inst: ['big city', 'megacity', 'global city', 'capital city', 'metropolis'], minLinks: 80, human: false }, pl_uk: { inst: ['city', 'big city', 'town', 'cathedral city'], country: 'uk', human: false },
   pl_us_cities: { inst: ['city of the United States', 'big city', 'city', 'consolidated city-county'], country: 'us', human: false },
   pl_wonders: { inst: ['mountain', 'waterfall', 'canyon', 'volcano', 'lake', 'glacier', 'coral reef'], human: false }, pl_parks: { inst: ['amusement park', 'theme park'], human: false },
   pl_stadiums: { inst: ['stadium', 'association football venue', 'multi-purpose stadium', 'sports venue'], human: false }, pl_natparks: { inst: ['national park of the United States', 'National Park of the United States', 'national park'], country: 'us', human: false },
@@ -510,3 +510,65 @@ export const GROW = {
   vg_nintendo: { inst: ['video game character', 'fictional character', 'player character'], where: '?item wdt:P1441 ?w . ?w wdt:P123 wd:Q8093 .', human: false },
   vg_villains: { inst: ['video game character', 'fictional character', 'supervillain'], where: '?item wdt:P1441 ?w . ?w wdt:P31 wd:Q7889 . ?item wdt:P31|wdt:P106|wdt:P2445 ?ev . VALUES ?evL { "antagonist"@en "villain"@en "supervillain"@en "final boss"@en } ?ev rdfs:label ?evL .', human: false },
 };
+
+/* ---- Relevance rules: a topped-up item's Wikidata description must match these. ---- */
+const R = {
+  football: 'footballer|football player|soccer|football \\(soccer\\)|goalkeeper', club: 'football club|association football|soccer club|football team',
+  country: 'country|sovereign state|kingdom|republic|nation|island state|federation', basketball: 'basketball', nfl: 'american football|quarterback|football player',
+  baseball: 'baseball', hockey: 'hockey', athlete: 'swimmer|sprinter|athlete|gymnast|skier|skater|snowboarder|runner|track|hurdler|jumper|decathlete|cyclist|olympi',
+  music: 'singer|rapper|musician|songwriter|band|group|duo|artist|DJ|record producer|vocalist|trio', rap: 'rapper|hip hop|hip-hop|MC|grime|drill|songwriter',
+  band: 'band|group|duo|trio|ensemble', album: 'album', actor: 'actor|actress|comedian|performer|entertainer|filmmaker',
+  creator: 'YouTuber|YouTube|streamer|internet|influencer|vlogger|content creator|gamer|web personality|online|TikTok|podcaster|Twitch|social media|video',
+  game: 'video game|game', character: 'character|fictional|protagonist|antagonist|villain|mascot|creature', chain: 'restaurant|fast food|fast-food|chain|coffeehouse|diner|eatery|franchise',
+  dish: 'dish|food|cuisine|bread|sandwich|soup|pie|cake|pastry|dessert|stew|sausage|cheese|snack|meal|salad|pudding|curry|pasta|noodle|dumpling|sauce|condiment|fried|baked|roast',
+  dessert: 'dessert|cake|pastry|pudding|sweet|confection|ice cream|pie|tart|biscuit|cookie|custard|mousse|doughnut|donut|chocolate',
+  candy: 'candy|confection|sweet|lollipop|chewing gum|bubble gum|chocolate|toffee|licorice|liquorice|jelly|gummy|mint|caramel|fudge|marshmallow',
+  drink: 'soft drink|soda|cola|beverage|drink|energy drink|lemonade|root beer|ginger ale', car: 'car|automobile|vehicle|truck|pickup|coupé|coupe|hatchback|roadster|sedan|saloon|SUV|supercar',
+  carBrand: 'manufacturer|automaker|car|automobile|marque|vehicle|motor', city: 'city|capital|town|metropolis|borough|municipality', state: 'state of the United States|U\\.S\\. state|state',
+};
+const MUST = {
+  fc_utd: R.football, fc_city: R.football, fc_liverpool: R.football, fc_arsenal: R.football, fc_chelsea: R.football, fc_spurs: R.football, fc_newcastle: R.football,
+  fc_madrid: R.football, fc_barca: R.football, fc_bayern: R.football, fc_juve: R.football, f_all: R.football, f_now: R.football, f_prem: R.football, f_eng: R.football,
+  f_liga: R.football, f_gk: R.football, f_mgr: 'manager|coach|football', f_ballon: R.football, f_lionesses: R.football, f_pl_clubs: R.club, f_eu_clubs: R.club, f_nations: R.country,
+  b_all: R.basketball, b_mod: R.basketball, b_90: R.basketball, a_wnba: R.basketball, a_nfl_all: R.nfl, a_nfl_now: R.nfl, a_nfl_qbs: 'quarterback|american football',
+  a_mlb: R.baseball, a_mlb_now: R.baseball, a_nhl: R.hockey, a_teamusa: R.athlete, g_olymp: R.athlete, a_college: '(college|university|collegiate|NCAA).*(football|basketball|team|athletic)|(football|basketball|athletic).*(college|university)',
+  c_ufc_goat: 'martial|fighter|UFC|kickbox|wrestler', c_box: 'boxer|boxing', c_wwe_att: 'wrestler|wrestling', c_wwe_now: 'wrestler|wrestling', g_f1: 'racing driver|formula one|racer|motorsport',
+  g_ten: 'tennis', g_darts: 'darts', g_snooker: 'snooker', g_golf: 'golf', g_cricket: 'cricket', g_rugby: 'rugby',
+  mu_now: R.music, mu_pop: R.music, mu_rock: R.music, mu_divas: R.music, mu_rb: R.music, mu_country: R.music, uk_pop: R.music, md_2010: R.music, md_2000: R.music, md_1990: R.music, md_1980: R.music,
+  mu_popgirls: R.music, mu_latin: R.music, mu_rnb00: R.music, mu_countrynow: R.music, mu_rap: R.rap, uk_grime: R.rap, mu_rapnow: R.rap, mu_90shiphop: R.rap,
+  mu_kpop: 'K-pop|South Korean|Korean', uk_britpop: R.band, mb_all: R.band, mb_boy: 'band|group', mu_emo: R.band,
+  al_greatest: R.album, al_modern: R.album, al_uk: R.album, al_hiphop: R.album, al_pop: R.album, al_rock: R.album,
+  a_men: R.actor, a_women: R.actor, a_action: R.actor, a_brits: R.actor, a_com: 'comedian|actor|actress|comedy', a_rising: R.actor, a_legends: R.actor, a_kidstars: R.actor, a_disney: R.actor + '|singer',
+  a_reality: 'television|reality|personality|socialite|star|influencer|media', a_standup: 'comedian|comedy', a_ceos: 'business|entrepreneur|executive|investor|founder|CEO|magnate|industrialist|billionaire',
+  a_chefs: 'chef|cook|restaurateur|culinary|food writer|baker', a_models: 'model', tc_late: 'host|presenter|comedian|television|broadcaster', tc_snl: 'comedian|actor|actress|comedy',
+  cr_us: R.creator, cr_uk: R.creator, cr_yt: R.creator, cr_stream: 'streamer|Twitch|gamer|YouTuber|internet|esports|content creator', cr_tiktok: R.creator, cr_gaming: 'streamer|gamer|esports|YouTuber|Twitch|video game|player',
+  cr_pods: 'podcast|host|comedian|commentator|presenter|personality|broadcaster|journalist', cr_beauty: 'beauty|makeup|make-up|YouTuber|influencer|fashion|vlogger|cosmetic',
+  vg_best: R.game, vg_mobile: R.game, vg_rockstar: R.game, vg_switch: R.game, vg_ps: R.game, vg_xbox: R.game, vg_horror: R.game, vg_shooters: R.game,
+  vg_chars: R.character, vg_nintendo: R.character, vg_villains: R.character, vg_franchise: 'series|franchise', vg_consoles: 'console|handheld',
+  mc_marvel: 'character|superhero|villain|comic', mc_dc: 'character|superhero|villain|comic', tch_icons: 'character', tch_sitcom: 'character',
+  fd_fast: R.chain, fd_us_fast: R.chain, fd_us_sit: R.chain, fd_coffee: 'coffee|doughnut|donut|bakery|café|cafe|tea', fd_pizza_chains: 'pizza',
+  fd_dish: R.dish, fd_us_food: R.dish, fd_uk_food: R.dish, fd_dessert: R.dessert, fd_choc: 'chocolate|candy bar|confection', fd_candy: R.candy, fd_us_candy: R.candy,
+  fd_drinks: R.drink, fd_us_soda: R.drink, fd_cereal: 'cereal',
+  n_dogs: 'dog|breed|hound|terrier|spaniel|retriever|sheepdog', n_cats: 'cat|breed',
+  car_super: R.car, car_jdm: R.car, car_muscle: R.car, car_hot: R.car, car_ev: R.car, car_trucks: 'truck|pickup|vehicle|ute', car_brands: R.carBrand, car_usbrands: R.carBrand,
+  pl_cities: R.city, pl_uk: R.city, pl_us_cities: R.city, pl_wonders: 'mountain|waterfall|canyon|volcano|lake|glacier|reef|falls|peak|gorge|cave|desert|river',
+  pl_parks: 'amusement park|theme park|water park', pl_stadiums: 'stadium|arena|venue|ground|ballpark|park', pl_natparks: 'national park', pl_states: R.state,
+  hg_royals: 'king|queen|monarch|sovereign', hg_empires: 'empire|kingdom|dynasty|state|caliphate|sultanate|khanate|realm', hg_flags: R.country, hg_pres: 'president',
+  hg_civil: 'activist|leader|abolitionist|rights|campaigner|reformer|minister|suffragist', hg_science: 'physicist|chemist|inventor|mathematician|biologist|astronomer|scientist|naturalist|engineer|polymath',
+  hg_space: 'astronaut|cosmonaut|aviator|pilot',
+  m_greek: 'god|goddess|deity|titan|primordial', m_heroes: 'hero|monster|creature|king|queen|princess|nymph|demigod|giant|daughter|son|figure|character',
+  m_norse: 'god|goddess|deity|giant|jötunn|valkyrie|wolf|serpent|dwarf|creature', m_egypt: 'god|goddess|deity', m_creatures: 'creature|monster|mythical|legendary|spirit|beast|being|folklore',
+  m_cryptids: 'cryptid|creature|monster|ape|beast|serpent',
+};
+// Things that must never appear, whatever the description says.
+const NOT = { fd_candy: 'company|corporation|manufacturer|founded|brand of beer|cigarette|tobacco', fd_us_candy: 'company|corporation|manufacturer|tobacco', fd_choc: 'company|corporation|manufacturer',
+  fd_drinks: 'alcoholic|beer|wine|spirit|company|corporation|liqueur', fd_us_soda: 'alcoholic|beer|wine|company|corporation', fd_cereal: 'company|grain|crop|plant',
+  fd_dish: 'company|restaurant chain', fd_us_food: 'company|restaurant chain', fd_uk_food: 'company|restaurant chain', vg_best: 'company|developer|publisher|series', vg_mobile: 'company|developer',
+  pl_cities: 'county|province|district|region|state', pl_uk: 'county|district|region', n_cats: 'big cat|wild', car_super: 'company|manufacturer|racing team', car_jdm: 'company|manufacturer',
+  mu_kpop: 'song|album|single', mb_all: 'song|album|single', al_greatest: 'song|single', al_modern: 'song|single' };
+for (const [id, re] of Object.entries(MUST)) {
+  if (!GROW[id]) continue;
+  const add = g => ({ ...g, must: re, ...(NOT[id] ? { not: NOT[id] } : {}) });
+  GROW[id] = Array.isArray(GROW[id]) ? GROW[id].map(add) : add(GROW[id]);
+}
+export const MUST_IDS = Object.keys(MUST);

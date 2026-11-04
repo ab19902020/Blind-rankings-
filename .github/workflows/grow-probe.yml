@@ -1,23 +1,21 @@
-name: Grow probe
+name: Grow audit
+# Lists what every category tops up with (kept vs dropped by the relevance check).
 on:
   push:
     branches: ['ccr-**']
-    paths: ['app/grow-probe.mjs', '.github/workflows/grow-probe.yml']
+    paths: ['app/grow-audit.mjs', 'app/src/data-more.js', '.github/workflows/grow-probe.yml']
   workflow_dispatch:
-    inputs:
-      ids:
-        description: 'Category ids'
-        default: 'g_darts,fc_utd,a_men,mu_rap,vg_best,n_dogs,cr_uk,hg_pres'
+concurrency:
+  group: grow-audit-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  probe:
+  audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - working-directory: app
-        run: |
-          node grow-probe.mjs "f_gk,c_box,g_ten,cr_uk,cr_us,cr_yt,cr_gaming,mu_emo,uk_grime,hg_royals" GET
-          node grow-probe.mjs "n_cats,car_jdm,pl_wonders,m_norse,m_heroes,vg_switch,fd_choc,fd_cereal,a_disney,tc_snl,b_mod,a_nfl_qbs" GET
+        run: node grow-audit.mjs > audit.txt; cat audit.txt

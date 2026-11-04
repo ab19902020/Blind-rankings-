@@ -441,13 +441,14 @@ async function sparqlFor(g, limit) {
     ${w.join('\n    ')}
     BIND(?sl AS ?links)
   } ORDER BY DESC(?links) LIMIT ${limit}`;
-  return `SELECT ?item ?title ?label ?img ?logo ?flag ?yt ?tw ?pfl ?links WHERE {
+  return `SELECT ?item ?title ?label ?desc ?img ?logo ?flag ?yt ?tw ?pfl ?links WHERE {
   { ${inner} }
   ${politic}
   ${excl}
   ?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?title .
   OPTIONAL { ?item rdfs:label ?label . FILTER(LANG(?label) = "en") }
   OPTIONAL { ?item wdt:P18 ?img } OPTIONAL { ?item wdt:P154 ?logo } OPTIONAL { ?item wdt:P41 ?flag }
+  OPTIONAL { ?item schema:description ?desc . FILTER(LANG(?desc) = "en") }
   OPTIONAL { ?item wdt:P2397 ?yt } OPTIONAL { ?item wdt:P5797 ?tw } ${perf}
 } ORDER BY DESC(?links)`;
 }
@@ -463,12 +464,22 @@ async function growWikidata(g, limit = 170) {
   for (const b of d.results?.bindings || []) {
     const qid = b.item.value.split('/').pop();
     let o = by.get(qid);
-    if (!o) { o = { qid, title: b.title.value, name: b.label?.value || stripParen(b.title.value), links: +b.links.value, yt: b.yt?.value, tw: b.tw?.value, artist: b.pfl?.value }; by.set(qid, o); }
+    if (!o) { o = { qid, title: b.title.value, name: b.label?.value || stripParen(b.title.value), desc: b.desc?.value || '', links: +b.links.value, yt: b.yt?.value, tw: b.tw?.value, artist: b.pfl?.value }; by.set(qid, o); }
     const w = wdCache.get(qid) || {};
     if (b.img && !w.p18) w.p18 = file(b.img); if (b.logo && !w.p154) w.p154 = file(b.logo); if (b.flag && !w.p41) w.p41 = file(b.flag);
     wdCache.set(qid, w);
   }
   return [...by.values()].filter(o => !/^Q\d+$/.test(o.name)).sort((a, b) => b.links - a.links);
+}
+// Relevance check for grown items: the item's one-line Wikidata description must match
+// what the category is about (g.must), and must not match g.not. No description = out.
+const audit = {};
+function relevant(id, g, o) {
+  const d = o.desc || '';
+  const ok = (!g.must || new RegExp(g.must, 'i').test(d)) && !(g.not && new RegExp(g.not, 'i').test(d)) && !!d;
+  const a = audit[id] ||= { kept: [], dropped: [] };
+  (ok ? a.kept : a.dropped).push(`${o.name}${d ? ' — ' + d : ''}`);
+  return ok;
 }
 const tmdbIdCache = new Map();
 async function tmdbIdFor(kind, name) {
@@ -528,7 +539,7 @@ const parseWiki = s => {
   return { title: title || name, name, src: (src || '').split(',').map(x => x.trim()).filter(Boolean) };
 };
 const growSamples = {};
-function addGrown(id, list) { growSamples[id] = list.slice(0, 14); }
+function addGrown(id, list) { growSamples[id] = list.slice(0, 120); }
 
 async function resolveCurated(it) {
   const kind = it.img || 'any';
@@ -551,6 +562,7 @@ async function resolveCurated(it) {
         }
         for (const o of await growWikidata(g, Math.max(170, target + 60))) {
           if (have.has(norm(o.name)) || have.has(norm(stripParen(o.title)))) continue;
+          if (!relevant(it.id, g, o)) continue;
           have.add(norm(o.name)); have.add(norm(stripParen(o.title)));
           const src = []; if (o.yt) src.push('ytc:' + o.yt); if (o.tw) src.push('tw:' + o.tw);
           extra.push({ title: o.title, name: o.name, src, qid: o.qid });
@@ -597,7 +609,7 @@ async function resolveCurated(it) {
           for (const [n, img] of await growTmdb(g)) if (!have.has(norm(n))) { have.add(norm(n)); tmdbGrown.push([n, img]); }
         } else {
           for (const o of await growWikidata(g, Math.max(170, target + 60))) {
-            if (have.has(norm(o.name))) continue; have.add(norm(o.name));
+            if (have.has(norm(o.name)) || !relevant(it.id, g, o)) continue; have.add(norm(o.name));
             queries.push({ q: o.name, n: o.name, t: 'person', title: o.title, grown: true, acting: !!g.acting });
           }
         }
@@ -624,7 +636,7 @@ async function resolveCurated(it) {
       const have = new Set(items.map(s => norm(s.split('|')[0])));
       const extra = [];
       for (const g of grows) for (const o of await growWikidata({ ...g, albums: true }, Math.max(170, target + 60))) {
-        if (!o.artist || have.has(norm(o.name))) continue; have.add(norm(o.name)); extra.push(`${o.name}|${o.artist}|grown`);
+        if (!o.artist || have.has(norm(o.name)) || !relevant(it.id, g, o)) continue; have.add(norm(o.name)); extra.push(`${o.name}|${o.artist}|grown`);
       }
       addGrown(it.id, extra.map(x => x.split('|').slice(0, 2).join(' – ')));
       items.push(...extra.slice(0, Math.round((target - items.length) * 1.4)));
@@ -858,11 +870,12 @@ async function main() {
     ...report.map(r => `- ${r.ok ? '✅' : '❌'} ${r.name} — ${r.found}${r.missing.length ? ` · no picture: ${r.missing.slice(0, 15).join(', ')}` : ''}`)].join('\n');
   fs.writeFileSync('catalog-report.md', md);
   fs.writeFileSync('catalog-report.json', JSON.stringify(report, null, 1));
+  fs.writeFileSync('grow-audit.json', JSON.stringify(audit, null, 1));
   console.log(`catalog: ${report.length - bad.length} categories, ${bad.length} dropped, ${totalPicks} picks, ${(fs.statSync(OUT).size / 1024).toFixed(0)} KB`);
   console.log(`sources: ${JSON.stringify(srcTotals)}`);
   console.log(`wikidata grow queries: ${growStats.queries} (${growStats.failed} failed)`);
   if (growStats.errors.length) console.log('grow errors:\n  ' + growStats.errors.slice(0, 40).join('\n  '));
 }
 
-export { resolveCurated, finishLeaf, report, imgKey, sparqlFor };
+export { resolveCurated, finishLeaf, report, imgKey, sparqlFor, growWikidata, relevant, audit };
 if (!process.env.CATALOG_NO_RUN) main();
