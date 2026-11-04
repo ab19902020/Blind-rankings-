@@ -1,0 +1,2050 @@
+[
+ {
+  "id": "m_trend",
+  "name": "TRENDING NOW",
+  "found": 80,
+  "pool": 80,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "m_pop",
+  "name": "ALL-TIME GREATS",
+  "found": 100,
+  "pool": 100,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_mcu",
+  "name": "Marvel (MCU) Films",
+  "found": 31,
+  "pool": 31,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_sw",
+  "name": "Star Wars Films",
+  "found": 12,
+  "pool": 12,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_bond",
+  "name": "James Bond Films",
+  "found": 25,
+  "pool": 25,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_hp",
+  "name": "Wizarding World Films",
+  "found": 11,
+  "pool": 11,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_dc",
+  "name": "DC Films",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_ff",
+  "name": "Fast & Furious Films",
+  "found": 11,
+  "pool": 11,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_spidey",
+  "name": "Spider-Man Films",
+  "found": 11,
+  "pool": 11,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_pixar",
+  "name": "Pixar Films",
+  "found": 27,
+  "pool": 27,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_batman",
+  "name": "Batman Films",
+  "found": 11,
+  "pool": 11,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_horror",
+  "name": "Horror Classics",
+  "found": 28,
+  "pool": 28,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_xmen",
+  "name": "X-Men Films",
+  "found": 13,
+  "pool": 13,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_remakes",
+  "name": "Disney Live-Action Remakes",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_lotr",
+  "name": "Middle-earth Characters",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fr_vgm",
+  "name": "Video Game Movies",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mc_villains",
+  "name": "Movie Villains",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mc_killers",
+  "name": "Horror Icons",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mc_marvel",
+  "name": "Marvel Heroes",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mc_dc",
+  "name": "DC Heroes & Villains",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mc_heroes",
+  "name": "Movie Heroes",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mc_mvillains",
+  "name": "Marvel Villains",
+  "found": 26,
+  "pool": 26,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_nolan",
+  "name": "Christopher Nolan",
+  "found": 13,
+  "pool": 13,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_taran",
+  "name": "Quentin Tarantino",
+  "found": 10,
+  "pool": 10,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_spiel",
+  "name": "Steven Spielberg",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_scors",
+  "name": "Martin Scorsese",
+  "found": 16,
+  "pool": 16,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_kubri",
+  "name": "Stanley Kubrick",
+  "found": 11,
+  "pool": 11,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_finch",
+  "name": "David Fincher",
+  "found": 12,
+  "pool": 12,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mc_disney",
+  "name": "Disney & Pixar Characters",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_ridley",
+  "name": "Ridley Scott",
+  "found": 16,
+  "pool": 16,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_ritchie",
+  "name": "Guy Ritchie",
+  "found": 13,
+  "pool": 13,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_villeneuve",
+  "name": "Denis Villeneuve",
+  "found": 10,
+  "pool": 10,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_wes",
+  "name": "Wes Anderson",
+  "found": 12,
+  "pool": 12,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "d_burton",
+  "name": "Tim Burton",
+  "found": 14,
+  "pool": 14,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_xmas",
+  "name": "Christmas Movies",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_heist",
+  "name": "Heist Movies",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mc_finalgirls",
+  "name": "Horror Final Girls",
+  "found": 14,
+  "pool": 14,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_scifi",
+  "name": "Sci-Fi Classics",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_kids",
+  "name": "Childhood Classics",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_oscar",
+  "name": "Best Picture Winners",
+  "found": 28,
+  "pool": 28,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_teen",
+  "name": "Teen Movies",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_brit",
+  "name": "British Films",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_romcom",
+  "name": "Rom-Coms",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "l_sport",
+  "name": "Sports Movies",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "s_dream",
+  "name": "DreamWorks Animation",
+  "found": 23,
+  "pool": 23,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "s_pixar2",
+  "name": "Pixar Films",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "s_a24",
+  "name": "A24 Films",
+  "found": 58,
+  "pool": 58,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "s_ghibli",
+  "name": "Studio Ghibli",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_act",
+  "name": "Action",
+  "found": 120,
+  "pool": 120,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_hor",
+  "name": "Horror",
+  "found": 119,
+  "pool": 119,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_sci",
+  "name": "Sci-Fi",
+  "found": 120,
+  "pool": 120,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_com",
+  "name": "Comedy",
+  "found": 120,
+  "pool": 120,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_ani",
+  "name": "Animation",
+  "found": 99,
+  "pool": 99,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_rom",
+  "name": "Romance",
+  "found": 97,
+  "pool": 97,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_war",
+  "name": "War",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_thr",
+  "name": "Thriller",
+  "found": 120,
+  "pool": 120,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "dec_2020",
+  "name": "2020s",
+  "found": 100,
+  "pool": 100,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "dec_2010",
+  "name": "2010s",
+  "found": 120,
+  "pool": 120,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "s_disney",
+  "name": "Disney Animated Classics",
+  "found": 26,
+  "pool": 26,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "dec_2000",
+  "name": "2000s",
+  "found": 120,
+  "pool": 120,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "dec_1970",
+  "name": "70s",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "dec_1980",
+  "name": "80s",
+  "found": 100,
+  "pool": 100,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "dec_1990",
+  "name": "90s",
+  "found": 120,
+  "pool": 120,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tv_trend",
+  "name": "TRENDING NOW",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tv_pop",
+  "name": "TOP RATED TV",
+  "found": 80,
+  "pool": 80,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tc_sitcom",
+  "name": "Sitcoms",
+  "found": 27,
+  "pool": 27,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tc_drama",
+  "name": "Prestige Dramas",
+  "found": 28,
+  "pool": 28,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tc_anim",
+  "name": "Adult Animation",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tc_scifi",
+  "name": "Sci-Fi & Fantasy",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tc_crime",
+  "name": "Crime & Mystery",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tc_ukdrama",
+  "name": "British Drama",
+  "found": 23,
+  "pool": 23,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tc_ukcom",
+  "name": "British Comedy",
+  "found": 26,
+  "pool": 26,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ct_cn",
+  "name": "Cartoon Network",
+  "found": 16,
+  "pool": 16,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ct_nick",
+  "name": "Nickelodeon",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tch_sitcom",
+  "name": "Sitcom Legends",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ct_disney",
+  "name": "Disney Channel",
+  "found": 16,
+  "pool": 16,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_hbo",
+  "name": "HBO",
+  "found": 46,
+  "pool": 46,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ct_uk",
+  "name": "UK Kids TV",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_amc",
+  "name": "AMC",
+  "found": 25,
+  "pool": 25,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_net",
+  "name": "Netflix Originals",
+  "found": 80,
+  "pool": 80,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_app",
+  "name": "Apple TV+",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_prim",
+  "name": "Prime Video",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_bbc",
+  "name": "BBC",
+  "found": 58,
+  "pool": 58,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "tch_icons",
+  "name": "TV Icons",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "rt_uk",
+  "name": "Reality TV",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "rt_comp",
+  "name": "Game & Talent Shows",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_utd",
+  "name": "Man United",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_arsenal",
+  "name": "Arsenal",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_city",
+  "name": "Man City",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_liverpool",
+  "name": "Liverpool",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_chelsea",
+  "name": "Chelsea",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_spurs",
+  "name": "Tottenham",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_newcastle",
+  "name": "Newcastle",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_madrid",
+  "name": "Real Madrid",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_barca",
+  "name": "Barcelona",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_bayern",
+  "name": "Bayern Munich",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_juve",
+  "name": "Juventus",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_prem",
+  "name": "Premier League Icons",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_all",
+  "name": "All-Time Greats",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_now",
+  "name": "Current Superstars",
+  "found": 23,
+  "pool": 23,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_eng",
+  "name": "England Legends",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_liga",
+  "name": "La Liga Icons",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_mgr",
+  "name": "Managers",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_ballon",
+  "name": "Ballon d'Or Winners",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_gk",
+  "name": "Goalkeepers",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_pl_clubs",
+  "name": "Premier League Clubs",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_eu_clubs",
+  "name": "European Giants",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_lionesses",
+  "name": "Lionesses",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "f_nations",
+  "name": "World Cup Nations",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "b_all",
+  "name": "NBA All-Time",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "b_mod",
+  "name": "Modern Stars",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "b_90",
+  "name": "90s & 00s",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "b_teams",
+  "name": "NBA Teams",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "c_ufc_goat",
+  "name": "UFC Legends",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "c_box",
+  "name": "Boxing Legends",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_f1",
+  "name": "F1 Drivers",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_f1t",
+  "name": "F1 Teams",
+  "found": 12,
+  "pool": 12,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "c_wwe_att",
+  "name": "WWE Legends",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_ten",
+  "name": "Tennis",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_darts",
+  "name": "Darts",
+  "found": 16,
+  "pool": 16,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_snooker",
+  "name": "Snooker",
+  "found": 16,
+  "pool": 16,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_golf",
+  "name": "Golf",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_olymp",
+  "name": "Olympic Legends",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_cricket",
+  "name": "Cricket",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "a_nfl_all",
+  "name": "NFL Legends",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "a_mlb",
+  "name": "MLB Legends",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mu_now",
+  "name": "Pop Right Now",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mu_pop",
+  "name": "Pop Icons",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "g_rugby",
+  "name": "Rugby Legends",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mu_rap",
+  "name": "Rap Legends",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mu_rock",
+  "name": "Rock Frontmen",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mu_divas",
+  "name": "Divas",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mu_rb",
+  "name": "R&B / Soul",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mu_country",
+  "name": "Country",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "uk_grime",
+  "name": "UK Rap & Grime",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "uk_britpop",
+  "name": "British Bands",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "uk_pop",
+  "name": "British Pop Stars",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mu_kpop",
+  "name": "K-Pop",
+  "found": 25,
+  "pool": 25,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mb_all",
+  "name": "Greatest Bands",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "mb_boy",
+  "name": "Boy & Girl Groups",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "md_2010",
+  "name": "2010s Hits",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "md_2000",
+  "name": "2000s Nostalgia",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "md_1990",
+  "name": "90s Legends",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "md_1980",
+  "name": "80s Icons",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "al_greatest",
+  "name": "Greatest Albums",
+  "found": 30,
+  "pool": 30,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "vg_best",
+  "name": "Greatest Games",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "vg_chars",
+  "name": "Gaming Icons",
+  "found": 23,
+  "pool": 23,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "vg_franchise",
+  "name": "Game Franchises",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "vg_villains",
+  "name": "Video Game Villains",
+  "found": 16,
+  "pool": 16,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "vg_consoles",
+  "name": "Consoles",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "vg_pokemon",
+  "name": "Original 151 Pokémon",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "vg_mobile",
+  "name": "Mobile Games",
+  "found": 20,
+  "pool": 22,
+  "missing": [
+   "Roblox",
+   "Geometry Dash"
+  ],
+  "ok": true
+ },
+ {
+  "id": "vg_nintendo",
+  "name": "Nintendo Characters",
+  "found": 22,
+  "pool": 24,
+  "missing": [
+   "Luigi",
+   "Inkling"
+  ],
+  "ok": true
+ },
+ {
+  "id": "an_trend",
+  "name": "TRENDING ANIME",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "an_pop",
+  "name": "TOP RATED ANIME",
+  "found": 80,
+  "pool": 80,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "an_series",
+  "name": "Anime Series",
+  "found": 28,
+  "pool": 28,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "an_shonen",
+  "name": "Shonen Heroes",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "an_villains",
+  "name": "Anime Villains",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "an_ghibli",
+  "name": "Studio Ghibli",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "an_films",
+  "name": "Anime Films",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "a_men",
+  "name": "Leading Men",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "a_women",
+  "name": "Leading Ladies",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "a_action",
+  "name": "Action Stars",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "a_brits",
+  "name": "British Actors",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "a_com",
+  "name": "Comedy Stars",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "a_rising",
+  "name": "Rising Stars",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "cr_yt",
+  "name": "Top YouTubers",
+  "found": 25,
+  "pool": 25,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "cr_uk",
+  "name": "UK YouTubers",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "cr_stream",
+  "name": "Streamers",
+  "found": 23,
+  "pool": 23,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_fast",
+  "name": "Fast Food Chains",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_dish",
+  "name": "World Dishes",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_dessert",
+  "name": "Desserts",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_choc",
+  "name": "Chocolate Bars",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_candy",
+  "name": "Sweets & Candy",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_snacks",
+  "name": "Crisps & Snacks",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_drinks",
+  "name": "Soft Drinks",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_cereal",
+  "name": "Cereals",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fd_pizza",
+  "name": "Pizza Toppings",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_dogs",
+  "name": "Dog Breeds",
+  "found": 24,
+  "pool": 24,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_cats",
+  "name": "Cat Breeds",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_deadly",
+  "name": "Deadliest Animals",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_bigcats",
+  "name": "Wild Cats",
+  "found": 16,
+  "pool": 16,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_ocean",
+  "name": "Ocean Animals",
+  "found": 21,
+  "pool": 21,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_birds",
+  "name": "Birds",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "n_dinos",
+  "name": "Dinosaurs",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "car_super",
+  "name": "Supercars",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "car_brands",
+  "name": "Car Brands",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "al_modern",
+  "name": "Modern Classic Albums",
+  "found": 25,
+  "pool": 25,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "car_jdm",
+  "name": "JDM Legends",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "car_movie",
+  "name": "Movie & TV Cars",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "car_hot",
+  "name": "Hot Hatches",
+  "found": 14,
+  "pool": 14,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "pl_cities",
+  "name": "World Cities",
+  "found": 25,
+  "pool": 25,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "pl_uk",
+  "name": "UK Cities",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "pl_holiday",
+  "name": "Holiday Spots",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "pl_wonders",
+  "name": "Natural Wonders",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "pl_parks",
+  "name": "Theme Parks",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "pl_stadiums",
+  "name": "Stadiums",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "hg_lands",
+  "name": "World Landmarks",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "hg_figs",
+  "name": "Historical Figures",
+  "found": 22,
+  "pool": 22,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "hg_royals",
+  "name": "British Monarchs",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "hg_inv",
+  "name": "Greatest Inventions",
+  "found": 23,
+  "pool": 23,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "hg_empires",
+  "name": "Empires",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "hg_flags",
+  "name": "World Flags",
+  "found": 25,
+  "pool": 25,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "hg_pres",
+  "name": "US Presidents",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "m_greek",
+  "name": "Greek Gods",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "m_heroes",
+  "name": "Greek Heroes & Monsters",
+  "found": 20,
+  "pool": 20,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "m_norse",
+  "name": "Norse Mythology",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "m_egypt",
+  "name": "Egyptian Gods",
+  "found": 18,
+  "pool": 18,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "m_creatures",
+  "name": "Mythical Creatures",
+  "found": 19,
+  "pool": 19,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "m_cryptids",
+  "name": "Cryptids & Legends",
+  "found": 17,
+  "pool": 17,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "al_uk",
+  "name": "British Albums",
+  "found": 22,
+  "pool": 23,
+  "missing": [
+   "Original Pirate Material|The Streets"
+  ],
+  "ok": true
+ },
+ {
+  "id": "ft_y0",
+  "name": "Best TV of 2026",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_trend",
+  "name": "Trending This Week",
+  "found": 55,
+  "pool": 55,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_cinema",
+  "name": "In Cinemas Now",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ft_y1",
+  "name": "Best TV of 2025",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fg_val",
+  "name": "Valorant Agents",
+  "found": 30,
+  "pool": 30,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fg_lol",
+  "name": "League of Legends Champions",
+  "found": 173,
+  "pool": 173,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ft_trend",
+  "name": "Trending TV This Week",
+  "found": 56,
+  "pool": 56,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen2",
+  "name": "Gen II Pokémon (Johto)",
+  "found": 100,
+  "pool": 100,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen1",
+  "name": "Gen I Pokémon (Kanto)",
+  "found": 151,
+  "pool": 151,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen3",
+  "name": "Gen III Pokémon (Hoenn)",
+  "found": 135,
+  "pool": 135,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_y0",
+  "name": "Best of 2026",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen4",
+  "name": "Gen IV Pokémon (Sinnoh)",
+  "found": 107,
+  "pool": 107,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ft_p8",
+  "name": "Shows on Netflix",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen5",
+  "name": "Gen V Pokémon (Unova)",
+  "found": 156,
+  "pool": 156,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ft_p9",
+  "name": "Shows on Prime Video",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_y1",
+  "name": "Best of 2025",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen7",
+  "name": "Gen VII Pokémon (Alola)",
+  "found": 88,
+  "pool": 88,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen6",
+  "name": "Gen VI Pokémon (Kalos)",
+  "found": 72,
+  "pool": 72,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen8",
+  "name": "Gen VIII Pokémon (Galar)",
+  "found": 96,
+  "pool": 96,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fp_gen9",
+  "name": "Gen IX Pokémon (Paldea)",
+  "found": 120,
+  "pool": 120,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_y2",
+  "name": "Best of 2024",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ft_p350",
+  "name": "Shows on Apple TV+",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_box",
+  "name": "Biggest Box Office Hits",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ft_p337",
+  "name": "Shows on Disney+",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fa_hot",
+  "name": "Hottest Stars This Week",
+  "found": 78,
+  "pool": 78,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_p8",
+  "name": "Films on Netflix",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "ft_p38",
+  "name": "Shows on BBC iPlayer",
+  "found": 57,
+  "pool": 57,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_p9",
+  "name": "Films on Prime Video",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_hp",
+  "name": "Harry Potter Characters",
+  "found": 25,
+  "pool": 25,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_p337",
+  "name": "Films on Disney+",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fm_p350",
+  "name": "Films on Apple TV+",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fmu_uk",
+  "name": "UK Top Songs Right Now",
+  "found": 59,
+  "pool": 59,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fc_got",
+  "name": "Game of Thrones Characters",
+  "found": 53,
+  "pool": 53,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fmu_global",
+  "name": "Global Top Songs",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fs_f1grid",
+  "name": "F1 2026 Grid",
+  "found": 30,
+  "pool": 30,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fmu_artists",
+  "name": "Biggest Artists Right Now",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fmu_albums",
+  "name": "Top Albums Right Now",
+  "found": 60,
+  "pool": 60,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fa_season",
+  "name": "This Season’s Anime",
+  "found": 50,
+  "pool": 50,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fa_trend",
+  "name": "Trending Anime",
+  "found": 50,
+  "pool": 50,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fa_top",
+  "name": "Highest Rated Anime",
+  "found": 50,
+  "pool": 50,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fa_pop",
+  "name": "Most Popular Anime Ever",
+  "found": 50,
+  "pool": 50,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fa_movies",
+  "name": "Top Anime Movies",
+  "found": 50,
+  "pool": 50,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fa_chars",
+  "name": "Most Loved Anime Characters",
+  "found": 50,
+  "pool": 50,
+  "missing": [],
+  "ok": true
+ },
+ {
+  "id": "fa_manga",
+  "name": "Most Popular Manga",
+  "found": 50,
+  "pool": 50,
+  "missing": [],
+  "ok": true
+ }
+]

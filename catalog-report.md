@@ -1,0 +1,259 @@
+# Blind Rank catalog — 2026-11-04T08:14:36.107Z
+
+255 categories built · 0 dropped (<10 pictures) · 38s
+
+- ✅ TRENDING NOW — 80
+- ✅ ALL-TIME GREATS — 100
+- ✅ Marvel (MCU) Films — 31
+- ✅ Star Wars Films — 12
+- ✅ James Bond Films — 25
+- ✅ Wizarding World Films — 11
+- ✅ DC Films — 19
+- ✅ Fast & Furious Films — 11
+- ✅ Spider-Man Films — 11
+- ✅ Pixar Films — 27
+- ✅ Batman Films — 11
+- ✅ Horror Classics — 28
+- ✅ X-Men Films — 13
+- ✅ Disney Live-Action Remakes — 17
+- ✅ Middle-earth Characters — 21
+- ✅ Video Game Movies — 20
+- ✅ Movie Villains — 24
+- ✅ Horror Icons — 20
+- ✅ Marvel Heroes — 21
+- ✅ DC Heroes & Villains — 22
+- ✅ Movie Heroes — 24
+- ✅ Marvel Villains — 26
+- ✅ Christopher Nolan — 13
+- ✅ Quentin Tarantino — 10
+- ✅ Steven Spielberg — 18
+- ✅ Martin Scorsese — 16
+- ✅ Stanley Kubrick — 11
+- ✅ David Fincher — 12
+- ✅ Disney & Pixar Characters — 21
+- ✅ Ridley Scott — 16
+- ✅ Guy Ritchie — 13
+- ✅ Denis Villeneuve — 10
+- ✅ Wes Anderson — 12
+- ✅ Tim Burton — 14
+- ✅ Christmas Movies — 21
+- ✅ Heist Movies — 20
+- ✅ Horror Final Girls — 14
+- ✅ Sci-Fi Classics — 22
+- ✅ Childhood Classics — 22
+- ✅ Best Picture Winners — 28
+- ✅ Teen Movies — 20
+- ✅ British Films — 22
+- ✅ Rom-Coms — 20
+- ✅ Sports Movies — 22
+- ✅ DreamWorks Animation — 23
+- ✅ Pixar Films — 20
+- ✅ A24 Films — 58
+- ✅ Studio Ghibli — 19
+- ✅ Action — 120
+- ✅ Horror — 119
+- ✅ Sci-Fi — 120
+- ✅ Comedy — 120
+- ✅ Animation — 99
+- ✅ Romance — 97
+- ✅ War — 60
+- ✅ Thriller — 120
+- ✅ 2020s — 100
+- ✅ 2010s — 120
+- ✅ Disney Animated Classics — 26
+- ✅ 2000s — 120
+- ✅ 70s — 60
+- ✅ 80s — 100
+- ✅ 90s — 120
+- ✅ TRENDING NOW — 60
+- ✅ TOP RATED TV — 80
+- ✅ Sitcoms — 27
+- ✅ Prestige Dramas — 28
+- ✅ Adult Animation — 20
+- ✅ Sci-Fi & Fantasy — 20
+- ✅ Crime & Mystery — 20
+- ✅ British Drama — 23
+- ✅ British Comedy — 26
+- ✅ Cartoon Network — 16
+- ✅ Nickelodeon — 17
+- ✅ Sitcom Legends — 17
+- ✅ Disney Channel — 16
+- ✅ HBO — 46
+- ✅ UK Kids TV — 20
+- ✅ AMC — 25
+- ✅ Netflix Originals — 80
+- ✅ Apple TV+ — 60
+- ✅ Prime Video — 60
+- ✅ BBC — 58
+- ✅ TV Icons — 22
+- ✅ Reality TV — 24
+- ✅ Game & Talent Shows — 20
+- ✅ Man United — 22
+- ✅ Arsenal — 20
+- ✅ Man City — 20
+- ✅ Liverpool — 20
+- ✅ Chelsea — 18
+- ✅ Tottenham — 18
+- ✅ Newcastle — 17
+- ✅ Real Madrid — 20
+- ✅ Barcelona — 20
+- ✅ Bayern Munich — 17
+- ✅ Juventus — 18
+- ✅ Premier League Icons — 22
+- ✅ All-Time Greats — 22
+- ✅ Current Superstars — 23
+- ✅ England Legends — 22
+- ✅ La Liga Icons — 20
+- ✅ Managers — 22
+- ✅ Ballon d'Or Winners — 24
+- ✅ Goalkeepers — 22
+- ✅ Premier League Clubs — 20
+- ✅ European Giants — 18
+- ✅ Lionesses — 20
+- ✅ World Cup Nations — 20
+- ✅ NBA All-Time — 20
+- ✅ Modern Stars — 20
+- ✅ 90s & 00s — 20
+- ✅ NBA Teams — 18
+- ✅ UFC Legends — 19
+- ✅ Boxing Legends — 20
+- ✅ F1 Drivers — 20
+- ✅ F1 Teams — 12
+- ✅ WWE Legends — 21
+- ✅ Tennis — 20
+- ✅ Darts — 16
+- ✅ Snooker — 16
+- ✅ Golf — 18
+- ✅ Olympic Legends — 20
+- ✅ Cricket — 22
+- ✅ NFL Legends — 20
+- ✅ MLB Legends — 18
+- ✅ Pop Right Now — 22
+- ✅ Pop Icons — 20
+- ✅ Rugby Legends — 20
+- ✅ Rap Legends — 22
+- ✅ Rock Frontmen — 21
+- ✅ Divas — 20
+- ✅ R&B / Soul — 20
+- ✅ Country — 20
+- ✅ UK Rap & Grime — 19
+- ✅ British Bands — 24
+- ✅ British Pop Stars — 22
+- ✅ K-Pop — 25
+- ✅ Greatest Bands — 22
+- ✅ Boy & Girl Groups — 21
+- ✅ 2010s Hits — 20
+- ✅ 2000s Nostalgia — 20
+- ✅ 90s Legends — 20
+- ✅ 80s Icons — 22
+- ✅ Greatest Albums — 30
+- ✅ Greatest Games — 24
+- ✅ Gaming Icons — 23
+- ✅ Game Franchises — 22
+- ✅ Video Game Villains — 16
+- ✅ Consoles — 19
+- ✅ Original 151 Pokémon — 24
+- ✅ Mobile Games — 20 · missing: Roblox, Geometry Dash
+- ✅ Nintendo Characters — 22 · missing: Luigi, Inkling
+- ✅ TRENDING ANIME — 60
+- ✅ TOP RATED ANIME — 80
+- ✅ Anime Series — 28
+- ✅ Shonen Heroes — 22
+- ✅ Anime Villains — 17
+- ✅ Studio Ghibli — 17
+- ✅ Anime Films — 18
+- ✅ Leading Men — 22
+- ✅ Leading Ladies — 21
+- ✅ Action Stars — 21
+- ✅ British Actors — 24
+- ✅ Comedy Stars — 22
+- ✅ Rising Stars — 20
+- ✅ Top YouTubers — 25
+- ✅ UK YouTubers — 22
+- ✅ Streamers — 23
+- ✅ Fast Food Chains — 22
+- ✅ World Dishes — 24
+- ✅ Desserts — 22
+- ✅ Chocolate Bars — 19
+- ✅ Sweets & Candy — 19
+- ✅ Crisps & Snacks — 19
+- ✅ Soft Drinks — 19
+- ✅ Cereals — 20
+- ✅ Pizza Toppings — 20
+- ✅ Dog Breeds — 24
+- ✅ Cat Breeds — 18
+- ✅ Deadliest Animals — 22
+- ✅ Wild Cats — 16
+- ✅ Ocean Animals — 21
+- ✅ Birds — 20
+- ✅ Dinosaurs — 20
+- ✅ Supercars — 22
+- ✅ Car Brands — 19
+- ✅ Modern Classic Albums — 25
+- ✅ JDM Legends — 18
+- ✅ Movie & TV Cars — 18
+- ✅ Hot Hatches — 14
+- ✅ World Cities — 25
+- ✅ UK Cities — 22
+- ✅ Holiday Spots — 22
+- ✅ Natural Wonders — 20
+- ✅ Theme Parks — 20
+- ✅ Stadiums — 20
+- ✅ World Landmarks — 22
+- ✅ Historical Figures — 22
+- ✅ British Monarchs — 20
+- ✅ Greatest Inventions — 23
+- ✅ Empires — 20
+- ✅ World Flags — 25
+- ✅ US Presidents — 20
+- ✅ Greek Gods — 20
+- ✅ Greek Heroes & Monsters — 20
+- ✅ Norse Mythology — 17
+- ✅ Egyptian Gods — 18
+- ✅ Mythical Creatures — 19
+- ✅ Cryptids & Legends — 17
+- ✅ British Albums — 22 · missing: Original Pirate Material|The Streets
+- ✅ Best TV of 2026 — 60
+- ✅ Trending This Week — 55
+- ✅ In Cinemas Now — 60
+- ✅ Best TV of 2025 — 60
+- ✅ Valorant Agents — 30
+- ✅ League of Legends Champions — 173
+- ✅ Trending TV This Week — 56
+- ✅ Gen II Pokémon (Johto) — 100
+- ✅ Gen I Pokémon (Kanto) — 151
+- ✅ Gen III Pokémon (Hoenn) — 135
+- ✅ Best of 2026 — 60
+- ✅ Gen IV Pokémon (Sinnoh) — 107
+- ✅ Shows on Netflix — 60
+- ✅ Gen V Pokémon (Unova) — 156
+- ✅ Shows on Prime Video — 60
+- ✅ Best of 2025 — 60
+- ✅ Gen VII Pokémon (Alola) — 88
+- ✅ Gen VI Pokémon (Kalos) — 72
+- ✅ Gen VIII Pokémon (Galar) — 96
+- ✅ Gen IX Pokémon (Paldea) — 120
+- ✅ Best of 2024 — 60
+- ✅ Shows on Apple TV+ — 60
+- ✅ Biggest Box Office Hits — 60
+- ✅ Shows on Disney+ — 60
+- ✅ Hottest Stars This Week — 78
+- ✅ Films on Netflix — 60
+- ✅ Shows on BBC iPlayer — 57
+- ✅ Films on Prime Video — 60
+- ✅ Harry Potter Characters — 25
+- ✅ Films on Disney+ — 60
+- ✅ Films on Apple TV+ — 60
+- ✅ UK Top Songs Right Now — 59
+- ✅ Game of Thrones Characters — 53
+- ✅ Global Top Songs — 60
+- ✅ F1 2026 Grid — 30
+- ✅ Biggest Artists Right Now — 60
+- ✅ Top Albums Right Now — 60
+- ✅ This Season’s Anime — 50
+- ✅ Trending Anime — 50
+- ✅ Highest Rated Anime — 50
+- ✅ Most Popular Anime Ever — 50
+- ✅ Top Anime Movies — 50
+- ✅ Most Loved Anime Characters — 50
+- ✅ Most Popular Manga — 50
