@@ -7,6 +7,24 @@ import { haptic } from './native.js';
 import * as Ic from './icons.jsx';
 
 const fmt = ms => `${(ms / 1000).toFixed(1)}s`;
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const LINES = {
+  top: ['Straight to #1 👑', 'Bold #1 call!', 'Instant GOAT 🐐', 'Crowned. 👑', 'That’s the one!', 'Top spot, no hesitation'],
+  high: ['Big respect 🔥', 'Strong pick', 'Up there!', 'Elite tier', 'Solid choice'],
+  mid: ['Safe pick', 'Hmm, interesting…', 'Middle of the pack', 'Fair enough', 'No regrets?', 'Bit of a gamble'],
+  low: ['Ouch 😬', 'Harsh!', 'Bottom tier…', 'Down it goes', 'Cold-blooded'],
+  last: ['Dead last 💀', 'Brutal. #10', 'Rock bottom 🪨', 'Sorry, not sorry'],
+  forced: ['No choice now!', 'Last slot standing', 'Had to go somewhere…'],
+};
+function reaction(slot, remaining) {
+  if (remaining === 1) return pick(LINES.forced);
+  if (slot === 0) return pick(LINES.top);
+  if (slot === 9) return pick(LINES.last);
+  if (slot <= 2) return pick(LINES.high);
+  if (slot >= 7) return pick(LINES.low);
+  return pick(LINES.mid);
+}
+const INTROS = ['Get in frame', 'Lights, camera…', 'No take-backs', 'Trust your gut', 'Here we go'];
 
 /* ======================= Game ======================= */
 export function GameScreen({ item, theme, deck, settings, engine, audioTrack, camOn, faceStatus, gameRef, cardRef, onExit, onDone }) {
@@ -18,6 +36,9 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
   const [last, setLast] = useState(null);
   const [flash, setFlash] = useState(null);
   const [recording, setRecording] = useState(false);
+  const [caption, setCaption] = useState(null);
+  const [intro] = useState(() => pick(INTROS));
+  const capT = useRef(null);
   const startRef = useRef(0);
   const timerRef = useRef(null);
   const timeouts = useRef([]);
@@ -30,7 +51,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
   // Share live state with the render engine.
   gameRef.current = {
     phase: phase === 'done' ? 'result' : phase === 'pre' ? 'idle' : phase,
-    slots, queue: deck, activeIndex: active, rolling, count, theme, title,
+    slots, queue: deck, activeIndex: active, rolling, count, theme, title, caption: caption && caption.text,
   };
 
   useEffect(() => {
@@ -57,7 +78,11 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
     if (phase !== 'playing' || rolling || slots[i] || active >= deck.length) return;
     haptic(35); playSound('thud');
     const n = [...slots]; n[i] = deck[active];
-    setSlots(n); setFlash(i); later(() => setFlash(null), 450);
+    const remaining = slots.filter(x => !x).length;
+    setSlots(n); setFlash(i); later(() => setFlash(null), 600);
+    clearTimeout(capT.current);
+    setCaption({ text: reaction(i, remaining), slot: i, k: Date.now() });
+    capT.current = later(() => setCaption(null), 1300);
     setLast({ slot: i, idx: active });
     const next = active + 1;
     if (n.filter(Boolean).length >= 10 || next >= deck.length) {
@@ -105,7 +130,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
           {slots.map((s, i) => (
             <button key={i} className={`slot ${s ? 'filled' : ''} ${i === nextEmpty && !rolling && phase === 'playing' ? 'next' : ''} ${flash === i ? 'flash' : ''}`}
               disabled={!!s || rolling} onClick={() => place(i)} aria-label={`Rank ${i + 1}`}>
-              {s ? <><img src={s.img} alt="" /><span className="tag">{i + 1}</span></> : <span className="num">{i + 1}</span>}
+              {s ? <><img src={s.img} alt="" /><span className="tag">{i + 1}</span></> : <span className="num">{i + 1}</span>}{flash === i && <span className="burst" />}
             </button>
           ))}
         </div>
@@ -118,6 +143,9 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
         <div className="fc-name">{rolling || !cur ? 'Shuffling…' : cleanName(cur.name)}</div>
       </div>
 
+      {caption && phase !== 'pre' && (
+        <div key={caption.k} className="caption" style={{ top: `calc(var(--sat) + 70px + ${caption.slot} * ((100vh - var(--sat) - var(--sab) - 92px) / 10))` }}>{caption.text}</div>
+      )}
       {phase === 'playing' && (
         <div className="counter"><b>{placed}/10</b><span>PLACED</span></div>
       )}
@@ -133,7 +161,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
               <RankCardArt n={2} tone="glass" style={{ width: 54 }} />
               <RankCardArt n={3} tone="glass" style={{ width: 54, transform: 'rotate(8deg)' }} />
             </div>
-            <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: '0.24em', color: 'var(--p)', textTransform: 'uppercase' }}>Get in frame</div>
+            <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: '0.24em', color: 'var(--p)', textTransform: 'uppercase' }}>{intro}</div>
             <h1 style={{ margin: '8px 0 6px', fontSize: 34, fontWeight: 900, lineHeight: 1.05 }}>{title}</h1>
             <p style={{ margin: 0, color: 'var(--muted)', fontWeight: 600 }}>{camOn ? 'Hold your phone up so your face fits the screen.' : 'Camera is off — you can still play.'}</p>
           </div>
@@ -152,7 +180,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
 }
 
 /* ======================= Result ======================= */
-export function ResultScreen({ record, theme, video, onHome, onAgain, onShareList, onSaveVideo, onShareVideo, fromHistory }) {
+export function ResultScreen({ record, theme, video, onHome, onAgain, onShareList, onShareImage, onSaveVideo, onShareVideo, fromHistory }) {
   const picks = record.picks;
   const [one, two, three] = picks;
   const rest = picks.slice(3);
@@ -212,9 +240,10 @@ export function ResultScreen({ record, theme, video, onHome, onAgain, onShareLis
           <div className="res-actions fade-up">
             {onAgain && <button className="cta theme" onClick={onAgain}><Ic.Repeat size={22} />Play again</button>}
             <div className="duo">
-              <button className="btn-outline" onClick={onShareList}><Ic.Share size={20} />Share list</button>
-              <button className="btn-outline" onClick={onHome}><Ic.Home size={20} />Home</button>
+              <button className="btn-outline" onClick={onShareImage}><Ic.Share size={20} />Share image</button>
+              <button className="btn-outline" onClick={onShareList}><Ic.List size={20} />Share text</button>
             </div>
+            <button className="btn-outline" onClick={onHome}><Ic.Home size={20} />Home</button>
           </div>
           <div style={{ height: 'calc(var(--sab) + 30px)' }} />
         </div>

@@ -115,3 +115,18 @@ export function randomChallenge(excludeItem) {
 }
 
 export { MENU_DATA };
+
+// A daily rotating set of featured challenges (same for everyone on the day).
+export function featuredToday(n = 8, date = new Date()) {
+  let seed = date.getFullYear() * 400 + date.getMonth() * 32 + date.getDate();
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const pool = leaves.filter(l => l.item.type !== 'game');
+  const out = []; const used = new Set(); const doms = new Set();
+  while (out.length < n && used.size < pool.length) {
+    const l = pool[Math.floor(rnd() * pool.length)];
+    if (used.has(l)) continue; used.add(l);
+    if (doms.has(l.domain) && doms.size < 10) continue; // spread across worlds
+    doms.add(l.domain); out.push(l);
+  }
+  return out;
+}

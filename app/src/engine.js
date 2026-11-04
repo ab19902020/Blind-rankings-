@@ -207,6 +207,18 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
       ctx.restore();
     }
 
+    // reaction caption
+    if (st.phase === 'playing' && st.caption) {
+      ctx.save();
+      ctx.font = `900 46px ${FONT}`;
+      const cw = ctx.measureText(st.caption).width + 70;
+      const cx = CW / 2 - cw / 2 + 60, cy = CH - 330;
+      rr(ctx, cx, cy, cw, 92, 30); ctx.fillStyle = '#FFFFFF'; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 30; ctx.fill();
+      ctx.shadowBlur = 0; ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(st.caption, cx + cw / 2, cy + 48);
+      ctx.restore();
+    }
+
     // countdown
     if (st.phase === 'countdown' && st.count) {
       ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, CW, CH);

@@ -8,6 +8,7 @@ import { load, save, DEFAULT_SETTINGS } from './storage.js';
 import { haptic, saveVideo, shareText, shareVideo, setHapticsEnabled } from './native.js';
 import { themeVars, itemTheme, Toast, leafInfo } from './ui.jsx';
 import { markSeen } from './api.js';
+import { shareRankImage } from './shareimg.js';
 import { Onboarding, HomeTab, DiscoverTab, RankingsTab, CategoryScreen, ReadyScreen, SettingsSheet } from './screens.jsx';
 import { GameScreen, ResultScreen } from './game.jsx';
 import * as Ic from './icons.jsx';
@@ -167,6 +168,7 @@ function App() {
     const text = `🏆 My Blind Rank: ${displayName(rec.title)}\n\n${rec.picks.map((p, i) => `${['🥇', '🥈', '🥉'][i] || `${i + 1}.`} ${p.name}`).join('\n')}\n\nRanked blind in ${(rec.timeMs / 1000).toFixed(1)}s — can you beat my list?`;
     shareText('My Blind Rank', text).then(r => r === 'copied' && say('Ranking copied to clipboard'));
   };
+  const shareImage = async (rec, theme) => { say('Making your image…'); const r = await shareRankImage(rec, theme); if (r === 'downloaded') say('Image downloaded'); else if (r === 'failed') say('Couldn’t share the image'); };
   const onSaveVideo = async () => {
     if (video.status !== 'ready' || video.saved) { if (video.saved) say('Already saved to your gallery'); return; }
     say('Saving…');
@@ -236,14 +238,14 @@ function App() {
         );
         if (v.name === 'result') return (
           <ResultScreen key={i} record={v.record} theme={itemTheme(v.item, v.domain)} video={video}
-            onHome={() => { tap(); goHome(); }} onAgain={() => openReady(v.item, v.domain)} onShareList={() => shareList(v.record)}
+            onHome={() => { tap(); goHome(); }} onAgain={() => openReady(v.item, v.domain)} onShareList={() => shareList(v.record)} onShareImage={() => shareImage(v.record, itemTheme(v.item, v.domain))}
             onSaveVideo={onSaveVideo} onShareVideo={onShareVideo} />
         );
         if (v.name === 'history') {
           const leaf = ALL_CHALLENGES.find(l => l.item.id === v.record.itemId && l.domain === v.record.domain);
           return (
             <ResultScreen key={i} fromHistory record={v.record} theme={themeFor(v.record.themeKey)} video={null}
-              onHome={() => { tap(); pop(); }} onAgain={leaf ? () => openReady(leaf.item, leaf.domain) : null} onShareList={() => shareList(v.record)} />
+              onHome={() => { tap(); pop(); }} onAgain={leaf ? () => openReady(leaf.item, leaf.domain) : null} onShareList={() => shareList(v.record)} onShareImage={() => shareImage(v.record, themeFor(v.record.themeKey))} />
           );
         }
         return null;

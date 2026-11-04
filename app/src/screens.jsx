@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MENU_DATA, ALL_CHALLENGES, countChallenges, displayName, themeFor, dailyChallenge, DOMAIN_META, safeSecondary } from './catalog.js';
+import { MENU_DATA, ALL_CHALLENGES, countChallenges, displayName, themeFor, dailyChallenge, DOMAIN_META, safeSecondary, featuredToday, sourceLabel } from './catalog.js';
 import { loadDeck, cachedThumb } from './api.js';
 import { RankCardArt, PopcornArt, GamepadArt, CreatorArt, DomainArt, HEADER_ART, JerseyArt } from './art.jsx';
 import { ChallengeRow, FeatureBanner, Switch, Sheet, themeVars, itemTheme, themeLabel, useThumb, Ambient } from './ui.jsx';
@@ -75,6 +75,7 @@ export function Wordmark() {
 /* ======================= Home ======================= */
 export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick }) {
   const daily = useMemo(() => dailyChallenge(), []);
+  const featured = useMemo(() => featuredToday(8).filter(l => l.item !== daily.item), []);
   const [dref, durl] = useThumb(daily.item);
   return (
     <div className="scroll">
@@ -96,6 +97,11 @@ export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick }) {
 
         <div className="fade-up" style={{ animationDelay: '180ms', padding: '6px 18px 0' }}>
           <button className="cta" onClick={onQuick}><Ic.Play size={22} /> Let’s rank</button>
+        </div>
+
+        <div className="section-label">Featured today</div>
+        <div className="carousel">
+          {featured.map((l, i) => <FeatureCard key={l.item.id} leaf={l} delay={i * 50} onClick={() => onPlay(l.item, l.domain)} />)}
         </div>
 
         <div className="section-label">Pick your world</div>
@@ -125,6 +131,20 @@ export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick }) {
         <div className="tab-space" />
       </div>
     </div>
+  );
+}
+
+function FeatureCard({ leaf, onClick, delay }) {
+  const [ref, url] = useThumb(leaf.item);
+  const t = themeFor(leaf.item.themeOverride || leaf.domain);
+  return (
+    <button ref={ref} className="fcard fade-up" style={{ ...themeVars(t), animationDelay: `${delay}ms` }} onClick={onClick}>
+      <div className="fc-bg">{url ? <img src={url} alt="" /> : <DomainArt domain={leaf.domain} item={leaf.item} theme={t} className="fc-art" />}</div>
+      <div className="fc-shade" />
+      <span className="fc-world"><Ic.DomainLine name={MENU_DATA.domain.find(d => d.id === leaf.domain)?.icon} size={13} sw={2.6} />{themeLabel(leaf.domain)}</span>
+      <div className="fc-text"><b>{displayName(leaf.item.name)}</b><span>{sourceLabel(leaf.item)}</span></div>
+      <span className="fc-play"><Ic.Play size={16} /></span>
+    </button>
   );
 }
 
@@ -284,6 +304,7 @@ function ClapperIcon() {
 }
 
 /* ======================= Ready ======================= */
+const GENERIC_TAGS = ['Rank them blind. No take-backs.', 'Ten picks. One shot each.', 'You won’t know who’s next.', 'Trust your gut. Lock it in.'];
 const TAGLINES = {
   sports: 'Rank the legends. Before you know who’s next.', movies: 'Rank them blind. Before you know what’s next.', tv: 'Ten shows. One shot each.',
   anime: 'Ten icons. Zero second chances.', actors: 'Ten stars. Rank them blind.', creators: 'Ten creators. Rank them blind.',
@@ -295,6 +316,7 @@ export function ReadyScreen({ item, domain, group, camOn, camState, camError, st
   const t = itemTheme(item, domain);
   const [deck, setDeck] = useState({ status: 'loading', n: 0 });
   const [attempt, setAttempt] = useState(0);
+  const [tagline] = useState(() => (Math.random() < 0.5 && TAGLINES[domain]) || GENERIC_TAGS[Math.floor(Math.random() * GENERIC_TAGS.length)]);
   useEffect(() => {
     let alive = true;
     setDeck({ status: 'loading', n: 0 });
@@ -324,7 +346,7 @@ export function ReadyScreen({ item, domain, group, camOn, camState, camError, st
           </div>
           <div className="ready-title fade-up">
             <h1>{displayName(item.name)}</h1>
-            <p>{TAGLINES[domain] || 'Rank them blind.'}</p>
+            <p>{tagline}</p>
           </div>
           <div className="rules fade-up" style={{ animationDelay: '80ms' }}>
             <div><Ic.Eye size={24} />Reveal a pick</div>
