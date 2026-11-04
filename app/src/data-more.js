@@ -517,7 +517,7 @@ const R = {
   country: 'country|sovereign state|kingdom|republic|nation|island state|federation', basketball: 'basketball', nfl: 'american football|quarterback|football player',
   baseball: 'baseball', hockey: 'hockey', athlete: 'swimmer|sprinter|athlete|gymnast|skier|skater|snowboarder|runner|track|hurdler|jumper|decathlete|cyclist|olympi',
   music: 'singer|rapper|musician|songwriter|band|group|duo|artist|DJ|record producer|vocalist|trio', rap: 'rapper|hip hop|hip-hop|MC|grime|drill|songwriter',
-  band: 'band|group|duo|trio|ensemble', album: 'album', actor: 'actor|actress|comedian|performer|entertainer|filmmaker',
+  band: 'band|group|duo|trio|ensemble', album: 'album', actor: 'actor|actress',
   creator: 'YouTuber|YouTube|streamer|internet|influencer|vlogger|content creator|gamer|web personality|online|TikTok|podcaster|Twitch|social media|video',
   game: 'video game|game', character: 'character|fictional|protagonist|antagonist|villain|mascot|creature', chain: 'restaurant|fast food|fast-food|chain|coffeehouse|diner|eatery|franchise',
   dish: 'dish|food|cuisine|bread|sandwich|soup|pie|cake|pastry|dessert|stew|sausage|cheese|snack|meal|salad|pudding|curry|pasta|noodle|dumpling|sauce|condiment|fried|baked|roast',
@@ -578,7 +578,7 @@ export const MUST_IDS = Object.keys(MUST);
 for (const id of ['fd_dessert', 'fd_candy', 'fd_choc', 'fd_drinks', 'fd_cereal', 'fd_uk_food', 'fd_us_candy', 'fd_us_soda', 'fd_coffee', 'fd_pizza_chains', 'car_hot',
   'cr_beauty', 'm_heroes', 'm_norse', 'al_uk', 'al_hiphop', 'al_rock', 'mu_now', 'mc_marvel']) delete GROW[id];
 const ANGLO_MUSIC = ['us', 'uk', 'ca', 'au', 'ie', 'nz'];
-const BRIT = 'British|English|Scottish|Welsh|Northern Irish|UK';
+const BRIT = '^(British|English|Scottish|Welsh|Northern Irish|Black British)';
 const patch = (id, extra) => { if (!GROW[id]) return; GROW[id] = Array.isArray(GROW[id]) ? GROW[id].map(g => ({ ...g, ...extra })) : { ...GROW[id], ...extra }; };
 for (const id of ['mu_pop', 'mu_divas', 'mu_rb', 'mu_rock', 'mu_country', 'md_2010', 'md_2000', 'md_1990', 'md_1980', 'mu_popgirls', 'mu_rnb00', 'mu_90shiphop', 'mu_rap', 'mu_rapnow', 'mu_countrynow', 'mb_all']) patch(id, { country: ANGLO_MUSIC });
 patch('mu_rap', { must: 'rapper|hip hop|hip-hop|MC' }); patch('mu_rapnow', { must: 'rapper|hip hop|hip-hop' }); patch('mu_90shiphop', { must: 'rapper|hip hop|hip-hop' });
@@ -601,7 +601,7 @@ patch('cr_pods', { must: 'podcast|comedian|host|presenter|broadcaster', not: 'po
 for (const id of ['cr_us', 'cr_uk', 'cr_yt', 'cr_stream', 'cr_gaming', 'cr_tiktok']) patch(id, { not: 'political|politic|commentator|pundit|activist|far-right' });
 patch('c_ufc_goat', { must: 'mixed martial|UFC|MMA', not: 'kickboxer|influencer|professional wrestler' });
 patch('c_box', { not: 'rugby|wrestler|actor' });
-for (const id of ['a_nfl_all', 'a_nfl_now', 'a_nfl_qbs']) patch(id, { must: 'american football|quarterback|NFL|football player', not: 'association football|soccer|wrestler|sprinter|actor' });
+for (const id of ['a_nfl_all', 'a_nfl_now', 'a_nfl_qbs']) patch(id, { must: 'american football|quarterback|NFL|gridiron', not: 'association football|soccer|wrestler|sprinter|actor' });
 patch('a_wnba', { sex: 'f' }); patch('g_olymp', { not: 'princess|royal' }); patch('g_rugby', { born: [1940] }); patch('g_golf', { born: [1900] });
 patch('fd_fast', { country: ANGLO_MUSIC, must: 'fast food|fast-food|fast casual|quick-service|drive-in|hamburger|burger|fried chicken|pizza|sandwich|taco|doughnut|chicken', not: 'casual dining|steakhouse|family restaurant|theme restaurant|sports bar' });
 patch('fd_us_fast', { must: 'fast food|fast-food|fast casual|quick-service|drive-in|hamburger|burger|fried chicken|pizza|sandwich|taco|chicken', not: 'casual dining|steakhouse|family restaurant|theme restaurant|sports bar|doughnut|coffee' });
@@ -615,3 +615,15 @@ patch('pl_parks', { not: 'abandoned|ghost|city park|public park|garden' });
 patch('hg_empires', { must: 'empire|dynasty|caliphate|khanate|sultanate' }); patch('hg_civil', { must: 'civil rights|abolitionist|suffrag|activist' });
 patch('m_egypt', { also: 'Egypt' }); patch('m_greek', { also: 'Greek' }); patch('m_creatures', { minLinks: 15 });
 patch('f_eu_clubs', { country: ['uk', 'es', 'it', 'de', 'fr', 'pt', 'nl', 'tr', 'be', 'gr', 'sc', 'at', 'ch', 'ru', 'ua'] });
+
+/* ---- Second audit pass ---- */
+delete GROW.car_brands;
+patch('a_ceos', { not: 'fashion|model|singer|socialite|television personality|Playboy' });
+patch('a_reality', { must: 'reality|television personality|TV personality|media personality' });
+patch('a_kidstars', { country: ANGLO_MUSIC });
+patch('a_brits', { not: 'Indian|American' });
+for (const id of ['car_ev', 'car_super', 'car_jdm', 'car_muscle', 'car_trucks', 'car_usbrands', 'fd_fast', 'fd_us_fast', 'fd_us_sit', 'pl_parks', 'pl_stadiums', 'vg_best', 'vg_switch', 'vg_ps', 'vg_xbox', 'vg_mobile', 'vg_horror', 'vg_shooters']) patch(id, { proper: true });
+patch('pl_parks', { country: ['us', 'uk', 'fr', 'de', 'nl', 'dk', 'se', 'jp', 'es', 'it', 'ca', 'au', 'be'], must: 'amusement park|theme park|water park' });
+patch('fd_us_sit', { must: 'casual dining|steakhouse|family restaurant|bar and grill|casual restaurant|diner|buffet|pancake house', not: 'fast food|fast-food|fast casual|quick-service|pizza|sandwich|coffee|doughnut|burger|chicken' });
+patch('hg_civil', { must: 'civil rights|abolitionist|suffrag' });
+for (const id of ['mu_pop', 'mu_divas', 'mu_rb', 'mu_rock', 'md_2010', 'md_2000', 'md_1990', 'md_1980', 'mu_popgirls', 'mu_rnb00']) patch(id, { not: 'Russian|Soviet|Ukrainian|Albanian|Thai|Indonesian|Italian|Turkish' });

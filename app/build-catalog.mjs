@@ -476,7 +476,7 @@ async function growWikidata(g, limit = 170) {
 const audit = {};
 // Never in any category: adult-industry, convicted / extremist people, and a few named exceptions.
 const NEVER = /pornograph|adult film|adult content|adult entertainer|OnlyFans|erotic|sex worker|stripper|convicted|sex offender|murderer|serial killer|criminal|terrorist|fraudster|mercenary|oligarch|white nationalist|white supremacist|far-right|alt-right|neo-Nazi|conspiracy theorist/i;
-const NEVER_NAMES = new Set(['Andrew Tate', 'Tristan Tate', 'Ghislaine Maxwell', 'Yevgeny Prigozhin', 'Nick Fuentes', 'Gavin McInnes', 'Bonnie Blue', 'R. Kelly', 'Bill Cosby', 'Jimmy Savile', 'Harvey Weinstein', 'Rolf Harris', 'Gary Glitter', 'Josh Duggar', 'Oscar Pistorius', 'Aaron Hernandez', 'O. J. Simpson', '6ix9ine', 'Sean Combs', 'Diddy', 'Chris Benoit', 'Marilyn Manson', 'Lil Pump', 'Danny Masterson', 'Kevin Spacey', 'Gérard Depardieu', 'Roman Polanski', 'Woody Allen', 'Phil Spector', 'Jared Fogle', 'Ian Watkins', 'Jian Ghomeshi', 'Russell Brand']);
+const NEVER_NAMES = new Set(['Andrew Tate', 'Tristan Tate', 'Ghislaine Maxwell', 'Yevgeny Prigozhin', 'Nick Fuentes', 'Gavin McInnes', 'Bonnie Blue', 'R. Kelly', 'Bill Cosby', 'Jimmy Savile', 'Harvey Weinstein', 'Rolf Harris', 'Gary Glitter', 'Josh Duggar', 'Oscar Pistorius', 'Aaron Hernandez', 'O. J. Simpson', '6ix9ine', 'Sean Combs', 'Diddy', 'Chris Benoit', 'Marilyn Manson', 'Lil Pump', 'Danny Masterson', 'Kevin Spacey', 'Gérard Depardieu', 'Roman Polanski', 'Woody Allen', 'Phil Spector', 'Donald Trump Jr.', 'Ivana Trump', 'Eric Trump', 'Vanessa Trump', 'Tiffany Trump', 'Hugh Hefner', 'Jared Fogle', 'Ian Watkins', 'Jian Ghomeshi', 'Russell Brand']);
 function relevant(id, g, o) {
   const d = o.desc || '';
   // The main thing they are: "American actor and former football player" -> "American actor".
@@ -484,7 +484,8 @@ function relevant(id, g, o) {
   const ok = !!d && !NEVER.test(d) && !NEVER_NAMES.has(o.name)
     && (!g.must || new RegExp(g.must, 'i').test(g.head === false ? d : head))
     && (!g.also || new RegExp(g.also, 'i').test(d))
-    && !(g.not && new RegExp(g.not, 'i').test(d));
+    && !(g.not && new RegExp(g.not, 'i').test(d))
+    && !(g.proper && !/^[\p{Lu}\d"'(]/u.test(o.name)); // proper nouns only: no generic "electric car"
   const a = audit[id] ||= { kept: [], dropped: [] };
   (ok ? a.kept : a.dropped).push(`${o.name}${d ? ' — ' + d : ''}`);
   return ok;
