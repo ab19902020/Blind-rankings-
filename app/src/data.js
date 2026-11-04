@@ -1,235 +1,386 @@
-// Category & challenge data
-export const THEME = { 
-            movies: { primary: '#FFB800', secondary: '#FF3D5A', shadow: 'rgba(255, 184, 0, 0.5)' }, 
-            tv: { primary: '#D946EF', secondary: '#7C3AED', shadow: 'rgba(217, 70, 239, 0.5)' },
-            anime: { primary: '#FF4500', secondary: '#FF8C00', shadow: 'rgba(255, 69, 0, 0.5)' },
-            sports: { primary: '#00D4FF', secondary: '#0066FF', shadow: 'rgba(0, 212, 255, 0.5)' }, 
-            creators: { primary: '#FF0000', secondary: '#AA0000', shadow: 'rgba(255, 0, 0, 0.5)' },
-            music: { primary: '#FF0080', secondary: '#FFB800', shadow: 'rgba(255, 0, 128, 0.5)' },
-            games: { primary: '#00FF41', secondary: '#008F11', shadow: 'rgba(0, 255, 65, 0.5)' },
-            food: { primary: '#FF5722', secondary: '#FFC107', shadow: 'rgba(255, 87, 34, 0.5)' },
-            history: { primary: '#D4AF37', secondary: '#8B4513', shadow: 'rgba(212, 175, 55, 0.5)' },
-            nature: { primary: '#10B981', secondary: '#047857', shadow: 'rgba(16, 185, 129, 0.5)' },
-            actors: { primary: '#F43F5E', secondary: '#BE123C', shadow: 'rgba(244, 63, 94, 0.5)' },
-            myths: { primary: '#8B5CF6', secondary: '#4C1D95', shadow: 'rgba(139, 92, 246, 0.5)' },
-            
-            utd: { primary: '#DA291C', secondary: '#000000', shadow: 'rgba(218, 41, 28, 0.5)' },
-            madrid: { primary: '#FEBE10', secondary: '#FFFFFF', shadow: 'rgba(254, 190, 16, 0.5)' },
-            barca: { primary: '#A50044', secondary: '#004D98', shadow: 'rgba(165, 0, 68, 0.5)' },
-            arsenal: { primary: '#EF0107', secondary: '#FFFFFF', shadow: 'rgba(239, 1, 7, 0.5)' },
-            chelsea: { primary: '#034694', secondary: '#C1D8FF', shadow: 'rgba(3, 70, 148, 0.5)' },
-            liverpool: { primary: '#C8102E', secondary: '#00B2A9', shadow: 'rgba(200, 16, 46, 0.5)' },
-            city: { primary: '#6CABDD', secondary: '#1C2C5B', shadow: 'rgba(108, 171, 221, 0.5)' },
-            bayern: { primary: '#DC052D', secondary: '#0066B2', shadow: 'rgba(220, 5, 45, 0.5)' }
-        };
+// Blind Rank catalog.
+// Every playable challenge must have a genuine pool of at least 10 (most have 15-30,
+// so each round draws a different 10). Live charts pull fresh results each time.
+//
+// Item formats
+//   wiki:    'Wikipedia Title' or 'Wikipedia Title|Display Name'
+//   films:   'Title|Year'  (TMDB movie search, year-checked)
+//   shows:   'Title' or 'Title|Year' (TMDB TV search)
+//   people:  'Actor' or 'Actor|Character shown' (TMDB person photo)
+
+export const THEME = {
+  movies: { primary: '#FFB800', secondary: '#FF3D5A' },
+  tv: { primary: '#D946EF', secondary: '#7C3AED' },
+  anime: { primary: '#FF4500', secondary: '#FF8C00' },
+  sports: { primary: '#00D4FF', secondary: '#0066FF' },
+  creators: { primary: '#FF2D2D', secondary: '#AA0000' },
+  music: { primary: '#FF0080', secondary: '#FFB800' },
+  games: { primary: '#22E55E', secondary: '#008F11' },
+  food: { primary: '#FF5722', secondary: '#FFC107' },
+  history: { primary: '#D4AF37', secondary: '#8B4513' },
+  nature: { primary: '#10B981', secondary: '#047857' },
+  actors: { primary: '#F43F5E', secondary: '#BE123C' },
+  myths: { primary: '#8B5CF6', secondary: '#4C1D95' },
+  cars: { primary: '#FF4D4D', secondary: '#7F1D1D' },
+  places: { primary: '#14B8A6', secondary: '#0EA5E9' },
+
+  utd: { primary: '#DA291C', secondary: '#000000' },
+  madrid: { primary: '#FEBE10', secondary: '#FFFFFF' },
+  barca: { primary: '#A50044', secondary: '#004D98' },
+  arsenal: { primary: '#EF0107', secondary: '#FFFFFF' },
+  chelsea: { primary: '#034694', secondary: '#C1D8FF' },
+  liverpool: { primary: '#C8102E', secondary: '#00B2A9' },
+  city: { primary: '#6CABDD', secondary: '#1C2C5B' },
+  bayern: { primary: '#DC052D', secondary: '#0066B2' },
+  spurs: { primary: '#132257', secondary: '#FFFFFF' },
+  newcastle: { primary: '#E8E8E8', secondary: '#111111' },
+  juve: { primary: '#F2F2F2', secondary: '#111111' },
+};
+
+/* ---------- helpers ---------- */
+const nav = (id, name, icon, desc) => ({ type: 'nav', id, name, icon, desc });
+const live = (id, name, icon, endpoint, extra = {}) => ({ type: 'game', id, name, icon, endpoint, ...extra });
+const wiki = (id, name, icon, items, extra = {}) => ({ type: 'wiki', id, name, icon, items, ...extra });
+const films = (id, name, icon, list, extra = {}) => {
+  const { names, ...rest } = extra;
+  return {
+    type: 'custom', id, name, icon, kind: names ? 'characters' : 'films', ...rest,
+    queries: list.map((s, i) => { const [q, y] = s.split('|'); return { q, y, n: names ? names[i] : q, t: 'movie' }; }),
+  };
+};
+const shows = (id, name, icon, list, extra = {}) => ({
+  type: 'custom', id, name, icon, kind: 'shows', ...extra,
+  queries: list.map(s => { const [q, y] = s.split('|'); return { q, y, n: q, t: 'tv' }; }),
+});
+const people = (id, name, icon, list, extra = {}) => ({
+  type: 'custom', id, name, icon, kind: 'people', ...extra,
+  queries: list.map(s => { const [q, n] = s.split('|'); return { q, n: n || q, t: 'person' }; }),
+});
 
 export const MENU_DATA = {
-            domain: [
-                { type: 'nav', id: 'movies', name: 'MOVIES', icon: 'popcorn', desc: 'FRANCHISES, CHARACTERS' },
-                { type: 'nav', id: 'tv', name: 'TV SHOWS', icon: 'tv', desc: 'NETWORKS, CARTOONS' },
-                { type: 'nav', id: 'anime', name: 'ANIME', icon: 'star', desc: 'SHONEN, GHIBLI, LEGENDS' },
-                { type: 'nav', id: 'actors', name: 'CELEBS', icon: 'users', desc: 'A-LISTERS, HOLLYWOOD' },
-                { type: 'nav', id: 'sports', name: 'SPORTS', icon: 'trophy', desc: 'FOOTBALL, NBA, UFC, F1' },
-                { type: 'nav', id: 'creators', name: 'CREATORS', icon: 'play', desc: 'YOUTUBE, TWITCH' },
-                { type: 'nav', id: 'music', name: 'MUSIC', icon: 'music', desc: 'POP, RAP, ROCK, K-POP' },
-                { type: 'nav', id: 'games', name: 'GAMING', icon: 'gamepad', desc: 'CHARACTERS, BOSSES' },
-                { type: 'nav', id: 'nature', name: 'NATURE', icon: 'leaf', desc: 'DOGS, DINOS, DEADLY' },
-                { type: 'nav', id: 'food', name: 'FOOD', icon: 'burger', desc: 'FAST FOOD, CEREAL, CANDY' },
-                { type: 'nav', id: 'history', name: 'HISTORY', icon: 'globe', desc: 'LANDMARKS, FLAGS, FIGURES' },
-                { type: 'nav', id: 'myths', name: 'MYTHS', icon: 'zap', desc: 'GREEK GODS, CRYPTIDS' }
-            ],
-            
-            // --- NEW DOMAINS ---
-            nature: [
-                { type: 'wiki', id: 'n_dogs', name: 'Dog Breeds', icon: '🐕', items: ["Golden Retriever", "German Shepherd", "Pug", "Siberian Husky", "Bulldog", "Poodle", "Beagle", "Rottweiler", "Dachshund", "Pembroke Welsh Corgi", "Dobermann", "Great Dane", "Shih Tzu", "Boxer (dog)", "Chihuahua (dog)", "Border Collie", "Australian Shepherd", "French Bulldog", "Shiba Inu", "Dalmatian (dog)"] },
-                { type: 'wiki', id: 'n_deadly', name: 'Deadliest Animals', icon: '🦈', items: ["Great white shark", "Hippopotamus", "Saltwater crocodile", "Polar bear", "Lion", "Tiger", "King cobra", "Black mamba", "Grizzly bear", "Leopard", "Orca", "Box jellyfish", "Mosquito", "Komodo dragon", "Cape buffalo", "African elephant", "Tsetse fly", "Stonefish", "Deathstalker"] },
-                { type: 'wiki', id: 'n_dinos', name: 'Dinosaurs', icon: '🦖', items: ["Tyrannosaurus", "Triceratops", "Velociraptor", "Stegosaurus", "Brachiosaurus", "Spinosaurus", "Ankylosaurus", "Diplodocus", "Allosaurus", "Pteranodon", "Iguanodon", "Parasaurolophus", "Carnotaurus", "Dilophosaurus", "Baryonyx"] }
-            ],
-            actors: [
-                { type: 'custom', id: 'a_men', name: 'Leading Men', icon: '🕴️', queries: [{ q: "Leonardo DiCaprio", n: "Leonardo DiCaprio", t: "person" }, { q: "Brad Pitt", n: "Brad Pitt", t: "person" }, { q: "Tom Cruise", n: "Tom Cruise", t: "person" }, { q: "Denzel Washington", n: "Denzel Washington", t: "person" }, { q: "Christian Bale", n: "Christian Bale", t: "person" }, { q: "Matthew McConaughey", n: "Matthew McConaughey", t: "person" }, { q: "Ryan Gosling", n: "Ryan Gosling", t: "person" }, { q: "Johnny Depp", n: "Johnny Depp", t: "person" }, { q: "Will Smith", n: "Will Smith", t: "person" }, { q: "Tom Hanks", n: "Tom Hanks", t: "person" }, { q: "Keanu Reeves", n: "Keanu Reeves", t: "person" }, { q: "Hugh Jackman", n: "Hugh Jackman", t: "person" }, { q: "Chris Hemsworth", n: "Chris Hemsworth", t: "person" }, { q: "Cillian Murphy", n: "Cillian Murphy", t: "person" }, { q: "Timothée Chalamet", n: "Timothée Chalamet", t: "person" }] },
-                { type: 'custom', id: 'a_women', name: 'Leading Ladies', icon: '💃', queries: [{ q: "Margot Robbie", n: "Margot Robbie", t: "person" }, { q: "Zendaya", n: "Zendaya", t: "person" }, { q: "Scarlett Johansson", n: "Scarlett Johansson", t: "person" }, { q: "Jennifer Lawrence", n: "Jennifer Lawrence", t: "person" }, { q: "Emma Stone", n: "Emma Stone", t: "person" }, { q: "Natalie Portman", n: "Natalie Portman", t: "person" }, { q: "Angelina Jolie", n: "Angelina Jolie", t: "person" }, { q: "Charlize Theron", n: "Charlize Theron", t: "person" }, { q: "Anne Hathaway", n: "Anne Hathaway", t: "person" }, { q: "Meryl Streep", n: "Meryl Streep", t: "person" }, { q: "Florence Pugh", n: "Florence Pugh", t: "person" }, { q: "Anya Taylor-Joy", n: "Anya Taylor-Joy", t: "person" }, { q: "Sydney Sweeney", n: "Sydney Sweeney", t: "person" }, { q: "Ana de Armas", n: "Ana de Armas", t: "person" }] },
-                { type: 'custom', id: 'a_com', name: 'Comedy Stars', icon: '😂', queries: [ { q: "Jim Carrey", n: "Jim Carrey", t: "person" }, { q: "Will Ferrell", n: "Will Ferrell", t: "person" }, { q: "Mike Myers", n: "Mike Myers", t: "person" }, { q: "Rowan Atkinson", n: "Rowan Atkinson", t: "person" }, { q: "Sacha Baron Cohen", n: "Sacha Baron Cohen", t: "person" }, { q: "Jack Black", n: "Jack Black", t: "person" }, { q: "Adam Sandler", n: "Adam Sandler", t: "person" }, { q: "Steve Carell", n: "Steve Carell", t: "person" }, { q: "Robin Williams", n: "Robin Williams", t: "person" }, { q: "Kevin Hart", n: "Kevin Hart", t: "person" }, { q: "Seth Rogen", n: "Seth Rogen", t: "person" }, { q: "Jonah Hill", n: "Jonah Hill", t: "person" }, { q: "Melissa McCarthy", n: "Melissa McCarthy", t: "person" } ]}
-            ],
-            myths: [
-                { type: 'wiki', id: 'm_greek', name: 'Greek Gods', icon: '⚡', items: ["Zeus", "Poseidon", "Hades", "Athena", "Ares", "Apollo", "Artemis", "Aphrodite", "Hermes", "Hera", "Hephaestus", "Dionysus", "Demeter", "Hestia", "Persephone"] },
-                { type: 'wiki', id: 'm_cryptids', name: 'Cryptids & Legends', icon: '👁️', items: ["Bigfoot", "Loch Ness Monster", "Mothman", "Chupacabra", "Yeti", "Kraken", "Wendigo", "Jersey Devil", "Jackalope", "Slender Man", "Mongolian death worm", "Thunderbird (mythology)"] }
-            ],
+  domain: [
+    nav('movies', 'MOVIES', 'popcorn', 'FRANCHISES, CHARACTERS'),
+    nav('tv', 'TV SHOWS', 'tv', 'SITCOMS, DRAMAS, CARTOONS'),
+    nav('sports', 'SPORTS', 'trophy', 'FOOTBALL, NBA, UFC, F1'),
+    nav('music', 'MUSIC', 'music', 'POP, RAP, ROCK, K-POP'),
+    nav('games', 'GAMING', 'gamepad', 'GAMES, HEROES, BOSSES'),
+    nav('anime', 'ANIME', 'star', 'SHONEN, GHIBLI, VILLAINS'),
+    nav('actors', 'CELEBS', 'users', 'A-LISTERS, ACTION STARS'),
+    nav('creators', 'CREATORS', 'play', 'YOUTUBE, TWITCH'),
+    nav('food', 'FOOD', 'burger', 'FAST FOOD, SWEETS, DRINKS'),
+    nav('nature', 'NATURE', 'leaf', 'DOGS, CATS, OCEAN'),
+    nav('cars', 'CARS', 'car', 'SUPERCARS, BRANDS, JDM'),
+    nav('places', 'PLACES', 'plane', 'CITIES, ISLANDS, WONDERS'),
+    nav('history', 'HISTORY', 'globe', 'LANDMARKS, KINGS, EMPIRES'),
+    nav('myths', 'MYTHS', 'zap', 'GODS, MONSTERS, HEROES'),
+  ],
 
-            // --- EXPANDED EXISTING DOMAINS ---
-            movies: [
-                { type: 'game', id: 'm_trend', name: 'TRENDING NOW', icon: '🔥', endpoint: '/discover/movie?sort_by=popularity.desc&primary_release_date.gte=2024-01-01&vote_count.gte=100' },
-                { type: 'game', id: 'm_pop', name: 'ALL-TIME GREATS', icon: '⭐', endpoint: '/discover/movie?sort_by=vote_count.desc&vote_average.gte=8' },
-                { type: 'nav', id: 'm_chars', name: 'CHARACTERS', icon: '🦹‍♂️', desc: 'VILLAINS, HEROES, DISNEY' },
-                { type: 'nav', id: 'm_franchises', name: 'FRANCHISES', icon: '🍿', desc: 'MCU, STAR WARS' },
-                { type: 'nav', id: 'm_genres', name: 'BY GENRE', icon: '🎭', desc: 'SCIFI, HORROR' },
-                { type: 'nav', id: 'm_dirs', name: 'DIRECTORS', icon: '🎬', desc: 'NOLAN, TARANTINO' },
-                { type: 'nav', id: 'm_studios', name: 'STUDIOS', icon: '🏰', desc: 'A24, DISNEY, WB' },
-                { type: 'nav', id: 'm_decades', name: 'DECADES', icon: '⏳', desc: '80s, 90s, 00s' },
-            ],
-            m_chars: [
-                { type: 'custom', id: 'mc_villains', name: 'Movie Villains', icon: '😈', queries: [ { q: "Heath Ledger", n: "The Joker", t: "person" }, { q: "Ralph Fiennes", n: "Voldemort", t: "person" }, { q: "Mads Mikkelsen", n: "Hannibal Lecter", t: "person" }, { q: "Josh Brolin", n: "Thanos", t: "person" }, { q: "Christoph Waltz", n: "Hans Landa", t: "person" }, { q: "Javier Bardem", n: "Anton Chigurh", t: "person" }, { q: "Christian Bale", n: "Patrick Bateman", t: "person" }, { q: "Tom Hiddleston", n: "Loki", t: "person" }, { q: "Willem Dafoe", n: "Green Goblin", t: "person" }, { q: "Tom Hardy", n: "Bane", t: "person" }, { q: "Rosamund Pike", n: "Amy Dunne", t: "person" }, { q: "Anthony Hopkins", n: "Hannibal", t: "person" }, { q: "Jack Nicholson", n: "Jack Torrance", t: "person" }, { q: "Anthony Perkins", n: "Norman Bates", t: "person" }, { q: "Robert Englund", n: "Freddy Krueger", t: "person" }, { q: "James Earl Jones", n: "Darth Vader", t: "person" }, { q: "Hugo Weaving", n: "Agent Smith", t: "person" }, { q: "Robert Patrick", n: "T-1000", t: "person" }, { q: "Ian McKellen", n: "Magneto", t: "person" }, { q: "Bill Skarsgård", n: "Pennywise", t: "person" }, { q: "Tobin Bell", n: "Jigsaw", t: "person" }, { q: "Gunnar Hansen", n: "Leatherface", t: "person" }, { q: "Andy Serkis", n: "Gollum", t: "person" }, { q: "Ian McDiarmid", n: "Emperor Palpatine", t: "person" } ]},
-                { type: 'custom', id: 'mc_heroes', name: 'Movie Heroes', icon: '🦸‍♂️', queries: [ { q: "Harrison Ford", n: "Indiana Jones", t: "person" }, { q: "Keanu Reeves", n: "Neo", t: "person" }, { q: "Robert Downey Jr", n: "Iron Man", t: "person" }, { q: "Chris Evans", n: "Captain America", t: "person" }, { q: "Daniel Craig", n: "James Bond", t: "person" }, { q: "Sigourney Weaver", n: "Ellen Ripley", t: "person" }, { q: "Sylvester Stallone", n: "Rocky Balboa", t: "person" }, { q: "Hugh Jackman", n: "Wolverine", t: "person" }, { q: "Henry Cavill", n: "Superman", t: "person" }, { q: "Tom Holland", n: "Spider-Man", t: "person" }, { q: "Tom Cruise", n: "Ethan Hunt", t: "person" }, { q: "Chris Hemsworth", n: "Thor", t: "person" }, { q: "Mark Hamill", n: "Luke Skywalker", t: "person" }, { q: "Daniel Radcliffe", n: "Harry Potter", t: "person" }, { q: "Christian Bale", n: "Bruce Wayne", t: "person" }, { q: "Gal Gadot", n: "Diana Prince", t: "person" }, { q: "Viggo Mortensen", n: "Aragorn", t: "person" }, { q: "Bruce Willis", n: "John McClane", t: "person" } ]},
-                { type: 'custom', id: 'mc_killers', name: 'Horror Killers', icon: '🔪', queries: [ { q: "Halloween 1978", n: "Michael Myers", t: "movie" }, { q: "A Nightmare on Elm Street 1984", n: "Freddy Krueger", t: "movie" }, { q: "Friday the 13th 1980", n: "Jason Voorhees", t: "movie" }, { q: "The Texas Chain Saw Massacre", n: "Leatherface", t: "movie" }, { q: "Scream 1996", n: "Ghostface", t: "movie" }, { q: "Child's Play 1988", n: "Chucky", t: "movie" }, { q: "It 2017", n: "Pennywise", t: "movie" }, { q: "Saw 2004", n: "Jigsaw", t: "movie" }, { q: "Psycho 1960", n: "Norman Bates", t: "movie" }, { q: "The Ring", n: "Samara", t: "movie" }, { q: "Hellraiser", n: "Pinhead", t: "movie" }, { q: "Candyman", n: "Candyman", t: "movie" } ]},
-                { type: 'wiki', id: 'mc_finalgirls', name: 'Horror Final Girls', icon: '🩸', items: ["Laurie Strode", "Sidney Prescott", "Ellen Ripley", "Nancy Thompson", "Sally Hardesty", "Alice Hardy", "Ginny Field", "Kirsty Cotton", "Julie James", "Gale Weathers", "Erin (You're Next)", "Tree Gelbman", "Grace Le Domas", "Dani Ardor", "Maxine Minx", "Mia Allen", "Needy Lesnicki", "Clear Rivers", "Marybeth Dunston", "Sarah Carter (The Descent)", "Suzy Bannion", "Chris MacNeil"] },
-                { type: 'wiki', id: 'mc_disney', name: 'Disney & Pixar', icon: '✨', items: ["Mickey Mouse", "Donald Duck", "Goofy", "Woody (Toy Story)", "Buzz Lightyear", "Simba", "Ariel (The Little Mermaid)", "Belle (Disney)", "Cinderella (Disney character)", "Snow White (Disney character)", "Mulan (Disney character)", "Elsa (Frozen)", "Anna (Frozen)", "Moana (character)", "Rapunzel (Tangled)", "Aladdin (Disney character)", "Genie (Disney)", "Peter Pan (Disney character)", "Winnie the Pooh (Disney character)", "Stitch (Lilo & Stitch)", "Nemo (Finding Nemo)", "Dory (Finding Nemo)", "Mr. Incredible", "Elastigirl", "Wall-E (character)", "Lightning McQueen", "Mike Wazowski", "James P. Sullivan", "Joy (Inside Out)", "Sadness (Inside Out)", "Miguel (Coco)"] }
-            ],
-            m_franchises: [
-                { type: 'game', id: 'fr_mcu', name: 'Marvel Cinematic Universe', icon: '🦸‍♂️', endpoint: '/discover/movie?with_companies=420' },
-                { type: 'game', id: 'fr_sw', name: 'Star Wars Universe', icon: '⚔️', endpoint: '/discover/movie?with_companies=1&with_keywords=11195' },
-                { type: 'game', id: 'fr_lotr', name: 'Lord of the Rings', icon: '🧝‍♂️', endpoint: '/discover/movie?with_keywords=1190' },
-                { type: 'game', id: 'fr_bond', name: 'James Bond (007)', icon: '🕵️‍♂️', endpoint: '/discover/movie?with_keywords=10620' },
-                { type: 'game', id: 'fr_dc', name: 'DC Universe', icon: '🦇', endpoint: '/discover/movie?with_companies=12806,9993,429' },
-                { type: 'game', id: 'fr_hp', name: 'Harry Potter', icon: '⚡', endpoint: '/discover/movie?with_keywords=6956' },
-            ],
-            m_genres: [
-                { type: 'game', id: 'g_act', name: 'Action', icon: '💥', endpoint: '/discover/movie?with_genres=28&vote_count.gte=1000' },
-                { type: 'game', id: 'g_hor', name: 'Horror', icon: '🔪', endpoint: '/discover/movie?with_genres=27&vote_count.gte=1000' },
-                { type: 'game', id: 'g_com', name: 'Comedy', icon: '😂', endpoint: '/discover/movie?with_genres=35&vote_count.gte=1000' },
-                { type: 'game', id: 'g_sci', name: 'Sci-Fi', icon: '👽', endpoint: '/discover/movie?with_genres=878&vote_count.gte=1000' },
-                { type: 'game', id: 'g_rom', name: 'Romance', icon: '❤️', endpoint: '/discover/movie?with_genres=10749&vote_count.gte=1000' },
-                { type: 'game', id: 'g_dra', name: 'Drama', icon: '🍷', endpoint: '/discover/movie?with_genres=18&vote_count.gte=1500' },
-            ],
-            m_dirs: [
-                { type: 'game', id: 'd_nolan', name: 'C. Nolan', icon: '⏳', endpoint: '/discover/movie?with_crew=525' },
-                { type: 'game', id: 'd_taran', name: 'Q. Tarantino', icon: '🩸', endpoint: '/discover/movie?with_crew=138' },
-                { type: 'game', id: 'd_scors', name: 'M. Scorsese', icon: '🕴️', endpoint: '/discover/movie?with_crew=224' },
-                { type: 'game', id: 'd_spiel', name: 'S. Spielberg', icon: '🦖', endpoint: '/discover/movie?with_crew=488' },
-                { type: 'game', id: 'd_kubri', name: 'S. Kubrick', icon: '👁️', endpoint: '/discover/movie?with_crew=240' },
-                { type: 'game', id: 'd_finch', name: 'D. Fincher', icon: '📦', endpoint: '/discover/movie?with_crew=7467' },
-            ],
-            m_studios: [
-                { type: 'game', id: 's_a24', name: 'A24', icon: '✨', endpoint: '/discover/movie?with_companies=3166|41077&vote_count.gte=200' },
-                { type: 'game', id: 's_dis', name: 'Disney', icon: '🏰', endpoint: '/discover/movie?with_companies=2&with_genres=16&vote_count.gte=500' },
-                { type: 'game', id: 's_pix', name: 'Pixar', icon: '💡', endpoint: '/discover/movie?with_companies=3&vote_count.gte=500' },
-                { type: 'game', id: 's_ghi', name: 'Ghibli', icon: '🍃', endpoint: '/discover/movie?with_companies=10342' },
-                { type: 'game', id: 's_wb', name: 'Warner Bros', icon: '🛡️', endpoint: '/discover/movie?with_companies=174&vote_count.gte=1000' },
-            ],
-            m_decades: [
-                { type: 'game', id: 'dec_2020', name: '2020s', icon: '🔥', endpoint: '/discover/movie?primary_release_date.gte=2020-01-01&sort_by=popularity.desc&vote_count.gte=1000' },
-                { type: 'game', id: 'dec_2010', name: '2010s', icon: '📱', endpoint: '/discover/movie?primary_release_date.gte=2010-01-01&primary_release_date.lte=2019-12-31&sort_by=popularity.desc&vote_count.gte=2000' },
-                { type: 'game', id: 'dec_2000', name: '2000s', icon: '💿', endpoint: '/discover/movie?primary_release_date.gte=2000-01-01&primary_release_date.lte=2009-12-31&sort_by=popularity.desc&vote_count.gte=1500' },
-                { type: 'game', id: 'dec_1990', name: '90s', icon: '📼', endpoint: '/discover/movie?primary_release_date.gte=1990-01-01&primary_release_date.lte=1999-12-31&sort_by=popularity.desc&vote_count.gte=1000' },
-                { type: 'game', id: 'dec_1980', name: '80s', icon: '🕹️', endpoint: '/discover/movie?primary_release_date.gte=1980-01-01&primary_release_date.lte=1989-12-31&sort_by=popularity.desc&vote_count.gte=500' },
-            ],
-            tv: [
-                { type: 'game', id: 'tv_trend', name: 'TRENDING NOW', icon: '🔥', endpoint: '/discover/tv?sort_by=popularity.desc&first_air_date.gte=2024-01-01&vote_count.gte=100' },
-                { type: 'game', id: 'tv_pop', name: 'TOP RATED TV', icon: '⭐', endpoint: '/discover/tv?sort_by=vote_count.desc&vote_average.gte=8' },
-                { type: 'nav', id: 'tv_cartoons', name: 'NOSTALGIA CARTOONS', icon: '🧸', desc: 'CN, NICK, DISNEY' },
-                { type: 'nav', id: 'tv_nets', name: 'NETWORKS', icon: '📡', desc: 'HBO, NETFLIX, AMC' },
-                { type: 'nav', id: 'tv_gens', name: 'BY GENRE', icon: '🎭', desc: 'SITCOMS, SCIFI' },
-                { type: 'nav', id: 'tv_real', name: 'REALITY TV', icon: '🎤', desc: 'DATING, COOKING' },
-            ],
-            tv_cartoons: [
-                { type: 'custom', id: 'ct_cn', name: 'Cartoon Network', icon: '🔲', queries: [ { q: "Ben 10", n: "Ben 10", t: "tv" }, { q: "Teen Titans", n: "Teen Titans", t: "tv" }, { q: "Regular Show", n: "Regular Show", t: "tv" }, { q: "Adventure Time", n: "Adventure Time", t: "tv" }, { q: "Dexter's Laboratory", n: "Dexter's Laboratory", t: "tv" }, { q: "The Powerpuff Girls", n: "The Powerpuff Girls", t: "tv" }, { q: "Samurai Jack", n: "Samurai Jack", t: "tv" }, { q: "Ed, Edd n Eddy", n: "Ed, Edd n Eddy", t: "tv" }, { q: "Courage the Cowardly Dog", n: "Courage the Cowardly Dog", t: "tv" }, { q: "Codename: Kids Next Door", n: "Codename: Kids Next Door", t: "tv" }, { q: "The Amazing World of Gumball", n: "The Amazing World of Gumball", t: "tv" }, { q: "Foster's Home for Imaginary Friends", n: "Foster's Home", t: "tv" } ]},
-                { type: 'custom', id: 'ct_nick', name: 'Nickelodeon', icon: '🟧', queries: [ { q: "SpongeBob SquarePants", n: "SpongeBob", t: "tv" }, { q: "Avatar: The Last Airbender", n: "Avatar: TLA", t: "tv" }, { q: "The Fairly OddParents", n: "Fairly OddParents", t: "tv" }, { q: "Danny Phantom", n: "Danny Phantom", t: "tv" }, { q: "Jimmy Neutron", n: "Jimmy Neutron", t: "tv" }, { q: "Rugrats", n: "Rugrats", t: "tv" }, { q: "Hey Arnold!", n: "Hey Arnold!", t: "tv" }, { q: "Invader Zim", n: "Invader Zim", t: "tv" }, { q: "CatDog", n: "CatDog", t: "tv" }, { q: "The Ren & Stimpy Show", n: "Ren & Stimpy", t: "tv" }, { q: "Drake & Josh", n: "Drake & Josh", t: "tv" }, { q: "iCarly", n: "iCarly", t: "tv" } ]},
-                { type: 'custom', id: 'ct_disney', name: 'Disney Channel', icon: '✨', queries: [ { q: "Phineas and Ferb", n: "Phineas and Ferb", t: "tv" }, { q: "Gravity Falls", n: "Gravity Falls", t: "tv" }, { q: "The Suite Life of Zack & Cody", n: "Suite Life", t: "tv" }, { q: "Wizards of Waverly Place", n: "Wizards of Waverly Place", t: "tv" }, { q: "Hannah Montana", n: "Hannah Montana", t: "tv" }, { q: "Kim Possible", n: "Kim Possible", t: "tv" }, { q: "That's So Raven", n: "That's So Raven", t: "tv" }, { q: "The Proud Family", n: "The Proud Family", t: "tv" }, { q: "Lizzie McGuire", n: "Lizzie McGuire", t: "tv" }, { q: "Good Luck Charlie", n: "Good Luck Charlie", t: "tv" } ]}
-            ],
-            tv_nets: [
-                { type: 'game', id: 'n_hbo', name: 'HBO Prestige', icon: '👑', endpoint: '/discover/tv?with_networks=49&vote_count.gte=500' },
-                { type: 'game', id: 'n_net', name: 'Netflix', icon: 'N', endpoint: '/discover/tv?with_networks=213&vote_count.gte=500' },
-                { type: 'game', id: 'n_amc', name: 'AMC Dramas', icon: '🧟', endpoint: '/discover/tv?with_networks=174&vote_count.gte=300' },
-                { type: 'game', id: 'n_app', name: 'Apple TV+', icon: '🍎', endpoint: '/discover/tv?with_networks=2552&vote_count.gte=100' },
-                { type: 'game', id: 'n_prim', name: 'Amazon Prime', icon: '📦', endpoint: '/discover/tv?with_networks=1024&vote_count.gte=200' },
-            ],
-            tv_gens: [
-                { type: 'game', id: 'g_sit', name: 'Sitcoms', icon: '🛋️', endpoint: '/discover/tv?with_genres=35&vote_count.gte=500' },
-                { type: 'game', id: 'g_dra', name: 'Drama', icon: '🍷', endpoint: '/discover/tv?with_genres=18&vote_count.gte=500' },
-                { type: 'game', id: 'g_sci', name: 'Sci-Fi/Fantasy', icon: '🐉', endpoint: '/discover/tv?with_genres=10765&vote_count.gte=500' },
-                { type: 'game', id: 'g_cri', name: 'Crime/Mystery', icon: '🔍', endpoint: '/discover/tv?with_genres=80,9648&vote_count.gte=300' },
-            ],
-            tv_real: [
-                { type: 'game', id: 'rt_all', name: 'All Reality', icon: '📺', endpoint: '/discover/tv?with_genres=10764&vote_count.gte=50' },
-                { type: 'game', id: 'rt_comp', name: 'Competition', icon: '🏆', endpoint: '/discover/tv?with_genres=10764&with_keywords=271217' },
-                { type: 'game', id: 'rt_date', name: 'Dating', icon: '💔', endpoint: '/discover/tv?with_genres=10764&with_keywords=10636' },
-            ],
-            anime: [
-                { type: 'game', id: 'an_trend', name: 'TRENDING ANIME', icon: '🔥', endpoint: '/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&first_air_date.gte=2024-01-01' },
-                { type: 'game', id: 'an_pop', name: 'TOP RATED ANIME', icon: '⭐', endpoint: '/discover/tv?with_genres=16&with_original_language=ja&sort_by=vote_count.desc' },
-                { type: 'wiki', id: 'an_shonen', name: 'Shonen Legends', icon: '⚔️', items: ["Naruto Uzumaki", "Monkey D. Luffy", "Goku", "Ichigo Kurosaki", "Izuku Midoriya", "Tanjiro Kamado", "Yuji Itadori", "Eren Yeager", "Edward Elric", "Gon Freecss", "Yusuke Urameshi", "Asta", "Saitama (One Punch Man)", "Light Yagami", "Lelouch vi Britannia", "Gintoki Sakata", "Levi Ackerman", "Sasuke Uchiha", "Vegeta", "Roronoa Zoro", "Killua Zoldyck", "Kakashi Hatake", "Itachi Uchiha", "Gojo Satoru"] },
-                { type: 'game', id: 'an_ghibli', name: 'Studio Ghibli', icon: '🍃', endpoint: '/discover/movie?with_companies=10342' },
-            ],
-            creators: [
-                { type: 'wiki', id: 'cr_yt', name: 'Top YouTubers', icon: '▶️', items: ["MrBeast", "PewDiePie", "Markiplier", "Jacksepticeye", "KSI", "Logan Paul", "Jake Paul", "Dude Perfect", "Emma Chamberlain", "Marques Brownlee", "Smosh", "Ryan Higa", "Lilly Singh", "David Dobrik", "Casey Neistat", "Ninja (gamer)", "Dream (YouTuber)", "TommyInnit", "Fidelitas", "Rhett and Link", "DanTDM", "ZHC", "LazarBeam", "Airrack", "IShowSpeed", "Kai Cenat", "xQc", "Pokimane", "Valkyrae", "Ludwig Ahgren"] },
-                { type: 'wiki', id: 'cr_stream', name: 'Twitch Legends', icon: '🟪', items: ["Ninja (gamer)", "Shroud (gamer)", "xQc", "Kai Cenat", "Pokimane", "Summit1g", "TimTheTatman", "Dr Disrespect", "Nickmercs", "Lirik", "SypherPK", "Asmongold", "HasanAbi", "Ludwig Ahgren", "Valkyrae", "Kyedae", "Tarik", "TenZ", "Amouranth", "QTCinderella", "Maya Higa", "Ironmouse", "Gawr Gura", "MoistCr1TiKaL", "Jerma985"] }
-            ],
-            sports: [
-                { type: 'nav', id: 'sp_foot_clubs', name: 'FOOTBALL CLUBS', icon: '🛡️', desc: 'MAN UTD, MADRID, CITY' },
-                { type: 'nav', id: 'sp_foot', name: 'FOOTBALL LEGENDS', icon: '⚽', desc: 'PREMIER LEAGUE, LA LIGA' },
-                { type: 'nav', id: 'sp_basket', name: 'BASKETBALL', icon: '🏀', desc: 'NBA LEGENDS, TEAMS' },
-                { type: 'nav', id: 'sp_combat', name: 'COMBAT SPORTS', icon: '🥊', desc: 'UFC, BOXING, WWE' },
-                { type: 'nav', id: 'sp_amer', name: 'US SPORTS', icon: '🏈', desc: 'NFL, BASEBALL' },
-                { type: 'nav', id: 'sp_global', name: 'GLOBAL SPORTS', icon: '🌍', desc: 'F1, TENNIS, GOLF' },
-            ],
-            sp_foot_clubs: [
-                { type: 'wiki', id: 'fc_utd', themeOverride: 'utd', name: 'Man United', icon: '😈', items: ["Wayne Rooney", "Ryan Giggs", "Paul Scholes", "George Best", "Eric Cantona", "Roy Keane", "Peter Schmeichel", "Rio Ferdinand", "David Beckham", "Ruud van Nistelrooy", "Nemanja Vidić", "Marcus Rashford", "Paul Pogba", "Edwin van der Sar", "Patrice Evra"] },
-                { type: 'wiki', id: 'fc_madrid', themeOverride: 'madrid', name: 'Real Madrid', icon: '👑', items: ["Cristiano Ronaldo", "Alfredo Di Stéfano", "Raúl (footballer)", "Zinedine Zidane", "Iker Casillas", "Sergio Ramos", "Luka Modrić", "Roberto Carlos", "Luís Figo", "Karim Benzema", "Gareth Bale", "Vinícius Júnior", "Toni Kroos", "Marcelo (footballer, born 1988)"] },
-                { type: 'wiki', id: 'fc_barca', themeOverride: 'barca', name: 'Barcelona', icon: '🔴', items: ["Lionel Messi", "Xavi", "Andrés Iniesta", "Ronaldinho", "Johan Cruyff", "Carles Puyol", "Dani Alves", "Luis Suárez", "Neymar", "Rivaldo", "Sergio Busquets", "Gerard Piqué", "Samuel Eto'o", "Víctor Valdés", "Jordi Alba"] },
-                { type: 'wiki', id: 'fc_city', themeOverride: 'city', name: 'Man City', icon: '🦅', items: ["Kevin De Bruyne", "Sergio Agüero", "David Silva", "Vincent Kompany", "Yaya Touré", "Erling Haaland", "Phil Foden", "Raheem Sterling", "Bernardo Silva", "Ederson", "Ruben Dias", "Rodri", "Ilkay Gündogan", "Kyle Walker", "John Stones", "Joe Hart", "Pablo Zabaleta", "Fernandinho"] },
-                { type: 'wiki', id: 'fc_bayern', themeOverride: 'bayern', name: 'Bayern Munich', icon: '🥨', items: ["Franz Beckenbauer", "Gerd Müller", "Thomas Müller", "Manuel Neuer", "Philipp Lahm", "Bastian Schweinsteiger", "Franck Ribéry", "Arjen Robben", "Robert Lewandowski", "Oliver Kahn", "Karl-Heinz Rummenigge", "Lothar Matthäus", "Sepp Maier", "Joshua Kimmich", "Jamal Musiala", "Alphonso Davies"] },
-                { type: 'wiki', id: 'fc_arsenal', themeOverride: 'arsenal', name: 'Arsenal', icon: '🎯', items: ["Thierry Henry", "Dennis Bergkamp", "Patrick Vieira", "Tony Adams", "Ian Wright", "Robert Pires", "David Seaman", "Sol Campbell", "Cesc Fàbregas", "Robin van Persie", "Bukayo Saka", "Jens Lehmann", "Freddie Ljungberg", "Ashley Cole", "Gilberto Silva"] },
-                { type: 'wiki', id: 'fc_chelsea', themeOverride: 'chelsea', name: 'Chelsea', icon: '🦁', items: ["Frank Lampard", "John Terry", "Didier Drogba", "Petr Čech", "Eden Hazard", "Ashley Cole", "Gianfranco Zola", "Claude Makélélé", "N'Golo Kanté", "Michael Essien", "Branislav Ivanović", "Ricardo Carvalho", "John Obi Mikel"] },
-                { type: 'wiki', id: 'fc_liverpool', themeOverride: 'liverpool', name: 'Liverpool', icon: '🦅', items: ["Steven Gerrard", "Kenny Dalglish", "Ian Rush", "Mohamed Salah", "Virgil van Dijk", "John Barnes", "Robbie Fowler", "Jamie Carragher", "Sadio Mané", "Luis Suárez", "Alisson", "Trent Alexander-Arnold", "Roberto Firmino", "Michael Owen", "Kevin Keegan"] },
-            ],
-            sp_foot: [
-                { type: 'wiki', id: 'f_all', name: 'All-Time Greats', icon: '🐐', items: ["Lionel Messi", "Cristiano Ronaldo", "Pelé", "Diego Maradona", "Zinedine Zidane", "Ronaldo (Brazilian footballer)", "Ronaldinho", "Johan Cruyff", "Thierry Henry", "Andrés Iniesta", "Paolo Maldini", "Lev Yashin", "Franz Beckenbauer", "Alfredo Di Stéfano", "Michel Platini"] },
-                { type: 'wiki', id: 'f_prem', name: 'Prem Icons', icon: '🦁', items: ["Thierry Henry", "Alan Shearer", "Wayne Rooney", "Sergio Agüero", "Steven Gerrard", "Frank Lampard", "Kevin De Bruyne", "Ryan Giggs", "Didier Drogba", "Eden Hazard", "Paul Scholes", "Roy Keane", "Eric Cantona", "Patrick Vieira", "David Silva"] },
-                { type: 'wiki', id: 'f_liga', name: 'La Liga Icons', icon: '🇪🇸', items: ["Lionel Messi", "Cristiano Ronaldo", "Andrés Iniesta", "Xavi", "Zinedine Zidane", "Ronaldinho", "Sergio Ramos", "Karim Benzema", "Luka Modrić", "Luis Suárez", "Iker Casillas", "Raúl (footballer)", "Roberto Carlos", "Rivaldo", "Dani Alves"] },
-            ],
-            sp_basket: [
-                { type: 'wiki', id: 'b_all', name: 'NBA All-Time', icon: '🐐', items: ["Michael Jordan", "LeBron James", "Kobe Bryant", "Kareem Abdul-Jabbar", "Magic Johnson", "Larry Bird", "Shaquille O'Neal", "Tim Duncan", "Wilt Chamberlain", "Stephen Curry", "Bill Russell", "Hakeem Olajuwon", "Oscar Robertson", "Kevin Durant", "Karl Malone"] },
-                { type: 'wiki', id: 'b_mod', name: 'Modern Stars', icon: '🔥', items: ["LeBron James", "Stephen Curry", "Kevin Durant", "Giannis Antetokounmpo", "Nikola Jokić", "Luka Dončić", "Joel Embiid", "Jayson Tatum", "Anthony Edwards (basketball)", "Devin Booker", "Shai Gilgeous-Alexander", "Damian Lillard", "Jimmy Butler", "Kawhi Leonard", "Kyrie Irving"] },
-                { type: 'wiki', id: 'b_90', name: '90s & 00s', icon: '📼', items: ["Michael Jordan", "Kobe Bryant", "Shaquille O'Neal", "Allen Iverson", "Vince Carter", "Tracy McGrady", "Kevin Garnett", "Dirk Nowitzki", "Steve Nash", "Jason Kidd", "Tim Duncan", "Paul Pierce", "Ray Allen", "Dwyane Wade", "Carmelo Anthony"] },
-            ],
-            sp_combat: [
-                { type: 'wiki', id: 'c_ufc_goat', name: 'UFC GOATs', icon: '🥋', items: ["Jon Jones", "Georges St-Pierre", "Khabib Nurmagomedov", "Anderson Silva", "Demetrious Johnson", "Amanda Nunes", "Conor McGregor", "Daniel Cormier", "José Aldo", "Max Holloway", "Alexander Volkanovski", "Kamaru Usman", "Israel Adesanya", "Stipe Miocic", "Ronda Rousey"] },
-                { type: 'wiki', id: 'c_box', name: 'Boxing Legends', icon: '🥊', items: ["Muhammad Ali", "Mike Tyson", "George Foreman", "Joe Frazier", "Evander Holyfield", "Lennox Lewis", "Tyson Fury", "Oleksandr Usyk", "Deontay Wilder", "Sugar Ray Robinson", "Floyd Mayweather Jr.", "Manny Pacquiao", "Roberto Durán", "Thomas Hearns", "Canelo Álvarez"] },
-                { type: 'wiki', id: 'c_wwe_att', name: 'WWE Attitude', icon: '💀', items: ["Stone Cold Steve Austin", "Dwayne Johnson", "The Undertaker", "Mick Foley", "Triple H", "Shawn Michaels", "Ric Flair", "Chris Jericho", "Kurt Angle", "Kane (wrestler)", "Big Show", "Edge (wrestler)", "Christian Cage", "Hardy Boyz", "Dudley Boyz"] },
-            ],
-            sp_amer: [
-                { type: 'wiki', id: 'a_nfl_all', name: 'NFL All-Time', icon: '🏈', items: ['Tom Brady', 'Peyton Manning', 'Aaron Rodgers', 'Patrick Mahomes', 'Jerry Rice', 'Rob Gronkowski', 'Brett Favre', 'Drew Brees', 'Lawrence Taylor', 'Jim Brown', 'Randy Moss', 'Deion Sanders', 'Joe Montana', 'Dan Marino', 'Emmitt Smith'] },
-                { type: 'wiki', id: 'a_mlb', name: 'MLB Legends', icon: '⚾', items: ['Babe Ruth', 'Willie Mays', 'Hank Aaron', 'Ted Williams', 'Barry Bonds', 'Ken Griffey Jr.', 'Derek Jeter', 'Mike Trout', 'Shohei Ohtani', 'Albert Pujols', 'Mickey Mantle', 'Lou Gehrig', 'Jackie Robinson', 'Sandy Koufax', 'Pedro Martínez'] },
-            ],
-            sp_global: [
-                { type: 'wiki', id: 'g_f1', name: 'Formula 1', icon: '🏎️', items: ['Lewis Hamilton', 'Michael Schumacher', 'Ayrton Senna', 'Max Verstappen', 'Sebastian Vettel', 'Fernando Alonso', 'Niki Lauda', 'Charles Leclerc', 'Lando Norris', 'Alain Prost', 'Nigel Mansell', 'Jackie Stewart', 'Jim Clark', 'Juan Manuel Fangio', 'Nelson Piquet'] },
-                { type: 'wiki', id: 'g_ten', name: 'Tennis', icon: '🎾', items: ['Roger Federer', 'Rafael Nadal', 'Novak Djokovic', 'Serena Williams', 'Andy Murray', 'Pete Sampras', 'Andre Agassi', 'Maria Sharapova', 'Steffi Graf', 'Carlos Alcaraz', 'Jannik Sinner', 'Daniil Medvedev', 'Björn Borg', 'John McEnroe', 'Jimmy Connors'] },
-                { type: 'wiki', id: 'g_golf', name: 'Golf', icon: '⛳', items: ['Tiger Woods', 'Rory McIlroy', 'Jack Nicklaus', 'Arnold Palmer', 'Phil Mickelson', 'Gary Player', 'Ben Hogan', 'Sam Snead', 'Seve Ballesteros', 'Brooks Koepka', 'Scottie Scheffler', 'Jon Rahm', 'Dustin Johnson', 'Jordan Spieth', 'Justin Thomas'] },
-            ],
-            music: [
-                { type: 'nav', id: 'mu_genres', name: 'BY GENRE', icon: '🎧', desc: 'POP, RAP, ROCK, K-POP' },
-                { type: 'nav', id: 'mu_bands', name: 'BANDS/GROUPS', icon: '🎸', desc: 'BEATLES, QUEEN...' },
-                { type: 'nav', id: 'mu_decades', name: 'BY DECADE', icon: '⏳', desc: '80s, 90s, 00s...' },
-            ],
-            mu_genres: [
-                { type: 'wiki', id: 'mu_pop', name: 'Pop Icons', icon: '🎤', items: ['Michael Jackson', 'Madonna', 'Taylor Swift', 'Lady Gaga', 'Ariana Grande', 'Justin Bieber', 'Katy Perry', 'Britney Spears', 'Adele', 'Beyoncé', 'Ed Sheeran', 'Bruno Mars', 'Dua Lipa', 'Harry Styles', 'The Weeknd'] },
-                { type: 'wiki', id: 'mu_rap', name: 'Rap Legends', icon: '🔥', items: ['Eminem', 'Jay-Z', 'Tupac Shakur', 'Snoop Dogg', 'Nas', 'Dr. Dre', 'Kendrick Lamar', 'J. Cole', 'Lil Wayne', '50 Cent', 'The Notorious B.I.G.', 'Ice Cube', 'Tyler, the Creator', 'Drake (musician)', 'Kanye West'] },
-                { type: 'wiki', id: 'mu_rock', name: 'Rock Frontmen', icon: '🤘', items: ['Freddie Mercury', 'Mick Jagger', 'Kurt Cobain', 'Paul McCartney', 'John Lennon', 'Elvis Presley', 'David Bowie', 'Jimi Hendrix', 'Elton John', 'Bruce Springsteen', 'Axl Rose', 'Ozzy Osbourne', 'Mick Fleetwood', 'Steven Tyler', 'Robert Plant'] },
-                { type: 'wiki', id: 'mu_rb', name: 'R&B / Soul', icon: '🎷', items: ['Whitney Houston', 'Mariah Carey', 'Stevie Wonder', 'Aretha Franklin', 'James Brown', 'Marvin Gaye', 'Ray Charles', 'Alicia Keys', 'John Legend', 'Usher (musician)', 'Rihanna', 'Luther Vandross', 'Frank Ocean', 'SZA', 'Mary J. Blige'] },
-                { type: 'wiki', id: 'mu_kpop', name: 'K-Pop Legends', icon: '✨', items: ["BTS", "Blackpink", "EXO", "Twice", "Red Velvet", "Seventeen (South Korean band)", "Stray Kids", "NCT", "Tomorrow X Together", "ENHYPEN", "aespa", "ITZY", "NewJeans", "LE SSERAFIM", "IVE", "Girls' Generation", "Big Bang (South Korean band)", "Super Junior", "SHINee", "2NE1", "G-Dragon", "IU (singer)", "Taeyeon", "Jungkook", "V (singer)", "Jimin", "Lisa (rapper, born 1997)", "Jennie (singer)"] },
-            ],
-            mu_bands: [
-                { type: 'wiki', id: 'mb_all', name: 'Greatest Bands', icon: '🎸', items: ['The Beatles', 'Queen (band)', 'The Rolling Stones', 'Pink Floyd', 'Led Zeppelin', 'Nirvana (band)', 'AC/DC', 'Metallica', 'U2', 'Coldplay', 'Red Hot Chili Peppers', 'Fleetwood Mac', 'Guns N\' Roses', 'Eagles (band)', 'Aerosmith'] },
-                { type: 'wiki', id: 'mb_boy', name: 'Boy/Girl Groups', icon: '🕺', items: ['One Direction', 'Backstreet Boys', 'NSYNC', 'BTS', 'Spice Girls', 'Destiny\'s Child', 'TLC (group)', 'Blackpink', 'Boyz II Men', 'Fifth Harmony', 'Jonas Brothers', 'New Edition', 'The Jackson 5', 'The Pussycat Dolls', 'Little Mix'] },
-            ],
-            mu_decades: [
-                { type: 'wiki', id: 'md_2010', name: '2010s Hits', icon: '📱', items: ['Taylor Swift', 'Drake (musician)', 'Adele', 'Ed Sheeran', 'Justin Bieber', 'Ariana Grande', 'Bruno Mars', 'Katy Perry', 'The Weeknd', 'Rihanna', 'Kendrick Lamar', 'Post Malone', 'Imagine Dragons', 'Maroon 5', 'Shawn Mendes'] },
-                { type: 'wiki', id: 'md_2000', name: '2000s Nostalgia', icon: '💿', items: ['Eminem', 'Britney Spears', 'Beyoncé', 'Justin Timberlake', 'Usher (musician)', '50 Cent', 'Jay-Z', 'Pink (singer)', 'Christina Aguilera', 'Alicia Keys', 'Linkin Park', 'Avril Lavigne', 'Green Day', 'Black Eyed Peas', 'Outkast'] },
-                { type: 'wiki', id: 'md_1990', name: '90s Legends', icon: '📼', items: ['Nirvana (band)', 'Tupac Shakur', 'Mariah Carey', 'Celine Dion', 'The Notorious B.I.G.', 'Snoop Dogg', 'Garth Brooks', 'Shania Twain', 'TLC (group)', 'Dr. Dre', 'Oasis (band)', 'Radiohead', 'Spice Girls', 'Backstreet Boys', 'Pearl Jam'] },
-            ],
-            games: [
-                { type: 'wiki', id: 'vg_chars', name: 'Gaming Icons', icon: '🍄', items: ['Mario', 'Master Chief (Halo)', 'Kratos (God of War)', 'Sonic the Hedgehog', 'Link (The Legend of Zelda)', 'Pikachu', 'Lara Croft', 'Doomguy', 'Pac-Man', 'Geralt of Rivia', 'Samus Aran', 'Cloud Strife', 'Solid Snake', 'Marcus Fenix', 'Arthur Morgan'] },
-                { type: 'wiki', id: 'vg_bosses', name: 'Soulsborne Bosses', icon: '⚔️', items: ["Malenia", "Nameless King", "Slave Knight Gael", "Artorias the Abysswalker", "Ornstein and Smough", "Ludwig, the Holy Blade", "Lady Maria of the Astral Clocktower", "Sister Friede", "Radahn", "Maliketh, the Black Blade", "Godfrey, First Elden Lord", "Gwyn, Lord of Cinder", "Isshin, the Sword Saint", "Genichiro Ashina", "Father Gascoigne"] },
-                { type: 'wiki', id: 'vg_consoles', name: 'Consoles', icon: '🎮', items: ['PlayStation 2', 'Xbox 360', 'Nintendo 64', 'Game Boy', 'Super Nintendo Entertainment System', 'PlayStation 4', 'Nintendo Switch', 'Wii', 'Sega Genesis', 'GameCube', 'Dreamcast', 'PlayStation 5', 'Xbox Series X', 'Nintendo DS', 'PlayStation Portable'] },
-                { type: 'wiki', id: 'vg_pokemon', name: 'Original Pokémon', icon: '🐉', items: ['Charizard', 'Blastoise', 'Venusaur', 'Pikachu', 'Mewtwo', 'Gengar', 'Snorlax', 'Dragonite', 'Alakazam', 'Gyarados', 'Eevee', 'Jigglypuff', 'Mew', 'Squirtle', 'Charmander'] }
-            ],
-            food: [
-                { type: 'wiki', id: 'fd_fast', name: 'Fast Food Chains', icon: '🍔', items: ['McDonald\'s', 'Burger King', 'KFC', 'Taco Bell', 'Wendy\'s', 'Subway (restaurant)', 'Domino\'s Pizza', 'Starbucks', 'Chipotle Mexican Grill', 'Pizza Hut', 'Chick-fil-A', 'Popeyes', 'Dunkin\' Donuts', 'Dairy Queen', 'Papa John\'s'] },
-                { type: 'wiki', id: 'fd_cereal', name: 'Cereals', icon: '🥣', items: ['Cinnamon Toast Crunch', 'Frosted Flakes', 'Froot Loops', 'Lucky Charms', 'Cheerios', "Cap'n Crunch", "Reese's Puffs", 'Apple Jacks', 'Corn Pops', 'Trix (cereal)', 'Cocoa Puffs', 'Honey Nut Cheerios', 'Fruity Pebbles', 'Cocoa Pebbles', 'Rice Krispies'] },
-                { type: 'wiki', id: 'fd_candy', name: 'Candy & Sweets', icon: '🍫', items: ['Snickers', 'Twix', 'Kit Kat', "M&M's", "Reese's Peanut Butter Cups", 'Skittles (candy)', 'Sour Patch Kids', 'Starburst (candy)', 'Milky Way (chocolate bar)', 'Butterfinger', 'Toblerone', 'Haribo', 'Nerds (candy)', 'Swedish Fish', 'Twizzlers'] },
-                { type: 'wiki', id: 'fd_snacks', name: 'Popular Snacks', icon: '🍿', items: ['Doritos', 'Cheetos', 'Oreo', 'Lay\'s', 'Pringles', 'Cheez-It', 'Ruffles', 'Tostitos', 'Fritos', 'Funyuns', 'Rold Gold', 'Takis', 'Slim Jim (snack food)', 'Pop-Tarts', 'Goldfish (cracker)'] }
-            ],
-            history: [
-                { type: 'wiki', id: 'hg_lands', name: 'World Landmarks', icon: '🗽', items: ['Eiffel Tower', 'Great Pyramid of Giza', 'Great Wall of China', 'Colosseum', 'Taj Mahal', 'Statue of Liberty', 'Big Ben', 'Machu Picchu', 'Mount Everest', 'Stonehenge', 'Sydney Opera House', 'Christ the Redeemer (statue)', 'Petra', 'Acropolis of Athens', 'Chichen Itza'] },
-                { type: 'wiki', id: 'hg_flags', name: 'World Flags', icon: '🌍', items: ['Flag of the United States', 'Flag of the United Kingdom', 'Flag of Japan', 'Flag of Brazil', 'Flag of Canada', 'Flag of France', 'Flag of Germany', 'Flag of Italy', 'Flag of Australia', 'Flag of India', 'Flag of Mexico', 'Flag of South Korea', 'Flag of China', 'Flag of Spain', 'Flag of Argentina'] },
-                { type: 'wiki', id: 'hg_figs', name: 'Historical Figures', icon: '📜', items: ['Albert Einstein', 'Abraham Lincoln', 'Cleopatra', 'Julius Caesar', 'Leonardo da Vinci', 'Mahatma Gandhi', 'Nelson Mandela', 'Joan of Arc', 'Winston Churchill', 'Napoleon', 'William Shakespeare', 'Martin Luther King Jr.', 'Alexander the Great', 'George Washington', 'Isaac Newton'] }
-            ]
-        };
+  /* ======================= MOVIES ======================= */
+  movies: [
+    live('m_trend', 'TRENDING NOW', '🔥', '/discover/movie?sort_by=popularity.desc&vote_count.gte=300&primary_release_date.gte=2023-01-01', { pages: 4 }),
+    live('m_pop', 'ALL-TIME GREATS', '⭐', '/discover/movie?sort_by=vote_average.desc&vote_count.gte=8000', { pages: 5 }),
+    nav('m_franchises', 'FRANCHISES', '🍿', 'MCU, BOND, STAR WARS, PIXAR'),
+    nav('m_chars', 'CHARACTERS', '🦹', 'VILLAINS, HEROES, KILLERS'),
+    nav('m_dirs', 'DIRECTORS', '🎬', 'NOLAN, TARANTINO, SCORSESE'),
+    nav('m_lists', 'BY THEME', '🎄', 'CHRISTMAS, HEISTS, ROM-COMS'),
+    nav('m_studios', 'ANIMATION', '🏰', 'DISNEY, GHIBLI, DREAMWORKS'),
+    nav('m_genres', 'BY GENRE', '🎭', 'ACTION, HORROR, SCI-FI'),
+    nav('m_decades', 'DECADES', '⏳', '80s, 90s, 00s, 10s'),
+  ],
+  m_franchises: [
+    films('fr_mcu', 'Marvel (MCU) Films', '🦸', ['Iron Man|2008', 'The Incredible Hulk|2008', 'Iron Man 2|2010', 'Thor|2011', 'Captain America: The First Avenger|2011', 'The Avengers|2012', 'Iron Man 3|2013', 'Thor: The Dark World|2013', 'Captain America: The Winter Soldier|2014', 'Guardians of the Galaxy|2014', 'Avengers: Age of Ultron|2015', 'Ant-Man|2015', 'Captain America: Civil War|2016', 'Doctor Strange|2016', 'Guardians of the Galaxy Vol. 2|2017', 'Spider-Man: Homecoming|2017', 'Thor: Ragnarok|2017', 'Black Panther|2018', 'Avengers: Infinity War|2018', 'Captain Marvel|2019', 'Avengers: Endgame|2019', 'Spider-Man: Far From Home|2019', 'Shang-Chi and the Legend of the Ten Rings|2021', 'Spider-Man: No Way Home|2021', 'Doctor Strange in the Multiverse of Madness|2022', 'Guardians of the Galaxy Vol. 3|2023', 'Deadpool & Wolverine|2024']),
+    films('fr_bond', 'James Bond Films', '🕵️', ['Dr. No|1962', 'From Russia with Love|1963', 'Goldfinger|1964', 'Thunderball|1965', 'You Only Live Twice|1967', "On Her Majesty's Secret Service|1969", 'Diamonds Are Forever|1971', 'Live and Let Die|1973', 'The Man with the Golden Gun|1974', 'The Spy Who Loved Me|1977', 'Moonraker|1979', 'For Your Eyes Only|1981', 'Octopussy|1983', 'A View to a Kill|1985', 'The Living Daylights|1987', 'Licence to Kill|1989', 'GoldenEye|1995', 'Tomorrow Never Dies|1997', 'The World Is Not Enough|1999', 'Die Another Day|2002', 'Casino Royale|2006', 'Quantum of Solace|2008', 'Skyfall|2012', 'Spectre|2015', 'No Time to Die|2021']),
+    films('fr_sw', 'Star Wars Films', '⚔️', ['Star Wars|1977', 'The Empire Strikes Back|1980', 'Return of the Jedi|1983', 'Star Wars: Episode I - The Phantom Menace|1999', 'Star Wars: Episode II - Attack of the Clones|2002', 'Star Wars: Episode III - Revenge of the Sith|2005', 'Star Wars: The Force Awakens|2015', 'Rogue One: A Star Wars Story|2016', 'Star Wars: The Last Jedi|2017', 'Solo: A Star Wars Story|2018', 'Star Wars: The Rise of Skywalker|2019']),
+    films('fr_dc', 'DC Films', '🦇', ['Superman|1978', 'Batman|1989', 'Batman Returns|1992', 'Batman Begins|2005', 'The Dark Knight|2008', 'The Dark Knight Rises|2012', 'Man of Steel|2013', 'Batman v Superman: Dawn of Justice|2016', 'Suicide Squad|2016', 'Wonder Woman|2017', 'Justice League|2017', 'Aquaman|2018', 'Shazam!|2019', 'Joker|2019', 'The Suicide Squad|2021', "Zack Snyder's Justice League|2021", 'The Batman|2022', 'Superman|2025']),
+    films('fr_hp', 'Wizarding World Films', '⚡', ["Harry Potter and the Philosopher's Stone|2001", 'Harry Potter and the Chamber of Secrets|2002', 'Harry Potter and the Prisoner of Azkaban|2004', 'Harry Potter and the Goblet of Fire|2005', 'Harry Potter and the Order of the Phoenix|2007', 'Harry Potter and the Half-Blood Prince|2009', 'Harry Potter and the Deathly Hallows: Part 1|2010', 'Harry Potter and the Deathly Hallows: Part 2|2011', 'Fantastic Beasts and Where to Find Them|2016', 'Fantastic Beasts: The Crimes of Grindelwald|2018', 'Fantastic Beasts: The Secrets of Dumbledore|2022']),
+    films('fr_pixar', 'Pixar Films', '💡', ['Toy Story|1995', "A Bug's Life|1998", 'Toy Story 2|1999', 'Monsters, Inc.|2001', 'Finding Nemo|2003', 'The Incredibles|2004', 'Cars|2006', 'Ratatouille|2007', 'WALL·E|2008', 'Up|2009', 'Toy Story 3|2010', 'Brave|2012', 'Monsters University|2013', 'Inside Out|2015', 'Finding Dory|2016', 'Coco|2017', 'Incredibles 2|2018', 'Toy Story 4|2019', 'Onward|2020', 'Soul|2020', 'Luca|2021', 'Turning Red|2022', 'Elemental|2023', 'Inside Out 2|2024']),
+    films('fr_ff', 'Fast & Furious Films', '🏎️', ['The Fast and the Furious|2001', '2 Fast 2 Furious|2003', 'The Fast and the Furious: Tokyo Drift|2006', 'Fast & Furious|2009', 'Fast Five|2011', 'Fast & Furious 6|2013', 'Furious 7|2015', 'The Fate of the Furious|2017', 'Fast & Furious Presents: Hobbs & Shaw|2019', 'F9|2021', 'Fast X|2023']),
+    films('fr_horror', 'Horror Classics', '👻', ['Psycho|1960', 'The Exorcist|1973', 'Jaws|1975', 'Halloween|1978', 'Alien|1979', 'The Shining|1980', 'The Thing|1982', 'A Nightmare on Elm Street|1984', 'Scream|1996', 'The Blair Witch Project|1999', 'The Ring|2002', 'Saw|2004', 'Paranormal Activity|2007', 'Insidious|2010', 'The Conjuring|2013', 'It|2017', 'Get Out|2017', 'Hereditary|2018', 'A Quiet Place|2018', 'Midsommar|2019', 'Smile|2022', 'Talk to Me|2023', 'Longlegs|2024']),
+    wiki('fr_lotr', 'Middle-earth Characters', '💍', ['Frodo Baggins', 'Samwise Gamgee', 'Gandalf', 'Aragorn', 'Legolas', 'Gimli (Middle-earth)|Gimli', 'Boromir', 'Gollum', 'Sauron', 'Saruman', 'Bilbo Baggins', 'Galadriel', 'Elrond', 'Arwen', 'Éowyn', 'Faramir', 'Meriadoc Brandybuck|Merry', 'Peregrin Took|Pippin', 'Théoden', 'Thorin Oakenshield', 'Smaug', 'Witch-king of Angmar']),
+  ],
+  m_chars: [
+    people('mc_villains', 'Movie Villains', '😈', ['Heath Ledger|The Joker', 'Ralph Fiennes|Voldemort', 'Anthony Hopkins|Hannibal Lecter', 'Josh Brolin|Thanos', 'Christoph Waltz|Hans Landa', 'Javier Bardem|Anton Chigurh', 'Christian Bale|Patrick Bateman', 'Tom Hiddleston|Loki', 'Willem Dafoe|Green Goblin', 'Tom Hardy|Bane', 'Rosamund Pike|Amy Dunne', 'Jack Nicholson|Jack Torrance', 'Alan Rickman|Hans Gruber', 'Hugo Weaving|Agent Smith', 'Robert Patrick|T-1000', 'Ian McKellen|Magneto', 'Bill Skarsgård|Pennywise', 'Andy Serkis|Gollum', 'Ian McDiarmid|Palpatine', 'Kathy Bates|Annie Wilkes', 'Louise Fletcher|Nurse Ratched', 'Joaquin Phoenix|Arthur Fleck', 'Michael B. Jordan|Killmonger', 'James Spader|Ultron']),
+    people('mc_heroes', 'Movie Heroes', '🦸', ['Harrison Ford|Indiana Jones', 'Keanu Reeves|John Wick', 'Robert Downey Jr.|Iron Man', 'Chris Evans|Captain America', 'Daniel Craig|James Bond', 'Sigourney Weaver|Ellen Ripley', 'Sylvester Stallone|Rocky Balboa', 'Hugh Jackman|Wolverine', 'Henry Cavill|Superman', 'Tom Holland|Spider-Man', 'Tom Cruise|Ethan Hunt', 'Chris Hemsworth|Thor', 'Mark Hamill|Luke Skywalker', 'Daniel Radcliffe|Harry Potter', 'Christian Bale|Batman', 'Gal Gadot|Wonder Woman', 'Viggo Mortensen|Aragorn', 'Bruce Willis|John McClane', 'Michael J. Fox|Marty McFly', 'Arnold Schwarzenegger|The Terminator', 'Uma Thurman|The Bride', 'Linda Hamilton|Sarah Connor', 'Jennifer Lawrence|Katniss Everdeen', 'Ryan Reynolds|Deadpool']),
+    films('mc_killers', 'Horror Icons', '🔪', ['Halloween|1978', 'A Nightmare on Elm Street|1984', 'Friday the 13th|1980', 'The Texas Chain Saw Massacre|1974', 'Scream|1996', "Child's Play|1988", 'It|2017', 'Saw|2004', 'Psycho|1960', 'The Ring|2002', 'Hellraiser|1987', 'Candyman|1992', 'Terrifier|2016', 'Annabelle|2014', 'M3GAN|2022', 'The Silence of the Lambs|1991', 'Predator|1987', 'The Babadook|2014', 'The Nun|2018', 'Smile|2022'], { names: ['Michael Myers', 'Freddy Krueger', 'Jason Voorhees', 'Leatherface', 'Ghostface', 'Chucky', 'Pennywise', 'Jigsaw', 'Norman Bates', 'Samara', 'Pinhead', 'Candyman', 'Art the Clown', 'Annabelle', 'M3GAN', 'Hannibal Lecter', 'The Predator', 'The Babadook', 'Valak', 'The Smile Entity'] }),
+    wiki('mc_marvel', 'Marvel Heroes', '🛡️', ['Iron Man', 'Spider-Man', 'Captain America', 'Thor (Marvel Comics)|Thor', 'Hulk', 'Black Widow (Natasha Romanova)|Black Widow', 'Wolverine (character)|Wolverine', "Black Panther (character)|Black Panther", 'Doctor Strange', 'Deadpool', 'Scarlet Witch', 'Hawkeye (Clint Barton)|Hawkeye', 'Captain Marvel (Carol Danvers)|Captain Marvel', 'Groot', 'Rocket Raccoon', 'Star-Lord', 'Vision (Marvel Comics)|Vision', 'Daredevil (Marvel Comics character)|Daredevil', 'Storm (Marvel Comics)|Storm', 'Ant-Man (Scott Lang)|Ant-Man', 'Silver Surfer', 'Ghost Rider (Johnny Blaze)|Ghost Rider']),
+    wiki('mc_dc', 'DC Heroes & Villains', '🦇', ['Superman', 'Batman', 'Wonder Woman', 'Flash (Barry Allen)|The Flash', 'Aquaman', 'Green Lantern (Hal Jordan)|Green Lantern', 'Cyborg (DC Comics)|Cyborg', 'Shazam (DC Comics)|Shazam', 'Green Arrow', 'Supergirl', 'Nightwing', 'Robin (character)|Robin', 'Martian Manhunter', 'Harley Quinn', 'Catwoman', 'Joker (character)|The Joker', 'Lex Luthor', 'Darkseid', 'Bane (DC Comics)|Bane', 'Poison Ivy (character)|Poison Ivy', 'Riddler', 'Penguin (character)|The Penguin']),
+    wiki('mc_disney', 'Disney & Pixar Characters', '✨', ['Mickey Mouse', 'Donald Duck', 'Goofy', 'Woody (Toy Story)|Woody', 'Buzz Lightyear', 'Simba', 'Ariel (The Little Mermaid)|Ariel', 'Belle (Beauty and the Beast)|Belle', 'Elsa (Frozen)|Elsa', 'Moana (character)|Moana', 'Rapunzel (Disney)|Rapunzel', 'Genie (Aladdin)|Genie', 'Stitch (Lilo & Stitch)|Stitch', 'Winnie-the-Pooh', 'Mike Wazowski', 'James P. Sullivan|Sulley', 'Mr. Incredible', 'Lightning McQueen', 'WALL-E (character)|WALL-E', 'Olaf (Frozen)|Olaf', 'Baymax', 'Mulan (Disney character)|Mulan', 'Jack Sparrow']),
+    wiki('mc_finalgirls', 'Horror Final Girls', '🩸', ['Laurie Strode', 'Sidney Prescott', 'Ellen Ripley', 'Nancy Thompson', 'Sally Hardesty', 'Alice Hardy', 'Kirsty Cotton', 'Julie James', 'Gale Weathers', 'Tree Gelbman', 'Dani Ardor', 'Clarice Starling', 'Sarah Connor (Terminator)|Sarah Connor', 'Erin (You\'re Next)|Erin', 'Chris Washington|Chris (Get Out)', 'Lorraine Warren']),
+  ],
+  m_dirs: [
+    films('d_nolan', 'Christopher Nolan', '⏳', ['Following|1998', 'Memento|2000', 'Insomnia|2002', 'Batman Begins|2005', 'The Prestige|2006', 'The Dark Knight|2008', 'Inception|2010', 'The Dark Knight Rises|2012', 'Interstellar|2014', 'Dunkirk|2017', 'Tenet|2020', 'Oppenheimer|2023']),
+    films('d_taran', 'Quentin Tarantino', '🩸', ['Reservoir Dogs|1992', 'Pulp Fiction|1994', 'Jackie Brown|1997', 'Kill Bill: Vol. 1|2003', 'Kill Bill: Vol. 2|2004', 'Death Proof|2007', 'Inglourious Basterds|2009', 'Django Unchained|2012', 'The Hateful Eight|2015', 'Once Upon a Time... in Hollywood|2019']),
+    films('d_spiel', 'Steven Spielberg', '🦖', ['Jaws|1975', 'Close Encounters of the Third Kind|1977', 'Raiders of the Lost Ark|1981', 'E.T. the Extra-Terrestrial|1982', 'Indiana Jones and the Temple of Doom|1984', 'Indiana Jones and the Last Crusade|1989', 'Hook|1991', 'Jurassic Park|1993', "Schindler's List|1993", 'Saving Private Ryan|1998', 'Minority Report|2002', 'Catch Me If You Can|2002', 'War of the Worlds|2005', 'Munich|2005', 'Lincoln|2012', 'Bridge of Spies|2015', 'Ready Player One|2018', 'The Fabelmans|2022']),
+    films('d_scors', 'Martin Scorsese', '🕴️', ['Mean Streets|1973', 'Taxi Driver|1976', 'Raging Bull|1980', 'The King of Comedy|1983', 'Goodfellas|1990', 'Cape Fear|1991', 'Casino|1995', 'Gangs of New York|2002', 'The Aviator|2004', 'The Departed|2006', 'Shutter Island|2010', 'Hugo|2011', 'The Wolf of Wall Street|2013', 'Silence|2016', 'The Irishman|2019', 'Killers of the Flower Moon|2023']),
+    films('d_kubri', 'Stanley Kubrick', '👁️', ['The Killing|1956', 'Paths of Glory|1957', 'Spartacus|1960', 'Lolita|1962', 'Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb|1964', '2001: A Space Odyssey|1968', 'A Clockwork Orange|1971', 'Barry Lyndon|1975', 'The Shining|1980', 'Full Metal Jacket|1987', 'Eyes Wide Shut|1999']),
+    films('d_finch', 'David Fincher', '📦', ['Alien³|1992', 'Se7en|1995', 'The Game|1997', 'Fight Club|1999', 'Panic Room|2002', 'Zodiac|2007', 'The Curious Case of Benjamin Button|2008', 'The Social Network|2010', 'The Girl with the Dragon Tattoo|2011', 'Gone Girl|2014', 'Mank|2020', 'The Killer|2023']),
+    films('d_ridley', 'Ridley Scott', '🏛️', ['Alien|1979', 'Blade Runner|1982', 'Thelma & Louise|1991', 'Gladiator|2000', 'Black Hawk Down|2001', 'Hannibal|2001', 'Kingdom of Heaven|2005', 'American Gangster|2007', 'Robin Hood|2010', 'Prometheus|2012', 'The Martian|2015', 'Alien: Covenant|2017', 'The Last Duel|2021', 'House of Gucci|2021', 'Napoleon|2023', 'Gladiator II|2024']),
+    films('d_ritchie', 'Guy Ritchie', '🎩', ['Lock, Stock and Two Smoking Barrels|1998', 'Snatch|2000', 'RocknRolla|2008', 'Sherlock Holmes|2009', 'Sherlock Holmes: A Game of Shadows|2011', 'The Man from U.N.C.L.E.|2015', 'King Arthur: Legend of the Sword|2017', 'Aladdin|2019', 'The Gentlemen|2019', 'Wrath of Man|2021', 'Operation Fortune: Ruse de Guerre|2023', 'The Covenant|2023', 'The Ministry of Ungentlemanly Warfare|2024']),
+  ],
+  m_lists: [
+    films('l_xmas', 'Christmas Movies', '🎄', ['Home Alone|1990', 'Elf|2003', 'Love Actually|2003', 'The Polar Express|2004', 'Die Hard|1988', 'How the Grinch Stole Christmas|2000', 'The Muppet Christmas Carol|1992', "It's a Wonderful Life|1946", 'The Holiday|2006', "National Lampoon's Christmas Vacation|1989", 'The Nightmare Before Christmas|1993', 'Home Alone 2: Lost in New York|1992', 'Arthur Christmas|2011', 'Klaus|2019', 'The Santa Clause|1994', 'A Christmas Story|1983', 'Gremlins|1984', 'Jingle All the Way|1996', 'Scrooged|1988', 'Nativity!|2009', 'Miracle on 34th Street|1947']),
+    films('l_heist', 'Heist Movies', '💰', ["Ocean's Eleven|2001", 'Heat|1995', 'The Italian Job|1969', 'The Italian Job|2003', 'Inception|2010', 'Baby Driver|2017', 'The Town|2010', 'Inside Man|2006', 'Reservoir Dogs|1992', 'The Thomas Crown Affair|1999', 'Now You See Me|2013', 'Snatch|2000', 'Logan Lucky|2017', 'Point Break|1991', 'Fast Five|2011', 'Den of Thieves|2018', 'Widows|2018', 'Hell or High Water|2016', 'Lock, Stock and Two Smoking Barrels|1998', 'Army of the Dead|2021']),
+    films('l_romcom', 'Rom-Coms', '💘', ['When Harry Met Sally...|1989', 'Notting Hill|1999', 'Pretty Woman|1990', '10 Things I Hate About You|1999', 'Love Actually|2003', 'Crazy, Stupid, Love.|2011', 'The Proposal|2009', 'How to Lose a Guy in 10 Days|2003', "Bridget Jones's Diary|2001", 'Four Weddings and a Funeral|1994', 'Clueless|1995', '13 Going on 30|2004', 'Sleepless in Seattle|1993', "You've Got Mail|1998", 'Crazy Rich Asians|2018', 'The Holiday|2006', 'Easy A|2010', 'Anyone But You|2023', 'About Time|2013', 'Friends with Benefits|2011']),
+    films('l_sport', 'Sports Movies', '🥊', ['Rocky|1976', 'Creed|2015', 'Remember the Titans|2000', 'Moneyball|2011', 'Raging Bull|1980', 'The Blind Side|2009', 'Space Jam|1996', 'Cool Runnings|1993', 'Million Dollar Baby|2004', 'Warrior|2011', 'Ford v Ferrari|2019', 'Rush|2013', 'Bend It Like Beckham|2002', 'Goal!|2005', 'Coach Carter|2005', 'The Karate Kid|1984', 'Dodgeball: A True Underdog Story|2004', 'Happy Gilmore|1996', 'Air|2023', 'Challengers|2024', 'The Fighter|2010', 'Escape to Victory|1981']),
+    films('l_scifi', 'Sci-Fi Classics', '🛸', ['2001: A Space Odyssey|1968', 'Star Wars|1977', 'Alien|1979', 'Blade Runner|1982', 'The Terminator|1984', 'Back to the Future|1985', 'Aliens|1986', 'Terminator 2: Judgment Day|1991', 'Jurassic Park|1993', 'The Matrix|1999', 'Minority Report|2002', 'District 9|2009', 'Avatar|2009', 'Inception|2010', 'Gravity|2013', 'Interstellar|2014', 'Ex Machina|2015', 'Mad Max: Fury Road|2015', 'Arrival|2016', 'Blade Runner 2049|2017', 'Dune|2021', 'Dune: Part Two|2024']),
+    films('l_kids', 'Childhood Classics', '🧸', ['The Lion King|1994', 'Toy Story|1995', 'Shrek|2001', 'Home Alone|1990', 'Matilda|1996', 'Jumanji|1995', 'Mrs. Doubtfire|1993', 'The Parent Trap|1998', 'E.T. the Extra-Terrestrial|1982', 'Finding Nemo|2003', 'Spirited Away|2001', 'The Goonies|1985', 'Babe|1995', 'Hook|1991', 'Space Jam|1996', 'Stuart Little|1999', 'Charlie and the Chocolate Factory|2005', 'Harry Potter and the Philosopher\'s Stone|2001', 'Chicken Run|2000', 'Paddington|2014', 'Despicable Me|2010', 'Madagascar|2005']),
+  ],
+  m_studios: [
+    films('s_disney', 'Disney Animated Classics', '🏰', ['Snow White and the Seven Dwarfs|1937', 'Pinocchio|1940', 'Dumbo|1941', 'Bambi|1942', 'Cinderella|1950', 'Peter Pan|1953', 'Lady and the Tramp|1955', 'Sleeping Beauty|1959', 'One Hundred and One Dalmatians|1961', 'The Jungle Book|1967', 'The Little Mermaid|1989', 'Beauty and the Beast|1991', 'Aladdin|1992', 'The Lion King|1994', 'Pocahontas|1995', 'Hercules|1997', 'Mulan|1998', 'Tarzan|1999', 'Lilo & Stitch|2002', 'Tangled|2010', 'Wreck-It Ralph|2012', 'Frozen|2013', 'Big Hero 6|2014', 'Zootopia|2016', 'Moana|2016', 'Encanto|2021']),
+    films('s_ghibli', 'Studio Ghibli', '🍃', ['Nausicaä of the Valley of the Wind|1984', 'Castle in the Sky|1986', 'My Neighbor Totoro|1988', 'Grave of the Fireflies|1988', "Kiki's Delivery Service|1989", 'Porco Rosso|1992', 'Pom Poko|1994', 'Whisper of the Heart|1995', 'Princess Mononoke|1997', 'Spirited Away|2001', 'The Cat Returns|2002', "Howl's Moving Castle|2004", 'Ponyo|2008', 'Arrietty|2010', 'From Up on Poppy Hill|2011', 'The Wind Rises|2013', 'The Tale of the Princess Kaguya|2013', 'When Marnie Was There|2014', 'The Boy and the Heron|2023']),
+    films('s_dream', 'DreamWorks Animation', '🌙', ['Antz|1998', 'The Prince of Egypt|1998', 'Chicken Run|2000', 'The Road to El Dorado|2000', 'Shrek|2001', 'Shrek 2|2004', 'Shark Tale|2004', 'Madagascar|2005', 'Over the Hedge|2006', 'Shrek the Third|2007', 'Bee Movie|2007', 'Kung Fu Panda|2008', 'Monsters vs Aliens|2009', 'How to Train Your Dragon|2010', 'Megamind|2010', 'Puss in Boots|2011', 'The Croods|2013', 'Trolls|2016', 'The Boss Baby|2017', 'The Bad Guys|2022', 'Puss in Boots: The Last Wish|2022', 'The Wild Robot|2024']),
+    films('s_pixar2', 'Pixar Films', '💡', ['Toy Story|1995', 'Monsters, Inc.|2001', 'Finding Nemo|2003', 'The Incredibles|2004', 'Cars|2006', 'Ratatouille|2007', 'WALL·E|2008', 'Up|2009', 'Toy Story 3|2010', 'Brave|2012', 'Inside Out|2015', 'Coco|2017', 'Incredibles 2|2018', 'Soul|2020', 'Luca|2021', 'Turning Red|2022', 'Inside Out 2|2024']),
+    live('s_a24', 'A24 Films', '✨', '/discover/movie?with_companies=41077&sort_by=vote_count.desc&vote_count.gte=150', { pages: 3 }),
+  ],
+  m_genres: [
+    live('g_act', 'Action', '💥', '/discover/movie?with_genres=28&vote_count.gte=3000&sort_by=vote_count.desc', { pages: 6 }),
+    live('g_hor', 'Horror', '🔪', '/discover/movie?with_genres=27&vote_count.gte=1500&sort_by=vote_count.desc', { pages: 6 }),
+    live('g_com', 'Comedy', '😂', '/discover/movie?with_genres=35&vote_count.gte=2000&sort_by=vote_count.desc', { pages: 6 }),
+    live('g_sci', 'Sci-Fi', '👽', '/discover/movie?with_genres=878&vote_count.gte=2500&sort_by=vote_count.desc', { pages: 6 }),
+    live('g_rom', 'Romance', '❤️', '/discover/movie?with_genres=10749&vote_count.gte=1500&sort_by=vote_count.desc', { pages: 5 }),
+    live('g_ani', 'Animation', '🎨', '/discover/movie?with_genres=16&vote_count.gte=2000&sort_by=vote_count.desc', { pages: 5 }),
+    live('g_thr', 'Thriller', '🕵️', '/discover/movie?with_genres=53&vote_count.gte=3000&sort_by=vote_count.desc', { pages: 6 }),
+    live('g_war', 'War', '🎖️', '/discover/movie?with_genres=10752&vote_count.gte=800&sort_by=vote_count.desc', { pages: 3 }),
+  ],
+  m_decades: [
+    live('dec_2020', '2020s', '🔥', '/discover/movie?primary_release_date.gte=2020-01-01&sort_by=vote_count.desc&vote_count.gte=1500', { pages: 5 }),
+    live('dec_2010', '2010s', '📱', '/discover/movie?primary_release_date.gte=2010-01-01&primary_release_date.lte=2019-12-31&sort_by=vote_count.desc&vote_count.gte=3000', { pages: 6 }),
+    live('dec_2000', '2000s', '💿', '/discover/movie?primary_release_date.gte=2000-01-01&primary_release_date.lte=2009-12-31&sort_by=vote_count.desc&vote_count.gte=2500', { pages: 6 }),
+    live('dec_1990', '90s', '📼', '/discover/movie?primary_release_date.gte=1990-01-01&primary_release_date.lte=1999-12-31&sort_by=vote_count.desc&vote_count.gte=1500', { pages: 6 }),
+    live('dec_1980', '80s', '🕹️', '/discover/movie?primary_release_date.gte=1980-01-01&primary_release_date.lte=1989-12-31&sort_by=vote_count.desc&vote_count.gte=1000', { pages: 5 }),
+    live('dec_1970', '70s', '🕺', '/discover/movie?primary_release_date.gte=1970-01-01&primary_release_date.lte=1979-12-31&sort_by=vote_count.desc&vote_count.gte=600', { pages: 3 }),
+  ],
+
+  /* ======================= TV ======================= */
+  tv: [
+    live('tv_trend', 'TRENDING NOW', '🔥', '/discover/tv?sort_by=popularity.desc&vote_count.gte=150&first_air_date.gte=2021-01-01&without_genres=10767,10763,10764', { pages: 3 }),
+    live('tv_pop', 'TOP RATED TV', '⭐', '/discover/tv?sort_by=vote_average.desc&vote_count.gte=2500&without_genres=16', { pages: 4 }),
+    nav('tv_classics', 'GENRES', '🎭', 'SITCOMS, DRAMAS, ANIMATION'),
+    nav('tv_chars', 'CHARACTERS', '🧑‍🎤', 'ICONS, SITCOM LEGENDS'),
+    nav('tv_cartoons', 'NOSTALGIA CARTOONS', '🧸', 'CN, NICK, DISNEY'),
+    nav('tv_nets', 'NETWORKS', '📡', 'HBO, NETFLIX, AMC'),
+    nav('tv_real', 'REALITY TV', '🎤', 'LOVE ISLAND, BAKE OFF'),
+  ],
+  tv_classics: [
+    shows('tc_sitcom', 'Sitcoms', '🛋️', ['Friends', 'The Office|2005', 'The Office|2001', 'Seinfeld', 'Brooklyn Nine-Nine', 'Parks and Recreation', 'How I Met Your Mother', 'The Big Bang Theory', 'Only Fools and Horses', 'Peep Show', 'The Inbetweeners', 'Fawlty Towers', 'Arrested Development', 'Modern Family', 'Scrubs', "It's Always Sunny in Philadelphia", 'Community', 'Malcolm in the Middle', 'The Fresh Prince of Bel-Air', 'Frasier|1993', 'Gavin & Stacey', 'Derry Girls', "Schitt's Creek", 'Ted Lasso', 'Abbott Elementary', 'Father Ted', 'Blackadder']),
+    shows('tc_drama', 'Prestige Dramas', '🍷', ['Breaking Bad', 'The Sopranos', 'The Wire', 'Game of Thrones', 'Mad Men', 'Better Call Saul', 'Succession', 'True Detective', 'Peaky Blinders', 'Chernobyl', 'Band of Brothers', 'The Crown', 'Ozark', 'Stranger Things', 'The Last of Us', 'House of the Dragon', 'Severance', 'The Bear', 'Fargo', 'Dexter|2006', 'Lost', 'Line of Duty', 'Sherlock', 'Black Mirror', 'The Boys', 'Yellowstone', 'Boardwalk Empire', 'Shōgun|2024']),
+    shows('tc_anim', 'Adult Animation', '📺', ['The Simpsons', 'Family Guy', 'South Park', 'Futurama', 'Rick and Morty', 'BoJack Horseman', 'American Dad!', "Bob's Burgers", 'King of the Hill', 'Archer|2009', 'Invincible', 'Arcane', 'Big Mouth', 'Beavis and Butt-Head', 'Solar Opposites', 'Harley Quinn|2019', 'Love, Death & Robots', 'Disenchantment', 'Hazbin Hotel', 'Castlevania']),
+    shows('tc_crime', 'Crime & Mystery', '🔍', ['Mindhunter', 'Narcos', 'True Detective', 'Sherlock', 'Line of Duty', 'Broadchurch', 'Luther', 'Happy Valley', 'Mare of Easttown', 'Only Murders in the Building', 'The Night Of', 'Money Heist', 'Killing Eve', 'Twin Peaks', 'Dexter|2006', 'Criminal Minds', 'CSI: Crime Scene Investigation', 'The Killing|2011', 'Slow Horses', 'Bodies|2023']),
+    shows('tc_scifi', 'Sci-Fi & Fantasy', '🐉', ['Game of Thrones', 'Stranger Things', 'Doctor Who|2005', 'The Mandalorian', 'Westworld', 'The Witcher', 'Black Mirror', 'Star Trek: The Next Generation', 'Battlestar Galactica|2004', 'The Expanse', 'Severance', 'Lost', 'The X-Files', 'Fallout|2024', 'Andor', 'The Rings of Power', 'House of the Dragon', 'Wednesday', 'Dark|2017', 'Silo']),
+  ],
+  tv_chars: [
+    wiki('tch_icons', 'TV Icons', '👑', ['Walter White (Breaking Bad)|Walter White', 'Tony Soprano', 'Homer Simpson', 'Jon Snow (character)|Jon Snow', 'Michael Scott (The Office)|Michael Scott', 'Tyrion Lannister', 'Tommy Shelby', 'Saul Goodman', 'Eleven (Stranger Things)|Eleven', 'Rick Sanchez', 'Daenerys Targaryen', 'Don Draper', 'Del Boy', 'Omar Little', 'Arya Stark', 'Logan Roy', 'Homelander', 'Jesse Pinkman', 'Dexter Morgan', 'Kendall Roy', 'Cersei Lannister', 'Jim Hopper']),
+    wiki('tch_sitcom', 'Sitcom Legends', '🛋️', ['Chandler Bing', 'Joey Tribbiani', 'Ross Geller', 'Rachel Green', 'Monica Geller', 'Phoebe Buffay', 'Dwight Schrute', 'Jim Halpert', 'Barney Stinson', 'Sheldon Cooper', 'Leslie Knope', 'Ron Swanson', 'Jake Peralta', 'Raymond Holt', 'Kramer (Seinfeld)|Kramer', 'George Costanza', 'Frasier Crane', 'Basil Fawlty', 'David Brent', 'Mark Corrigan', 'Alan Partridge']),
+  ],
+  tv_cartoons: [
+    shows('ct_cn', 'Cartoon Network', '🔲', ['Ben 10|2005', 'Teen Titans|2003', 'Regular Show', 'Adventure Time', "Dexter's Laboratory", 'The Powerpuff Girls|1998', 'Samurai Jack', 'Ed, Edd n Eddy', 'Courage the Cowardly Dog', 'Codename: Kids Next Door', 'The Amazing World of Gumball', "Foster's Home for Imaginary Friends", 'Johnny Bravo', 'Steven Universe', 'The Grim Adventures of Billy & Mandy', 'Cow and Chicken']),
+    shows('ct_nick', 'Nickelodeon', '🟧', ['SpongeBob SquarePants', 'Avatar: The Last Airbender', 'The Fairly OddParents', 'Danny Phantom', 'The Adventures of Jimmy Neutron, Boy Genius', 'Rugrats', 'Hey Arnold!', 'Invader Zim', 'CatDog', 'Rocko\'s Modern Life', 'Drake & Josh', 'iCarly', 'Kenan & Kel', 'The Wild Thornberrys', 'Aaahh!!! Real Monsters', 'All That', 'The Legend of Korra']),
+    shows('ct_disney', 'Disney Channel', '✨', ['Phineas and Ferb', 'Gravity Falls', 'The Suite Life of Zack & Cody', 'Wizards of Waverly Place', 'Hannah Montana', 'Kim Possible', "That's So Raven", 'The Proud Family', 'Lizzie McGuire', 'Good Luck Charlie', 'Recess', 'DuckTales|1987', 'Even Stevens', 'American Dragon: Jake Long', 'Lilo & Stitch: The Series', 'Austin & Ally']),
+    shows('ct_uk', 'UK Kids TV', '🇬🇧', ['Tracy Beaker|2002', 'Horrible Histories|2009', 'Bob the Builder|1998', 'Fireman Sam', 'Postman Pat', 'Thomas the Tank Engine & Friends', 'Teletubbies', 'Art Attack', 'Byker Grove', 'Grange Hill', 'Danger Mouse|1981', 'Wallace & Gromit', 'Shaun the Sheep', 'Peppa Pig', 'Bluey', 'Blue Peter', 'Tweenies', 'Raven|2002', 'Basil Brush', 'Mr. Bean: The Animated Series']),
+  ],
+  tv_nets: [
+    live('n_hbo', 'HBO', '👑', '/discover/tv?with_networks=49&vote_count.gte=500&sort_by=vote_count.desc', { pages: 3 }),
+    live('n_net', 'Netflix Originals', 'N', '/discover/tv?with_networks=213&vote_count.gte=800&sort_by=vote_count.desc', { pages: 4 }),
+    live('n_amc', 'AMC', '🧟', '/discover/tv?with_networks=174&vote_count.gte=150&sort_by=vote_count.desc', { pages: 2 }),
+    live('n_app', 'Apple TV+', '🍎', '/discover/tv?with_networks=2552&vote_count.gte=80&sort_by=vote_count.desc', { pages: 2 }),
+    live('n_prim', 'Prime Video', '📦', '/discover/tv?with_networks=1024&vote_count.gte=200&sort_by=vote_count.desc', { pages: 3 }),
+    live('n_bbc', 'BBC', '📻', '/discover/tv?with_networks=4|332|3&vote_count.gte=150&sort_by=vote_count.desc', { pages: 3 }),
+  ],
+  tv_real: [
+    shows('rt_uk', 'Reality TV', '📺', ['Love Island|2015', "I'm a Celebrity...Get Me Out of Here!|2002", 'The Great British Bake Off', 'Big Brother|2000', 'The Only Way Is Essex', 'Made in Chelsea', 'Gogglebox', 'Strictly Come Dancing', 'The X Factor|2004', "Britain's Got Talent", 'Keeping Up with the Kardashians', 'Jersey Shore', 'Survivor|2000', 'The Apprentice|2005', "RuPaul's Drag Race", 'Below Deck', 'Selling Sunset', 'Too Hot to Handle', 'Married at First Sight|2015', 'Geordie Shore', 'Love Is Blind', 'The Traitors|2022', 'Squid Game: The Challenge', 'Dancing on Ice']),
+    shows('rt_comp', 'Game & Talent Shows', '🏆', ['Who Wants to Be a Millionaire?|1998', 'The Chase', 'Pointless', 'Deal or No Deal|2005', 'Total Wipeout', 'Taskmaster', 'The Price Is Right|1972', 'Family Fortunes', 'Countdown|1982', 'Mastermind|1972', 'University Challenge', 'The Weakest Link', 'Jeopardy!', 'Wheel of Fortune', 'The Voice UK', 'American Idol', 'Gladiators|1992', 'The Crystal Maze', 'Beat the Chasers', 'Catchphrase|1986']),
+  ],
+
+  /* ======================= SPORTS ======================= */
+  sports: [
+    nav('sp_foot_clubs', 'CLUB LEGENDS', '🛡️', 'UTD, MADRID, CITY, SPURS'),
+    nav('sp_foot', 'FOOTBALL', '⚽', 'GOATS, STARS, CLUBS, MANAGERS'),
+    nav('sp_basket', 'BASKETBALL', '🏀', 'NBA LEGENDS, TEAMS'),
+    nav('sp_combat', 'COMBAT SPORTS', '🥊', 'UFC, BOXING, WWE'),
+    nav('sp_global', 'MORE SPORTS', '🌍', 'F1, TENNIS, DARTS, GOLF'),
+    nav('sp_amer', 'US SPORTS', '🏈', 'NFL, MLB'),
+  ],
+  sp_foot_clubs: [
+    wiki('fc_utd', 'Man United', '😈', ['Wayne Rooney', 'Ryan Giggs', 'Paul Scholes', 'George Best', 'Eric Cantona', 'Roy Keane', 'Peter Schmeichel', 'Rio Ferdinand', 'David Beckham', 'Ruud van Nistelrooy', 'Nemanja Vidić', 'Marcus Rashford', 'Paul Pogba', 'Edwin van der Sar', 'Patrice Evra', 'Cristiano Ronaldo', 'Bobby Charlton', 'Denis Law', 'Bryan Robson', 'Gary Neville', 'Bruno Fernandes', 'Ole Gunnar Solskjær'], { themeOverride: 'utd' }),
+    wiki('fc_city', 'Man City', '🩵', ['Kevin De Bruyne', 'Sergio Agüero', 'David Silva', 'Vincent Kompany', 'Yaya Touré', 'Erling Haaland', 'Phil Foden', 'Raheem Sterling', 'Bernardo Silva', 'Ederson (footballer, born 1993)|Ederson', 'Rúben Dias', 'Rodri (footballer, born 1996)|Rodri', 'İlkay Gündoğan', 'Kyle Walker', 'John Stones', 'Joe Hart', 'Pablo Zabaleta', 'Fernandinho', 'Carlos Tevez', 'Riyad Mahrez'], { themeOverride: 'city' }),
+    wiki('fc_liverpool', 'Liverpool', '🔴', ['Steven Gerrard', 'Kenny Dalglish', 'Ian Rush', 'Mohamed Salah', 'Virgil van Dijk', 'John Barnes', 'Robbie Fowler', 'Jamie Carragher', 'Sadio Mané', 'Luis Suárez', 'Alisson Becker|Alisson', 'Trent Alexander-Arnold', 'Roberto Firmino', 'Michael Owen', 'Kevin Keegan', 'Fernando Torres', 'Xabi Alonso', 'Graeme Souness', 'Andrew Robertson (footballer)|Andy Robertson', 'Jordan Henderson'], { themeOverride: 'liverpool' }),
+    wiki('fc_arsenal', 'Arsenal', '💣', ['Thierry Henry', 'Dennis Bergkamp', 'Patrick Vieira', 'Tony Adams', 'Ian Wright', 'Robert Pires', 'David Seaman', 'Sol Campbell', 'Cesc Fàbregas', 'Robin van Persie', 'Bukayo Saka', 'Jens Lehmann', 'Freddie Ljungberg', 'Ashley Cole', 'Gilberto Silva', 'Martin Ødegaard', 'Declan Rice', 'William Saliba', 'Mesut Özil', 'Liam Brady'], { themeOverride: 'arsenal' }),
+    wiki('fc_chelsea', 'Chelsea', '🦁', ['Frank Lampard', 'John Terry', 'Didier Drogba', 'Petr Čech', 'Eden Hazard', 'Ashley Cole', 'Gianfranco Zola', 'Claude Makélélé', "N'Golo Kanté", 'Michael Essien', 'Branislav Ivanović', 'Ricardo Carvalho', 'Cole Palmer', 'Fernando Torres', 'Juan Mata', 'César Azpilicueta', 'Mason Mount', 'Willian (footballer, born 1988)|Willian'], { themeOverride: 'chelsea' }),
+    wiki('fc_spurs', 'Tottenham', '🐓', ['Harry Kane', 'Gareth Bale', 'Son Heung-min', 'Glenn Hoddle', 'Jimmy Greaves', 'Gary Lineker', 'Teddy Sheringham', 'Luka Modrić', 'Ledley King', 'Jürgen Klinsmann', 'Paul Gascoigne', 'Dimitar Berbatov', 'Hugo Lloris', 'Christian Eriksen', 'Dele Alli', 'Robbie Keane', 'Jermain Defoe', 'Ossie Ardiles'], { themeOverride: 'spurs' }),
+    wiki('fc_newcastle', 'Newcastle', '⚫', ['Alan Shearer', 'Kevin Keegan', 'Peter Beardsley', 'Les Ferdinand', 'David Ginola', 'Shay Given', 'Nolberto Solano', 'Gary Speed', 'Rob Lee', 'Faustino Asprilla', 'Jackie Milburn', 'Bruno Guimarães', 'Alexander Isak', 'Kieran Trippier', 'Paul Gascoigne', 'Andy Cole', 'Fabricio Coloccini', 'Malcolm Macdonald'], { themeOverride: 'newcastle' }),
+    wiki('fc_madrid', 'Real Madrid', '👑', ['Cristiano Ronaldo', 'Alfredo Di Stéfano', 'Raúl (footballer)|Raúl', 'Zinedine Zidane', 'Iker Casillas', 'Sergio Ramos', 'Luka Modrić', 'Roberto Carlos', 'Luís Figo', 'Karim Benzema', 'Gareth Bale', 'Vinícius Júnior', 'Toni Kroos', 'Marcelo (footballer, born 1988)|Marcelo', 'Ferenc Puskás', 'Ronaldo (Brazilian footballer)|Ronaldo Nazário', 'Jude Bellingham', 'Kylian Mbappé', 'Fernando Hierro', 'David Beckham'], { themeOverride: 'madrid' }),
+    wiki('fc_barca', 'Barcelona', '🔵', ['Lionel Messi', 'Xavi', 'Andrés Iniesta', 'Ronaldinho', 'Johan Cruyff', 'Carles Puyol', 'Dani Alves', 'Luis Suárez', 'Neymar', 'Rivaldo', 'Sergio Busquets', 'Gerard Piqué', "Samuel Eto'o", 'Víctor Valdés', 'Jordi Alba', 'Lamine Yamal', 'Pedri', 'Hristo Stoichkov', 'Ronald Koeman', 'Romário'], { themeOverride: 'barca' }),
+    wiki('fc_bayern', 'Bayern Munich', '🥨', ['Franz Beckenbauer', 'Gerd Müller', 'Thomas Müller', 'Manuel Neuer', 'Philipp Lahm', 'Bastian Schweinsteiger', 'Franck Ribéry', 'Arjen Robben', 'Robert Lewandowski', 'Oliver Kahn', 'Karl-Heinz Rummenigge', 'Lothar Matthäus', 'Sepp Maier', 'Joshua Kimmich', 'Jamal Musiala', 'Alphonso Davies', 'Harry Kane'], { themeOverride: 'bayern' }),
+    wiki('fc_juve', 'Juventus', '🦓', ['Alessandro Del Piero', 'Gianluigi Buffon', 'Michel Platini', 'Pavel Nedvěd', 'Zinedine Zidane', 'Roberto Baggio', 'Andrea Pirlo', 'Giorgio Chiellini', 'Leonardo Bonucci', 'Paul Pogba', 'Cristiano Ronaldo', 'David Trezeguet', 'Gaetano Scirea', 'Dino Zoff', 'Paulo Dybala', 'Claudio Marchisio', 'Arturo Vidal', 'Fabio Cannavaro'], { themeOverride: 'juve' }),
+  ],
+  sp_foot: [
+    wiki('f_all', 'All-Time Greats', '🐐', ['Lionel Messi', 'Cristiano Ronaldo', 'Pelé', 'Diego Maradona', 'Zinedine Zidane', 'Ronaldo (Brazilian footballer)|Ronaldo Nazário', 'Ronaldinho', 'Johan Cruyff', 'Thierry Henry', 'Andrés Iniesta', 'Paolo Maldini', 'Lev Yashin', 'Franz Beckenbauer', 'Alfredo Di Stéfano', 'Michel Platini', 'Xavi', 'Ferenc Puskás', 'Eusébio', 'Marco van Basten', 'George Best', 'Kaká', 'Gerd Müller']),
+    wiki('f_now', 'Current Superstars', '⚡', ['Erling Haaland', 'Kylian Mbappé', 'Jude Bellingham', 'Vinícius Júnior', 'Mohamed Salah', 'Lamine Yamal', 'Harry Kane', 'Bukayo Saka', 'Rodri (footballer, born 1996)|Rodri', 'Phil Foden', 'Cole Palmer', 'Martin Ødegaard', 'Florian Wirtz', 'Jamal Musiala', 'Pedri', 'Lautaro Martínez', 'Virgil van Dijk', 'Bruno Fernandes', 'Alexander Isak', 'Declan Rice', 'Son Heung-min', 'Raphinha', 'Ousmane Dembélé']),
+    wiki('f_prem', 'Premier League Icons', '🦁', ['Thierry Henry', 'Alan Shearer', 'Wayne Rooney', 'Sergio Agüero', 'Steven Gerrard', 'Frank Lampard', 'Kevin De Bruyne', 'Ryan Giggs', 'Didier Drogba', 'Eden Hazard', 'Paul Scholes', 'Roy Keane', 'Eric Cantona', 'Patrick Vieira', 'David Silva', 'Mohamed Salah', 'Harry Kane', 'Cristiano Ronaldo', 'John Terry', 'Virgil van Dijk', 'Dennis Bergkamp', 'Rio Ferdinand']),
+    wiki('f_eng', 'England Legends', '🦁', ['Bobby Moore', 'Bobby Charlton', 'Gary Lineker', 'Alan Shearer', 'David Beckham', 'Wayne Rooney', 'Steven Gerrard', 'Frank Lampard', 'Paul Gascoigne', 'Harry Kane', 'Michael Owen', 'Paul Scholes', 'John Terry', 'Rio Ferdinand', 'Ashley Cole', 'Stuart Pearce', 'Gordon Banks', 'Peter Shilton', 'Geoff Hurst', 'Jude Bellingham', 'Bukayo Saka', 'Raheem Sterling']),
+    wiki('f_liga', 'La Liga Icons', '🇪🇸', ['Lionel Messi', 'Cristiano Ronaldo', 'Andrés Iniesta', 'Xavi', 'Zinedine Zidane', 'Ronaldinho', 'Sergio Ramos', 'Karim Benzema', 'Luka Modrić', 'Luis Suárez', 'Iker Casillas', 'Raúl (footballer)|Raúl', 'Roberto Carlos', 'Rivaldo', 'Dani Alves', 'Antoine Griezmann', 'Diego Forlán', 'David Villa', 'Fernando Torres', 'Neymar']),
+    wiki('f_mgr', 'Managers', '📋', ['Alex Ferguson', 'Pep Guardiola', 'José Mourinho', 'Jürgen Klopp', 'Arsène Wenger', 'Carlo Ancelotti', 'Zinedine Zidane', 'Johan Cruyff', 'Brian Clough', 'Bob Paisley', 'Bill Shankly', 'Matt Busby', 'Diego Simeone', 'Antonio Conte', 'Mikel Arteta', 'Mauricio Pochettino', 'Rafael Benítez', 'Claudio Ranieri', 'Luis Enrique', 'Thomas Tuchel', 'Xabi Alonso', 'Gareth Southgate']),
+    wiki('f_pl_clubs', 'Premier League Clubs', '🏟️', ['Arsenal F.C.|Arsenal', 'Aston Villa F.C.|Aston Villa', 'Chelsea F.C.|Chelsea', 'Everton F.C.|Everton', 'Liverpool F.C.|Liverpool', 'Manchester City F.C.|Man City', 'Manchester United F.C.|Man United', 'Newcastle United F.C.|Newcastle', 'Tottenham Hotspur F.C.|Tottenham', 'West Ham United F.C.|West Ham', 'Leeds United F.C.|Leeds', 'Brighton & Hove Albion F.C.|Brighton', 'Nottingham Forest F.C.|Nottingham Forest', 'Crystal Palace F.C.|Crystal Palace', 'Fulham F.C.|Fulham', 'Wolverhampton Wanderers F.C.|Wolves', 'Brentford F.C.|Brentford', 'AFC Bournemouth|Bournemouth', 'Sunderland A.F.C.|Sunderland', 'Leicester City F.C.|Leicester']),
+    wiki('f_eu_clubs', 'European Giants', '🏆', ['Real Madrid CF|Real Madrid', 'FC Barcelona|Barcelona', 'FC Bayern Munich|Bayern Munich', 'Juventus FC|Juventus', 'AC Milan', 'Inter Milan', 'Paris Saint-Germain F.C.|PSG', 'Borussia Dortmund', 'Atlético Madrid', 'AFC Ajax|Ajax', 'S.L. Benfica|Benfica', 'FC Porto|Porto', 'Celtic F.C.|Celtic', 'Rangers F.C.|Rangers', 'SSC Napoli|Napoli', 'AS Roma|Roma', 'Liverpool F.C.|Liverpool', 'Manchester United F.C.|Man United']),
+    wiki('f_nations', 'World Cup Nations', '🌍', ['Flag of Brazil|Brazil', 'Flag of Germany|Germany', 'Flag of Argentina|Argentina', 'Flag of France|France', 'Flag of Italy|Italy', 'Flag of England|England', 'Flag of Spain|Spain', 'Flag of the Netherlands|Netherlands', 'Flag of Uruguay|Uruguay', 'Flag of Portugal|Portugal', 'Flag of Belgium|Belgium', 'Flag of Croatia|Croatia', 'Flag of Mexico|Mexico', 'Flag of the United States|USA', 'Flag of Japan|Japan', 'Flag of Morocco|Morocco', 'Flag of Senegal|Senegal', 'Flag of Colombia|Colombia', 'Flag of Scotland|Scotland', 'Flag of Wales|Wales']),
+  ],
+  sp_basket: [
+    wiki('b_all', 'NBA All-Time', '🐐', ['Michael Jordan', 'LeBron James', 'Kobe Bryant', 'Kareem Abdul-Jabbar', 'Magic Johnson', 'Larry Bird', "Shaquille O'Neal", 'Tim Duncan', 'Wilt Chamberlain', 'Stephen Curry', 'Bill Russell', 'Hakeem Olajuwon', 'Oscar Robertson', 'Kevin Durant', 'Karl Malone', 'Dirk Nowitzki', 'Kevin Garnett', 'Allen Iverson', 'Giannis Antetokounmpo', 'Nikola Jokić']),
+    wiki('b_mod', 'Modern Stars', '🔥', ['LeBron James', 'Stephen Curry', 'Kevin Durant', 'Giannis Antetokounmpo', 'Nikola Jokić', 'Luka Dončić', 'Joel Embiid', 'Jayson Tatum', 'Anthony Edwards (basketball)|Anthony Edwards', 'Devin Booker', 'Shai Gilgeous-Alexander', 'Damian Lillard', 'Jimmy Butler', 'Kawhi Leonard', 'Kyrie Irving', 'Victor Wembanyama', 'Ja Morant', 'Donovan Mitchell', 'Jalen Brunson', 'Anthony Davis']),
+    wiki('b_90', '90s & 00s', '📼', ['Michael Jordan', 'Kobe Bryant', "Shaquille O'Neal", 'Allen Iverson', 'Vince Carter', 'Tracy McGrady', 'Kevin Garnett', 'Dirk Nowitzki', 'Steve Nash', 'Jason Kidd', 'Tim Duncan', 'Paul Pierce', 'Ray Allen', 'Dwyane Wade', 'Carmelo Anthony', 'Scottie Pippen', 'Dennis Rodman', 'Charles Barkley', 'Patrick Ewing', 'Reggie Miller']),
+    wiki('b_teams', 'NBA Teams', '🏀', ['Los Angeles Lakers|Lakers', 'Boston Celtics|Celtics', 'Chicago Bulls|Bulls', 'Golden State Warriors|Warriors', 'Miami Heat|Heat', 'San Antonio Spurs|Spurs', 'New York Knicks|Knicks', 'Brooklyn Nets|Nets', 'Dallas Mavericks|Mavericks', 'Denver Nuggets|Nuggets', 'Milwaukee Bucks|Bucks', 'Phoenix Suns|Suns', 'Philadelphia 76ers|76ers', 'Toronto Raptors|Raptors', 'Oklahoma City Thunder|Thunder', 'Houston Rockets|Rockets', 'Cleveland Cavaliers|Cavaliers', 'Los Angeles Clippers|Clippers']),
+  ],
+  sp_combat: [
+    wiki('c_ufc_goat', 'UFC Legends', '🥋', ['Jon Jones', 'Georges St-Pierre', 'Khabib Nurmagomedov', 'Anderson Silva', 'Demetrious Johnson', 'Amanda Nunes', 'Conor McGregor', 'Daniel Cormier', 'José Aldo', 'Max Holloway', 'Alexander Volkanovski', 'Kamaru Usman', 'Israel Adesanya', 'Stipe Miocic', 'Ronda Rousey', 'Islam Makhachev', 'Alex Pereira', 'Charles Oliveira', 'Chuck Liddell', 'Tom Aspinall']),
+    wiki('c_box', 'Boxing Legends', '🥊', ['Muhammad Ali', 'Mike Tyson', 'George Foreman', 'Joe Frazier', 'Evander Holyfield', 'Lennox Lewis', 'Tyson Fury', 'Oleksandr Usyk', 'Anthony Joshua', 'Sugar Ray Robinson', 'Floyd Mayweather Jr.', 'Manny Pacquiao', 'Roberto Durán', 'Sugar Ray Leonard', 'Canelo Álvarez', 'Ricky Hatton', 'Naseem Hamed', 'Joe Calzaghe', 'Marvin Hagler', 'Terence Crawford']),
+    wiki('c_wwe_att', 'WWE Legends', '💀', ['Stone Cold Steve Austin', 'Dwayne Johnson', 'The Undertaker', 'Mick Foley', 'Triple H', 'Shawn Michaels', 'Ric Flair', 'Chris Jericho', 'Kurt Angle', 'Kane (wrestler)|Kane', 'John Cena', 'Hulk Hogan', 'Randy Orton', 'Edge (wrestler)|Edge', 'Batista', 'Bret Hart', 'Rey Mysterio', 'Roman Reigns', 'CM Punk', 'Brock Lesnar', 'Macho Man Randy Savage']),
+  ],
+  sp_global: [
+    wiki('g_f1', 'F1 Drivers', '🏎️', ['Lewis Hamilton', 'Michael Schumacher', 'Ayrton Senna', 'Max Verstappen', 'Sebastian Vettel', 'Fernando Alonso', 'Niki Lauda', 'Charles Leclerc', 'Lando Norris', 'Alain Prost', 'Nigel Mansell', 'Jackie Stewart', 'Jim Clark', 'Juan Manuel Fangio', 'Kimi Räikkönen', 'Jenson Button', 'Damon Hill', 'Mika Häkkinen', 'Oscar Piastri', 'George Russell (racing driver)|George Russell']),
+    wiki('g_f1t', 'F1 Teams', '🏁', ['Scuderia Ferrari|Ferrari', 'McLaren', 'Red Bull Racing|Red Bull', 'Mercedes-Benz in Formula One|Mercedes', 'Williams Racing|Williams', 'Aston Martin in Formula One|Aston Martin', 'Alpine F1 Team|Alpine', 'Haas F1 Team|Haas', 'Team Lotus|Lotus', 'Brabham', 'Jordan Grand Prix|Jordan', 'Benetton Formula|Benetton', 'Tyrrell Racing|Tyrrell', 'Renault in Formula One|Renault', 'Sauber Motorsport|Sauber', 'Brawn GP']),
+    wiki('g_ten', 'Tennis', '🎾', ['Roger Federer', 'Rafael Nadal', 'Novak Djokovic', 'Serena Williams', 'Andy Murray', 'Pete Sampras', 'Andre Agassi', 'Maria Sharapova', 'Steffi Graf', 'Carlos Alcaraz', 'Jannik Sinner', 'Björn Borg', 'John McEnroe', 'Venus Williams', 'Martina Navratilova', 'Emma Raducanu', 'Coco Gauff', 'Aryna Sabalenka', 'Iga Świątek', 'Boris Becker']),
+    wiki('g_darts', 'Darts', '🎯', ['Phil Taylor', 'Michael van Gerwen', 'Luke Littler', 'Luke Humphries', 'Gary Anderson (darts player)|Gary Anderson', 'Peter Wright (darts player)|Peter Wright', 'Raymond van Barneveld', 'Michael Smith (darts player)|Michael Smith', 'Gerwyn Price', 'Eric Bristow', 'John Part', 'Rob Cross', 'James Wade', 'Adrian Lewis', 'Nathan Aspinall', 'Fallon Sherrock']),
+    wiki('g_snooker', 'Snooker', '🎱', ["Ronnie O'Sullivan", 'Stephen Hendry', 'Steve Davis', 'Judd Trump', 'John Higgins (snooker player)|John Higgins', 'Mark Selby', 'Mark Williams (snooker player)|Mark Williams', 'Neil Robertson', 'Jimmy White', 'Alex Higgins', 'Ding Junhui', 'Shaun Murphy', 'Kyren Wilson', 'Luca Brecel', 'Ray Reardon', 'Dennis Taylor']),
+    wiki('g_golf', 'Golf', '⛳', ['Tiger Woods', 'Rory McIlroy', 'Jack Nicklaus', 'Arnold Palmer', 'Phil Mickelson', 'Gary Player', 'Ben Hogan', 'Seve Ballesteros', 'Brooks Koepka', 'Scottie Scheffler', 'Jon Rahm', 'Dustin Johnson', 'Jordan Spieth', 'Justin Rose', 'Nick Faldo', 'Ernie Els', 'Tom Watson (golfer)|Tom Watson', 'Bryson DeChambeau']),
+    wiki('g_olymp', 'Olympic Legends', '🥇', ['Usain Bolt', 'Michael Phelps', 'Simone Biles', 'Mo Farah', 'Jessica Ennis-Hill', 'Carl Lewis', 'Jesse Owens', 'Eliud Kipchoge', 'Armand Duplantis', 'Steve Redgrave', 'Chris Hoy', 'Bradley Wiggins', 'Kelly Holmes', 'Florence Griffith Joyner', 'Paula Radcliffe', 'Nadia Comăneci', 'Katie Ledecky', 'Tom Daley', 'Ian Thorpe', 'Laura Kenny']),
+  ],
+  sp_amer: [
+    wiki('a_nfl_all', 'NFL Legends', '🏈', ['Tom Brady', 'Peyton Manning', 'Aaron Rodgers', 'Patrick Mahomes', 'Jerry Rice', 'Rob Gronkowski', 'Brett Favre', 'Drew Brees', 'Lawrence Taylor', 'Jim Brown', 'Randy Moss', 'Deion Sanders', 'Joe Montana', 'Dan Marino', 'Emmitt Smith', 'Barry Sanders', 'Travis Kelce', 'Walter Payton', 'Ray Lewis', 'Josh Allen (quarterback)|Josh Allen']),
+    wiki('a_mlb', 'MLB Legends', '⚾', ['Babe Ruth', 'Willie Mays', 'Hank Aaron', 'Ted Williams', 'Barry Bonds', 'Ken Griffey Jr.', 'Derek Jeter', 'Mike Trout', 'Shohei Ohtani', 'Albert Pujols', 'Mickey Mantle', 'Lou Gehrig', 'Jackie Robinson', 'Sandy Koufax', 'Pedro Martínez', 'Aaron Judge', 'Mariano Rivera', 'Roberto Clemente']),
+  ],
+
+  /* ======================= MUSIC ======================= */
+  music: [
+    nav('mu_genres', 'BY GENRE', '🎧', 'POP, RAP, ROCK, K-POP'),
+    nav('mu_uk', 'UK MUSIC', '🇬🇧', 'GRIME, BRITPOP, BANDS'),
+    nav('mu_bands', 'BANDS & GROUPS', '🎸', 'BEATLES, QUEEN, 1D'),
+    nav('mu_decades', 'BY DECADE', '⏳', '80s, 90s, 00s, 10s'),
+  ],
+  mu_genres: [
+    wiki('mu_now', 'Pop Right Now', '🌟', ['Sabrina Carpenter', 'Olivia Rodrigo', 'Billie Eilish', 'Chappell Roan', 'Doja Cat', 'SZA', 'Charli XCX', 'Tate McRae', 'Dua Lipa', 'Taylor Swift', 'Ariana Grande', 'The Weeknd', 'Bad Bunny', 'Post Malone', 'Harry Styles', 'Lady Gaga', 'Bruno Mars', 'Benson Boone', 'Raye (singer)|Raye', 'Gracie Abrams', 'Teddy Swims', 'Rosé (singer)|Rosé']),
+    wiki('mu_pop', 'Pop Icons', '🎤', ['Michael Jackson', 'Madonna', 'Taylor Swift', 'Lady Gaga', 'Ariana Grande', 'Justin Bieber', 'Katy Perry', 'Britney Spears', 'Adele', 'Beyoncé', 'Ed Sheeran', 'Bruno Mars', 'Dua Lipa', 'Harry Styles', 'The Weeknd', 'Rihanna', 'Justin Timberlake', 'Kylie Minogue', 'Elton John', 'George Michael']),
+    wiki('mu_rap', 'Rap Legends', '🔥', ['Eminem', 'Jay-Z', 'Tupac Shakur', 'Snoop Dogg', 'Nas', 'Dr. Dre', 'Kendrick Lamar', 'J. Cole', 'Lil Wayne', '50 Cent', 'The Notorious B.I.G.', 'Ice Cube', 'Tyler, the Creator', 'Drake (musician)|Drake', 'Kanye West', 'Travis Scott', 'Nicki Minaj', 'Missy Elliott', 'Lauryn Hill', 'Future (rapper)|Future', 'Lil Baby', 'A$AP Rocky']),
+    wiki('mu_rock', 'Rock Frontmen', '🤘', ['Freddie Mercury', 'Mick Jagger', 'Kurt Cobain', 'Paul McCartney', 'John Lennon', 'Elvis Presley', 'David Bowie', 'Jimi Hendrix', 'Bruce Springsteen', 'Axl Rose', 'Ozzy Osbourne', 'Steven Tyler', 'Robert Plant', 'Liam Gallagher', 'Chris Martin', 'Bono', 'Dave Grohl', 'Chester Bennington', 'Chris Cornell', 'Jim Morrison', 'Alex Turner (musician)|Alex Turner']),
+    wiki('mu_divas', 'Divas', '💎', ['Beyoncé', 'Whitney Houston', 'Mariah Carey', 'Celine Dion', 'Adele', 'Rihanna', 'Lady Gaga', 'Madonna', 'Christina Aguilera', 'Tina Turner', 'Aretha Franklin', 'Janet Jackson', 'Cher', 'Kylie Minogue', 'Shakira', 'Jennifer Lopez', 'Amy Winehouse', 'Britney Spears', 'Dolly Parton', 'Barbra Streisand']),
+    wiki('mu_rb', 'R&B / Soul', '🎷', ['Whitney Houston', 'Mariah Carey', 'Stevie Wonder', 'Aretha Franklin', 'James Brown', 'Marvin Gaye', 'Ray Charles', 'Alicia Keys', 'John Legend', 'Usher (musician)|Usher', 'Rihanna', 'Luther Vandross', 'Frank Ocean', 'SZA', 'Mary J. Blige', 'Chris Brown', 'Ne-Yo', 'Brandy (singer)|Brandy', 'Aaliyah', 'D\'Angelo']),
+    wiki('mu_kpop', 'K-Pop', '✨', ['BTS', 'Blackpink', 'EXO', 'Twice', 'Red Velvet', 'Seventeen (South Korean band)|Seventeen', 'Stray Kids', 'NCT', 'Tomorrow X Together', 'Enhypen', 'Aespa', 'Itzy', 'NewJeans', 'Le Sserafim', 'Ive (group)|IVE', "Girls' Generation", 'Big Bang (South Korean band)|Big Bang', 'Super Junior', 'Shinee', '2NE1', 'G-Dragon', 'IU (singer)|IU', 'Jungkook', 'Jennie (singer)|Jennie', 'Lisa (rapper)|Lisa']),
+    wiki('mu_country', 'Country', '🤠', ['Dolly Parton', 'Johnny Cash', 'Garth Brooks', 'Shania Twain', 'Willie Nelson', 'Kenny Rogers', 'Carrie Underwood', 'Morgan Wallen', 'Luke Combs', 'Chris Stapleton', 'Zach Bryan', 'Kacey Musgraves', 'Tim McGraw', 'Keith Urban', 'Blake Shelton', 'Reba McEntire', 'Patsy Cline', 'Hank Williams', 'Post Malone', 'Lainey Wilson']),
+  ],
+  mu_uk: [
+    wiki('uk_grime', 'UK Rap & Grime', '🎙️', ['Stormzy', 'Dave (rapper)|Dave', 'Skepta', 'Central Cee', 'Wiley (musician)|Wiley', 'Dizzee Rascal', 'Kano (rapper)|Kano', 'Giggs (rapper)|Giggs', 'Little Simz', 'J Hus', 'Aitch (rapper)|Aitch', 'Headie One', 'Ghetts', 'AJ Tracey', 'Bugzy Malone', 'Tinie Tempah', 'Chip (rapper)|Chip', 'Digga D', 'Krept and Konan', 'Lethal Bizzle', 'Santan Dave', 'Unknown T']),
+    wiki('uk_britpop', 'British Bands', '🇬🇧', ['Oasis (band)|Oasis', 'Blur (band)|Blur', 'Arctic Monkeys', 'Coldplay', 'Radiohead', 'The Beatles', 'The Rolling Stones', 'Queen (band)|Queen', 'The Smiths', 'Pulp (band)|Pulp', 'Muse (band)|Muse', 'The Stone Roses', 'The Libertines', 'Kasabian', 'Stereophonics', 'The Verve', 'The 1975', 'Catfish and the Bottlemen', 'Joy Division', 'The Cure', 'Pink Floyd', 'Led Zeppelin', 'Black Sabbath', 'Iron Maiden']),
+    wiki('uk_pop', 'British Pop Stars', '💂', ['Adele', 'Ed Sheeran', 'Harry Styles', 'Dua Lipa', 'Amy Winehouse', 'Elton John', 'George Michael', 'Robbie Williams', 'Lewis Capaldi', 'Sam Smith', 'Rita Ora', 'Ellie Goulding', 'Calvin Harris', 'Stormzy', 'Raye (singer)|Raye', 'Olly Murs', 'Jessie J', 'Charli XCX', 'Florence Welch', 'Zayn Malik', 'Freddie Mercury', 'David Bowie']),
+  ],
+  mu_bands: [
+    wiki('mb_all', 'Greatest Bands', '🎸', ['The Beatles', 'Queen (band)|Queen', 'The Rolling Stones', 'Pink Floyd', 'Led Zeppelin', 'Nirvana (band)|Nirvana', 'AC/DC', 'Metallica', 'U2', 'Coldplay', 'Red Hot Chili Peppers', 'Fleetwood Mac', "Guns N' Roses", 'Eagles (band)|Eagles', 'Aerosmith', 'Linkin Park', 'Foo Fighters', 'Green Day', 'Oasis (band)|Oasis', 'Arctic Monkeys', 'ABBA', 'Bon Jovi']),
+    wiki('mb_boy', 'Boy & Girl Groups', '🕺', ['One Direction', 'Backstreet Boys', 'NSYNC', 'BTS', 'Spice Girls', "Destiny's Child", 'TLC (group)|TLC', 'Blackpink', 'Boyz II Men', 'Fifth Harmony', 'Jonas Brothers', 'The Jackson 5', 'The Pussycat Dolls', 'Little Mix', 'Take That', 'Westlife', 'Girls Aloud', 'Sugababes', 'Boyzone', 'JLS', 'S Club 7', 'Busted']),
+  ],
+  mu_decades: [
+    wiki('md_2010', '2010s Hits', '📱', ['Taylor Swift', 'Drake (musician)|Drake', 'Adele', 'Ed Sheeran', 'Justin Bieber', 'Ariana Grande', 'Bruno Mars', 'Katy Perry', 'The Weeknd', 'Rihanna', 'Kendrick Lamar', 'Post Malone', 'Imagine Dragons', 'Maroon 5', 'Shawn Mendes', 'Lorde', 'Sia', 'Calvin Harris', 'Billie Eilish', 'One Direction']),
+    wiki('md_2000', '2000s Nostalgia', '💿', ['Eminem', 'Britney Spears', 'Beyoncé', 'Justin Timberlake', 'Usher (musician)|Usher', '50 Cent', 'Jay-Z', 'Pink (singer)|Pink', 'Christina Aguilera', 'Alicia Keys', 'Linkin Park', 'Avril Lavigne', 'Green Day', 'Black Eyed Peas', 'Outkast', 'Amy Winehouse', 'Nelly Furtado', 'Gwen Stefani', 'The Killers', 'Kanye West']),
+    wiki('md_1990', '90s Legends', '📼', ['Nirvana (band)|Nirvana', 'Tupac Shakur', 'Mariah Carey', 'Celine Dion', 'The Notorious B.I.G.', 'Snoop Dogg', 'Shania Twain', 'TLC (group)|TLC', 'Dr. Dre', 'Oasis (band)|Oasis', 'Radiohead', 'Spice Girls', 'Backstreet Boys', 'Pearl Jam', 'Whitney Houston', 'Blur (band)|Blur', 'Alanis Morissette', 'No Doubt', 'Red Hot Chili Peppers', 'Will Smith']),
+    wiki('md_1980', '80s Icons', '🕺', ['Michael Jackson', 'Madonna', 'Prince (musician)|Prince', 'Whitney Houston', 'George Michael', 'Bon Jovi', 'Duran Duran', 'Cyndi Lauper', 'Phil Collins', 'Bruce Springsteen', 'Tina Turner', 'Wham!', 'Eurythmics', 'Def Leppard', "Guns N' Roses", 'Culture Club', 'Tears for Fears', 'A-ha', 'The Police', 'U2', 'INXS', 'Queen (band)|Queen']),
+  ],
+
+  /* ======================= GAMING ======================= */
+  games: [
+    wiki('vg_best', 'Greatest Games', '🏆', ['The Last of Us|The Last of Us', 'Red Dead Redemption 2', 'The Legend of Zelda: Breath of the Wild|Zelda: Breath of the Wild', 'Elden Ring', 'Grand Theft Auto V|GTA V', 'Minecraft', 'The Witcher 3: Wild Hunt|The Witcher 3', 'God of War (2018 video game)|God of War (2018)', 'Super Mario Odyssey', 'Halo 3', 'Call of Duty 4: Modern Warfare|COD 4: Modern Warfare', 'The Elder Scrolls V: Skyrim|Skyrim', 'Portal 2', 'Half-Life 2', 'Super Mario 64', 'Tetris', "Baldur's Gate 3", 'Hollow Knight', 'Bloodborne', 'Mass Effect 2', 'BioShock', 'Ghost of Tsushima', 'Final Fantasy VII', 'Metal Gear Solid (1998 video game)|Metal Gear Solid', 'GoldenEye 007 (1997 video game)|GoldenEye 007', 'Pokémon Red and Blue|Pokémon Red & Blue']),
+    wiki('vg_chars', 'Gaming Icons', '🍄', ['Mario', 'Master Chief (Halo)|Master Chief', 'Kratos (God of War)|Kratos', 'Sonic the Hedgehog (character)|Sonic', 'Link (The Legend of Zelda)|Link', 'Pikachu', 'Lara Croft', 'Doomguy', 'Pac-Man (character)|Pac-Man', 'Geralt of Rivia', 'Samus Aran', 'Cloud Strife', 'Solid Snake', 'Arthur Morgan', 'Kirby (character)|Kirby', 'Donkey Kong (character)|Donkey Kong', 'Crash Bandicoot (character)|Crash Bandicoot', 'Ezio Auditore da Firenze|Ezio', 'Nathan Drake', 'Steve (Minecraft)|Steve', 'Ellie (The Last of Us)|Ellie', 'Agent 47', 'Scorpion (Mortal Kombat)|Scorpion', 'Ryu (Street Fighter)|Ryu']),
+    wiki('vg_franchise', 'Game Franchises', '🎮', ['Mario (franchise)|Super Mario', 'The Legend of Zelda', 'Pokémon', 'Call of Duty', 'Grand Theft Auto', 'Minecraft', 'EA Sports FC', 'Halo (franchise)|Halo', 'Fortnite', 'The Elder Scrolls', 'Final Fantasy', "Assassin's Creed", 'God of War (franchise)|God of War', 'Resident Evil', 'Street Fighter', 'Mortal Kombat', 'Metal Gear', 'Uncharted', 'The Sims', 'Fallout (franchise)|Fallout', 'Red Dead', 'Tomb Raider', 'Dark Souls', 'Battlefield (video game series)|Battlefield']),
+    wiki('vg_bosses', 'Soulsborne Bosses', '⚔️', ['Malenia', 'Nameless King', 'Slave Knight Gael', 'Artorias the Abysswalker', 'Ornstein and Smough', 'Ludwig, the Holy Blade', 'Lady Maria of the Astral Clocktower', 'Sister Friede', 'Radahn', 'Maliketh, the Black Blade', 'Godfrey, First Elden Lord', 'Gwyn, Lord of Cinder', 'Isshin, the Sword Saint', 'Genichiro Ashina', 'Father Gascoigne', 'Messmer the Impaler']),
+    wiki('vg_consoles', 'Consoles', '🕹️', ['PlayStation 2', 'Xbox 360', 'Nintendo 64', 'Game Boy', 'Super Nintendo Entertainment System|SNES', 'PlayStation 4', 'Nintendo Switch', 'Wii', 'Sega Genesis|Mega Drive', 'GameCube', 'Dreamcast', 'PlayStation 5', 'Xbox Series X and Series S|Xbox Series X', 'Nintendo DS', 'PlayStation Portable|PSP', 'PlayStation (console)|PlayStation 1', 'Xbox (console)|Original Xbox', 'Nintendo Entertainment System|NES', 'Game Boy Advance', 'Nintendo Switch 2']),
+    wiki('vg_pokemon', 'Original 151 Pokémon', '🐉', ['Charizard', 'Blastoise', 'Venusaur', 'Pikachu', 'Mewtwo', 'Gengar', 'Snorlax', 'Dragonite', 'Alakazam', 'Gyarados', 'Eevee', 'Jigglypuff', 'Mew (Pokémon)|Mew', 'Squirtle', 'Charmander', 'Bulbasaur', 'Lapras', 'Arcanine', 'Machamp', 'Psyduck', 'Articuno', 'Zapdos', 'Moltres', 'Onix', 'Meowth']),
+  ],
+
+  /* ======================= ANIME ======================= */
+  anime: [
+    live('an_trend', 'TRENDING ANIME', '🔥', '/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&vote_count.gte=40&first_air_date.gte=2018-01-01', { pages: 3 }),
+    live('an_pop', 'TOP RATED ANIME', '⭐', '/discover/tv?with_genres=16&with_original_language=ja&sort_by=vote_count.desc', { pages: 4 }),
+    shows('an_series', 'Anime Series', '📺', ['Naruto', 'One Piece', 'Dragon Ball Z', 'Attack on Titan', 'Death Note', 'Fullmetal Alchemist: Brotherhood', 'Demon Slayer: Kimetsu no Yaiba', 'Jujutsu Kaisen', 'My Hero Academia', 'Hunter x Hunter|2011', 'One-Punch Man', 'Cowboy Bebop|1998', 'Neon Genesis Evangelion', 'Bleach', 'Code Geass: Lelouch of the Rebellion', 'Steins;Gate', 'Chainsaw Man', 'Spy x Family', 'Tokyo Ghoul', 'Mob Psycho 100', 'Vinland Saga', "Frieren: Beyond Journey's End", 'Solo Leveling', 'Haikyu!!', 'Sailor Moon', 'Blue Lock', 'Cyberpunk: Edgerunners', 'Dandadan']),
+    wiki('an_shonen', 'Shonen Heroes', '⚔️', ['Naruto Uzumaki', 'Monkey D. Luffy', 'Goku', 'Ichigo Kurosaki', 'Izuku Midoriya', 'Tanjiro Kamado', 'Yuji Itadori', 'Eren Yeager', 'Edward Elric', 'Gon Freecss', 'Yusuke Urameshi', 'Asta (Black Clover)|Asta', 'Saitama (One-Punch Man)|Saitama', 'Light Yagami', 'Lelouch Lamperouge', 'Gintoki Sakata', 'Levi (Attack on Titan)|Levi', 'Sasuke Uchiha', 'Vegeta', 'Roronoa Zoro', 'Killua Zoldyck', 'Kakashi Hatake', 'Itachi Uchiha', 'Satoru Gojo', 'Denji (Chainsaw Man)|Denji']),
+    wiki('an_villains', 'Anime Villains', '😈', ['Frieza', 'Madara Uchiha', 'Sukuna (Jujutsu Kaisen)|Sukuna', 'Muzan Kibutsuji', 'Sōsuke Aizen', 'Meruem', 'Griffith (Berserk)|Griffith', 'Dio Brando', 'Cell (Dragon Ball)|Cell', 'Pain (Naruto)|Pain', 'Orochimaru (Naruto)|Orochimaru', 'Johan Liebert', 'Majin Buu', 'Donquixote Doflamingo', 'Hisoka Morow', 'Makima (Chainsaw Man)|Makima', 'All For One (My Hero Academia)|All For One', 'Shigaraki Tomura|Tomura Shigaraki', 'Kaido (One Piece)|Kaido']),
+    films('an_ghibli', 'Studio Ghibli', '🍃', ['Nausicaä of the Valley of the Wind|1984', 'Castle in the Sky|1986', 'My Neighbor Totoro|1988', 'Grave of the Fireflies|1988', "Kiki's Delivery Service|1989", 'Porco Rosso|1992', 'Whisper of the Heart|1995', 'Princess Mononoke|1997', 'Spirited Away|2001', 'The Cat Returns|2002', "Howl's Moving Castle|2004", 'Ponyo|2008', 'Arrietty|2010', 'The Wind Rises|2013', 'The Tale of the Princess Kaguya|2013', 'When Marnie Was There|2014', 'The Boy and the Heron|2023']),
+    films('an_films', 'Anime Films', '🎞️', ['Akira|1988', 'Ghost in the Shell|1995', 'Your Name.|2016', 'A Silent Voice|2016', 'Weathering with You|2019', 'Suzume|2022', 'Perfect Blue|1997', 'Paprika|2006', 'Demon Slayer: Kimetsu no Yaiba the Movie: Mugen Train|2020', 'Jujutsu Kaisen 0|2021', 'The First Slam Dunk|2022', 'Dragon Ball Super: Broly|2018', 'One Piece Film: Red|2022', 'The Girl Who Leapt Through Time|2006', 'Wolf Children|2012', 'Spirited Away|2001', 'Princess Mononoke|1997', 'Belle|2021']),
+  ],
+
+  /* ======================= CELEBS ======================= */
+  actors: [
+    people('a_men', 'Leading Men', '🕴️', ['Leonardo DiCaprio', 'Brad Pitt', 'Tom Cruise', 'Denzel Washington', 'Christian Bale', 'Matthew McConaughey', 'Ryan Gosling', 'Johnny Depp', 'Will Smith', 'Tom Hanks', 'Keanu Reeves', 'Hugh Jackman', 'Chris Hemsworth', 'Cillian Murphy', 'Timothée Chalamet', 'Robert Downey Jr.', 'George Clooney', 'Morgan Freeman', 'Al Pacino', 'Robert De Niro', 'Pedro Pascal', 'Joaquin Phoenix']),
+    people('a_women', 'Leading Ladies', '💃', ['Margot Robbie', 'Zendaya', 'Scarlett Johansson', 'Jennifer Lawrence', 'Emma Stone', 'Natalie Portman', 'Angelina Jolie', 'Charlize Theron', 'Anne Hathaway', 'Meryl Streep', 'Florence Pugh', 'Anya Taylor-Joy', 'Sydney Sweeney', 'Ana de Armas', 'Julia Roberts', 'Sandra Bullock', 'Nicole Kidman', 'Cate Blanchett', 'Viola Davis', 'Emma Watson', 'Jennifer Aniston']),
+    people('a_action', 'Action Stars', '💪', ['Arnold Schwarzenegger', 'Sylvester Stallone', 'Bruce Willis', 'Jason Statham', 'Dwayne Johnson', 'Vin Diesel', 'Jackie Chan', 'Bruce Lee', 'Jean-Claude Van Damme', 'Keanu Reeves', 'Tom Cruise', 'Liam Neeson', 'Mel Gibson', 'Chuck Norris', 'Harrison Ford', 'Charlize Theron', 'Daniel Craig', 'Wesley Snipes', 'Michelle Yeoh', 'Idris Elba', 'Jet Li']),
+    people('a_brits', 'British Actors', '🇬🇧', ['Daniel Craig', 'Idris Elba', 'Tom Hardy', 'Benedict Cumberbatch', 'Kate Winslet', 'Emma Watson', 'Michael Caine', 'Judi Dench', 'Helen Mirren', 'Gary Oldman', 'Christian Bale', 'Daniel Day-Lewis', 'Anthony Hopkins', 'Tom Holland', 'Henry Cavill', 'Daniel Radcliffe', 'Hugh Grant', 'Keira Knightley', 'Florence Pugh', 'Jason Statham', 'Emily Blunt', 'Colin Firth', 'Ralph Fiennes', 'Dev Patel']),
+    people('a_com', 'Comedy Stars', '😂', ['Jim Carrey', 'Will Ferrell', 'Mike Myers', 'Rowan Atkinson', 'Sacha Baron Cohen', 'Jack Black', 'Adam Sandler', 'Steve Carell', 'Robin Williams', 'Kevin Hart', 'Seth Rogen', 'Jonah Hill', 'Melissa McCarthy', 'Eddie Murphy', 'Ben Stiller', 'Owen Wilson', 'Simon Pegg', 'Ricky Gervais', 'Chris Rock', 'Rebel Wilson', 'Kristen Wiig', 'Peter Kay']),
+    people('a_rising', 'Rising Stars', '🌟', ['Zendaya', 'Timothée Chalamet', 'Florence Pugh', 'Jacob Elordi', 'Sydney Sweeney', 'Austin Butler', 'Jenna Ortega', 'Paul Mescal', 'Glen Powell', 'Barry Keoghan', 'Anya Taylor-Joy', 'Millie Bobby Brown', 'Ayo Edebiri', 'Jeremy Allen White', 'Mia Goth', 'Margaret Qualley', 'Hunter Schafer', 'Josh O\'Connor', 'Daisy Edgar-Jones', 'Jonathan Bailey']),
+  ],
+
+  /* ======================= CREATORS ======================= */
+  creators: [
+    wiki('cr_yt', 'Top YouTubers', '▶️', ['MrBeast', 'PewDiePie', 'Markiplier', 'Jacksepticeye', 'KSI', 'Logan Paul', 'Jake Paul', 'Dude Perfect', 'Emma Chamberlain', 'Marques Brownlee', 'Smosh', 'Lilly Singh', 'David Dobrik', 'Casey Neistat', 'Dream (YouTuber)|Dream', 'TommyInnit', 'Rhett and Link', 'DanTDM', 'LazarBeam', 'Airrack', 'IShowSpeed', 'Kai Cenat', 'MKBHD', 'Ryan Trahan', 'Mark Rober']),
+    wiki('cr_uk', 'UK YouTubers', '🇬🇧', ['KSI', 'Sidemen', 'Miniminter', 'Vikkstar123', 'Behzinga', 'W2S (YouTuber)|W2S', 'Chunkz', 'Niko Omilana', 'Angry Ginge', 'Yung Filly', 'Max Fosh', 'Joe Weller', 'Zoella', 'Alfie Deyes', 'Joe Sugg', 'Dan Howell', 'Phil Lester', 'Tom Scott (YouTuber)|Tom Scott', 'DanTDM', 'TommyInnit', 'Stephen Tries', 'Harry Pinero']),
+    wiki('cr_stream', 'Streamers', '🟪', ['Ninja (gamer)|Ninja', 'Shroud (gamer)|Shroud', 'xQc', 'Kai Cenat', 'Pokimane', 'Summit1g', 'TimTheTatman', 'Dr Disrespect', 'Nickmercs', 'SypherPK', 'Asmongold', 'HasanAbi', 'Ludwig Ahgren', 'Valkyrae', 'Tarik (gamer)|Tarik', 'TenZ', 'QTCinderella', 'Ironmouse', 'Gawr Gura', 'MoistCr1TiKaL', 'Jerma985', 'IShowSpeed', 'Adin Ross']),
+  ],
+
+  /* ======================= FOOD ======================= */
+  food: [
+    wiki('fd_fast', 'Fast Food Chains', '🍔', ["McDonald's", 'Burger King', 'KFC', 'Taco Bell', "Wendy's", 'Subway (restaurant)|Subway', "Domino's|Domino's Pizza", 'Starbucks', 'Chipotle Mexican Grill|Chipotle', 'Pizza Hut', 'Chick-fil-A', 'Popeyes', 'Five Guys', "Nando's", 'Greggs', 'Wagamama', 'In-N-Out Burger', 'Shake Shack', 'Dunkin\' Donuts|Dunkin\'', 'Wingstop', 'Tim Hortons', 'Pret a Manger']),
+    wiki('fd_dish', 'World Dishes', '🍣', ['Pizza', 'Sushi', 'Taco', 'Hamburger|Burger', 'Fish and chips', 'Chicken tikka masala', 'Pad thai', 'Ramen', 'Paella', 'Croissant', 'Lasagne', 'Doner kebab', 'Full breakfast|Full English', 'Sunday roast', 'Pho', 'Burrito', 'Dim sum', 'Fried chicken', 'Biryani', 'Shawarma', 'Carbonara', 'Falafel', 'Steak', 'Mac and cheese']),
+    wiki('fd_dessert', 'Desserts', '🍰', ['Cheesecake', 'Chocolate brownie|Brownie', 'Ice cream', 'Tiramisu', 'Apple pie', 'Crème brûlée', 'Sticky toffee pudding', 'Churro', 'Doughnut', 'Pancake', 'Waffle', 'Macaron', 'Eton mess', 'Banoffee pie', 'Trifle', 'Cupcake', 'Victoria sponge', 'Crumble', 'Baklava', 'Mochi', 'Profiterole', 'Cookie']),
+    wiki('fd_choc', 'Chocolate Bars', '🍫', ['Cadbury Dairy Milk|Dairy Milk', 'Snickers', 'Twix', 'Kit Kat', 'Mars (chocolate bar)|Mars', 'Galaxy (chocolate)|Galaxy', 'Maltesers', 'Wispa', 'Twirl (chocolate bar)|Twirl', 'Crunchie', 'Lion (chocolate bar)|Lion', 'Toblerone', 'Bounty (chocolate bar)|Bounty', 'Milky Way (chocolate bar)|Milky Way', 'Yorkie (chocolate bar)|Yorkie', 'Double Decker (chocolate bar)|Double Decker', 'Boost (chocolate bar)|Boost', 'Aero (chocolate)|Aero', 'Ferrero Rocher', "Reese's Peanut Butter Cups|Reese's Cups", 'Kinder Bueno', 'Picnic (chocolate bar)|Picnic']),
+    wiki('fd_candy', 'Sweets & Candy', '🍬', ['Haribo', 'Skittles (confectionery)|Skittles', 'Sour Patch Kids', 'Starburst (confectionery)|Starburst', "M&M's", 'Nerds (candy)|Nerds', 'Swedish Fish', 'Twizzlers', 'Jelly Babies', 'Fruit Pastilles', 'Wine gum|Wine Gums', 'Percy Pig', 'Rowntree\'s Randoms|Randoms', 'Love Hearts', 'Refreshers', 'Drumstick (confectionery)|Drumstick', 'Chupa Chups', 'Werther\'s Original', 'Fruit Gums', 'Jelly Belly']),
+    wiki('fd_snacks', 'Crisps & Snacks', '🍿', ['Doritos', 'Cheetos', 'Oreo', "Lay's", 'Pringles', 'Cheez-It', 'Walkers (snack foods)|Walkers', 'Monster Munch', 'Quavers', 'Wotsits', 'Hula Hoops', "McCoy's Crisps|McCoy's", 'Takis', 'Skips', 'Frazzles', 'Kettle Foods|Kettle Chips', 'Space Raiders', 'Discos (crisps)|Discos', 'Twiglets', 'Pom-Bear', 'Ruffles', 'Funyuns']),
+    wiki('fd_drinks', 'Soft Drinks', '🥤', ['Coca-Cola', 'Pepsi', 'Sprite (drink)|Sprite', 'Fanta', 'Dr Pepper', 'Irn-Bru', 'Red Bull', 'Monster Energy', 'Lucozade', '7 Up', 'Mountain Dew', 'Tango (drink)|Tango', 'Ribena', 'Vimto', 'Capri-Sun', 'Prime (drink)|Prime', 'Lipton Ice Tea', 'Oasis (drink)|Oasis', 'Rubicon Drinks|Rubicon', 'Fruit Shoot', 'Robinsons (drink)|Robinsons']),
+    wiki('fd_cereal', 'Cereals', '🥣', ['Cinnamon Toast Crunch', 'Frosted Flakes|Frosties', 'Froot Loops', 'Lucky Charms', 'Cheerios', "Cap'n Crunch", "Reese's Puffs", 'Weetabix', 'Coco Pops', 'Crunchy Nut Cornflakes|Crunchy Nut', 'Shreddies', 'Rice Krispies', 'Corn Flakes', 'Special K', 'Golden Grahams', 'Cookie Crisp', 'Shredded Wheat', 'Fruity Pebbles', 'Honey Monster Puffs', 'Cinnamon Grahams']),
+    wiki('fd_pizza', 'Pizza Toppings', '🍕', ['Pepperoni', 'Edible mushroom|Mushroom', 'Pineapple', 'Ham', 'Olive', 'Jalapeño', 'Sweetcorn', 'Anchovy', 'Bacon', 'Onion', 'Bell pepper|Peppers', 'Mozzarella', 'Spinach', 'Italian sausage|Sausage', 'Chicken as food|Chicken', 'Barbecue sauce|BBQ Sauce', 'Tomato', 'Basil', 'Feta', 'Ground beef|Beef']),
+  ],
+
+  /* ======================= NATURE ======================= */
+  nature: [
+    wiki('n_dogs', 'Dog Breeds', '🐕', ['Golden Retriever', 'German Shepherd', 'Pug', 'Siberian Husky', 'Bulldog', 'Poodle', 'Beagle', 'Rottweiler', 'Dachshund', 'Pembroke Welsh Corgi', 'Dobermann', 'Great Dane', 'Shih Tzu', 'Boxer (dog)|Boxer', 'Chihuahua (dog)|Chihuahua', 'Border Collie', 'Australian Shepherd', 'French Bulldog', 'Shiba Inu', 'Dalmatian (dog)|Dalmatian', 'Labrador Retriever', 'Cockapoo', 'Staffordshire Bull Terrier', 'Cavalier King Charles Spaniel']),
+    wiki('n_cats', 'Cat Breeds', '🐈', ['Maine Coon', 'Persian cat|Persian', 'Siamese cat|Siamese', 'Bengal cat|Bengal', 'Ragdoll', 'Sphynx cat|Sphynx', 'British Shorthair', 'Scottish Fold', 'Abyssinian cat|Abyssinian', 'Russian Blue', 'Norwegian Forest cat|Norwegian Forest', 'Birman', 'Savannah cat|Savannah', 'Devon Rex', 'Exotic Shorthair', 'Burmese cat|Burmese', 'Turkish Angora', 'American Shorthair']),
+    wiki('n_deadly', 'Deadliest Animals', '🦈', ['Great white shark', 'Hippopotamus', 'Saltwater crocodile', 'Polar bear', 'Lion', 'Tiger', 'King cobra', 'Black mamba', 'Grizzly bear', 'Leopard', 'Orca', 'Box jellyfish', 'Mosquito', 'Komodo dragon', 'African buffalo|Cape buffalo', 'African elephant', 'Tsetse fly', 'Stonefish', 'Deathstalker', 'Inland taipan', 'Poison dart frog', 'Blue-ringed octopus']),
+    wiki('n_bigcats', 'Wild Cats', '🐆', ['Lion', 'Tiger', 'Jaguar', 'Leopard', 'Cheetah', 'Snow leopard', 'Cougar', 'Eurasian lynx', 'Clouded leopard', 'Serval', 'Caracal', 'Ocelot', 'Bobcat', 'Sand cat', 'Black panther', 'Fishing cat']),
+    wiki('n_ocean', 'Ocean Animals', '🐋', ['Blue whale', 'Orca', 'Great white shark', 'Common bottlenose dolphin|Bottlenose dolphin', 'Octopus', 'Manta ray', 'Sea turtle', 'Hammerhead shark', 'Whale shark', 'Humpback whale', 'Narwhal', 'Giant squid', 'Seahorse', 'Clownfish', 'Sea otter', 'Walrus', 'Beluga whale', 'Tetraodontidae|Pufferfish', 'Stingray', 'Moray eel', 'Lion\'s mane jellyfish']),
+    wiki('n_birds', 'Birds', '🦅', ['Bald eagle', 'Golden eagle', 'Peregrine falcon', 'Barn owl', 'Snowy owl', 'Flamingo', 'Indian peafowl|Peacock', 'Toucan', 'Emperor penguin', 'Hummingbird', 'Common kingfisher|Kingfisher', 'European robin|Robin', 'Scarlet macaw', 'Common ostrich|Ostrich', 'Atlantic puffin|Puffin', 'Mute swan|Swan', 'Pelican', 'Wandering albatross|Albatross', 'Kookaburra', 'Harpy eagle']),
+    wiki('n_dinos', 'Dinosaurs', '🦖', ['Tyrannosaurus', 'Triceratops', 'Velociraptor', 'Stegosaurus', 'Brachiosaurus', 'Spinosaurus', 'Ankylosaurus', 'Diplodocus', 'Allosaurus', 'Pteranodon', 'Iguanodon', 'Parasaurolophus', 'Carnotaurus', 'Dilophosaurus', 'Baryonyx', 'Giganotosaurus', 'Pachycephalosaurus', 'Mosasaurus', 'Argentinosaurus', 'Therizinosaurus']),
+  ],
+
+  /* ======================= CARS ======================= */
+  cars: [
+    wiki('car_super', 'Supercars', '🏎️', ['Bugatti Chiron', 'Lamborghini Aventador', 'LaFerrari', 'McLaren P1', 'Porsche 911', 'Koenigsegg Jesko', 'Pagani Huayra', 'Ferrari F40', 'McLaren F1', 'Lamborghini Countach', 'Ford GT', 'Bugatti Veyron', 'Enzo Ferrari (automobile)|Ferrari Enzo', 'Porsche Carrera GT', 'Lamborghini Huracán', 'Ferrari 458', 'Nissan GT-R', 'Chevrolet Corvette', 'Mercedes-AMG One', 'Rimac Nevera', 'Audi R8', 'Aston Martin Valkyrie']),
+    wiki('car_brands', 'Car Brands', '🚘', ['Ferrari', 'Lamborghini', 'Porsche', 'BMW', 'Mercedes-Benz', 'Audi', 'Tesla, Inc.|Tesla', 'Toyota', 'Ford Motor Company|Ford', 'Volkswagen', 'Honda', 'Aston Martin', 'Rolls-Royce Motor Cars|Rolls-Royce', 'Bentley', 'McLaren Automotive|McLaren', 'Jaguar Cars|Jaguar', 'Land Rover', 'Mini (marque)|Mini', 'Nissan', 'Bugatti', 'Maserati', 'Lexus', 'Kia', 'Volvo Cars|Volvo']),
+    wiki('car_jdm', 'JDM Legends', '🇯🇵', ['Toyota Supra', 'Nissan Skyline GT-R', 'Mazda RX-7', 'Honda NSX', 'Mitsubishi Lancer Evolution', 'Subaru Impreza WRX STI', 'Nissan Silvia', 'Toyota Sprinter Trueno|Toyota AE86', 'Honda S2000', 'Mazda MX-5', 'Nissan 350Z', 'Toyota 86', 'Lexus LFA', 'Nissan GT-R', 'Honda Civic Type R', 'Nissan S30|Datsun 240Z', 'Toyota GR Yaris', 'Mazda RX-8']),
+    wiki('car_movie', 'Movie & TV Cars', '🎬', ['DeLorean time machine', 'Batmobile', 'KITT', 'Herbie', 'Ecto-1', 'General Lee (car)|General Lee', 'Mystery Machine', 'Eleanor (automobile)|Eleanor', 'Reliant Regal', 'Bumblebee (Transformers)|Bumblebee', 'Lightning McQueen', 'Aston Martin DB5', 'Mach Five|Mach 5', 'Lotus Esprit', 'Ford Gran Torino', 'Dodge Charger (B-body)|Dom\'s Charger', 'Ford Mustang', 'Volkswagen Beetle', 'Mini|Mr Bean\'s Mini']),
+    wiki('car_hot', 'Hot Hatches', '🔥', ['Volkswagen Golf GTI', 'Ford Fiesta ST', 'Honda Civic Type R', 'Ford Focus RS', 'Peugeot 205 GTI', 'Mini Hatch', 'Hyundai i30 N', 'Toyota GR Yaris', 'Renault Clio V6', 'Renault Mégane RS', 'Volkswagen Golf R', 'Audi RS3', 'Mercedes-AMG A 45', 'Abarth 500', 'Vauxhall Astra VXR', 'Cupra Leon']),
+  ],
+
+  /* ======================= PLACES ======================= */
+  places: [
+    wiki('pl_cities', 'World Cities', '🏙️', ['London', 'Paris', 'New York City', 'Tokyo', 'Rome', 'Barcelona', 'Dubai', 'Sydney', 'Amsterdam', 'Istanbul', 'Rio de Janeiro', 'Los Angeles', 'Las Vegas', 'Bangkok', 'Singapore', 'Hong Kong', 'Venice', 'Prague', 'Berlin', 'Lisbon', 'Cape Town', 'Marrakesh', 'Seoul', 'Miami', 'Mexico City']),
+    wiki('pl_uk', 'UK Cities', '🇬🇧', ['London', 'Manchester', 'Liverpool', 'Birmingham', 'Edinburgh', 'Glasgow', 'Leeds', 'Bristol', 'Newcastle upon Tyne|Newcastle', 'Cardiff', 'Belfast', 'Brighton', 'Sheffield', 'Nottingham', 'York', 'Bath, Somerset|Bath', 'Oxford', 'Cambridge', 'Leicester', 'Aberdeen', 'Norwich', 'Swansea']),
+    wiki('pl_holiday', 'Holiday Spots', '🏝️', ['Bali', 'Maldives', 'Santorini', 'Ibiza', 'Mallorca', 'Tenerife', 'Hawaii', 'Bora Bora', 'Jamaica', 'Cancún', 'Phuket province|Phuket', 'Crete', 'Cyprus', 'Malta', 'Mykonos', 'Sicily', 'Dubrovnik', 'Algarve', 'Barbados', 'Lanzarote', 'Amalfi Coast', 'Zakynthos']),
+    wiki('pl_wonders', 'Natural Wonders', '🏔️', ['Grand Canyon', 'Niagara Falls', 'Mount Everest', 'Great Barrier Reef', 'Aurora|Northern Lights', 'Victoria Falls', 'Amazon rainforest', 'Sahara', 'Hạ Long Bay|Ha Long Bay', 'Mount Fuji', 'Iguazu Falls', 'Uluru', 'Yellowstone National Park|Yellowstone', 'Table Mountain', 'Matterhorn', "Giant's Causeway", 'Antelope Canyon', 'Salar de Uyuni', 'Lake Como', 'Plitvice Lakes National Park|Plitvice Lakes']),
+    wiki('pl_parks', 'Theme Parks', '🎢', ['Magic Kingdom', 'Disneyland', 'Disneyland Park (Paris)|Disneyland Paris', 'Universal Studios Florida', "Universal Islands of Adventure|Islands of Adventure", 'Alton Towers', 'Thorpe Park', 'Europa-Park', 'PortAventura Park', 'Tokyo Disneyland', 'Cedar Point', 'Six Flags Magic Mountain', 'Efteling', 'Legoland Windsor Resort|Legoland Windsor', 'Blackpool Pleasure Beach', 'Busch Gardens Tampa Bay', 'Phantasialand', 'Chessington World of Adventures|Chessington', 'Tivoli Gardens', 'Epic Universe']),
+    wiki('pl_stadiums', 'Stadiums', '🏟️', ['Wembley Stadium', 'Old Trafford', 'Anfield', 'Camp Nou', 'Santiago Bernabéu Stadium|Santiago Bernabéu', 'San Siro', 'Allianz Arena', 'Signal Iduna Park', 'Emirates Stadium', 'Tottenham Hotspur Stadium', 'Etihad Stadium (Manchester)|Etihad Stadium', 'Stamford Bridge (stadium)|Stamford Bridge', 'St James\' Park', 'Celtic Park', 'Maracanã Stadium|Maracanã', 'La Bombonera', 'Madison Square Garden', 'SoFi Stadium', 'Twickenham Stadium', 'Lord\'s']),
+  ],
+
+  /* ======================= HISTORY ======================= */
+  history: [
+    wiki('hg_lands', 'World Landmarks', '🗽', ['Eiffel Tower', 'Great Pyramid of Giza', 'Great Wall of China', 'Colosseum', 'Taj Mahal', 'Statue of Liberty', 'Big Ben', 'Machu Picchu', 'Stonehenge', 'Sydney Opera House', 'Christ the Redeemer (statue)|Christ the Redeemer', 'Petra', 'Acropolis of Athens|Acropolis', 'Chichen Itza', 'Burj Khalifa', 'Golden Gate Bridge', 'Tower Bridge', 'Leaning Tower of Pisa', 'Sagrada Família', 'Angkor Wat', 'Mount Rushmore', 'Neuschwanstein Castle']),
+    wiki('hg_figs', 'Historical Figures', '📜', ['Albert Einstein', 'Abraham Lincoln', 'Cleopatra', 'Julius Caesar', 'Leonardo da Vinci', 'Mahatma Gandhi', 'Nelson Mandela', 'Joan of Arc', 'Winston Churchill', 'Napoleon', 'William Shakespeare', 'Martin Luther King Jr.', 'Alexander the Great', 'George Washington', 'Isaac Newton', 'Queen Victoria', 'Charles Darwin', 'Marie Curie', 'Elizabeth I', 'Genghis Khan', 'Florence Nightingale', 'Nikola Tesla']),
+    wiki('hg_royals', 'British Monarchs', '👑', ['William the Conqueror', 'Richard I of England|Richard the Lionheart', 'Henry VIII', 'Elizabeth I', 'James VI and I|James I', 'Charles I of England|Charles I', 'Charles II of England|Charles II', 'George III', 'Queen Victoria', 'Edward VII', 'George V', 'George VI', 'Elizabeth II', 'Charles III', 'Henry V of England|Henry V', 'Richard III of England|Richard III', 'Edward I of England|Edward I', 'Alfred the Great', 'Anne, Queen of Great Britain|Queen Anne', 'Mary I of England|Mary I']),
+    wiki('hg_inv', 'Greatest Inventions', '💡', ['Wheel', 'Printing press', 'Incandescent light bulb|Light Bulb', 'Telephone', 'Internet', 'Smartphone', 'Airplane', 'Car', 'Penicillin', 'Television', 'Computer', 'Steam engine', 'Refrigerator|Fridge', 'Vaccine', 'Camera', 'Radio', 'Bicycle', 'Microwave oven|Microwave', 'Washing machine', 'World Wide Web', 'Global Positioning System|GPS', 'Toilet', 'Electric battery|Battery']),
+    wiki('hg_empires', 'Empires', '⚔️', ['Roman Empire', 'British Empire', 'Mongol Empire', 'Ottoman Empire', 'Byzantine Empire', 'Ancient Egypt', 'Achaemenid Empire|Persian Empire', 'Macedonia (ancient kingdom)|Macedonian Empire', 'Han dynasty', 'Aztec Empire', 'Inca Empire', 'Spanish Empire', 'Holy Roman Empire', 'Russian Empire', 'Mughal Empire', 'Ancient Carthage|Carthage', 'First French Empire|Napoleonic France', 'Vikings', 'Qing dynasty', 'Empire of Japan']),
+    wiki('hg_flags', 'World Flags', '🌍', ['Flag of the United States|USA', 'Flag of the United Kingdom|UK', 'Flag of Japan|Japan', 'Flag of Brazil|Brazil', 'Flag of Canada|Canada', 'Flag of France|France', 'Flag of Germany|Germany', 'Flag of Italy|Italy', 'Flag of Australia|Australia', 'Flag of India|India', 'Flag of Mexico|Mexico', 'Flag of South Korea|South Korea', 'Flag of China|China', 'Flag of Spain|Spain', 'Flag of Argentina|Argentina', 'Flag of Ireland|Ireland', 'Flag of Jamaica|Jamaica', 'Flag of Nigeria|Nigeria', 'Flag of Portugal|Portugal', 'Flag of Sweden|Sweden', 'Flag of Greece|Greece', 'Flag of Turkey|Turkey', 'Flag of South Africa|South Africa', 'Flag of Scotland|Scotland', 'Flag of Wales|Wales']),
+    wiki('hg_pres', 'US Presidents', '🇺🇸', ['George Washington', 'Abraham Lincoln', 'Thomas Jefferson', 'Theodore Roosevelt', 'Franklin D. Roosevelt', 'John F. Kennedy', 'Ronald Reagan', 'Barack Obama', 'Donald Trump', 'Joe Biden', 'Bill Clinton', 'George W. Bush', 'Richard Nixon', 'Dwight D. Eisenhower', 'Harry S. Truman', 'Jimmy Carter', 'Lyndon B. Johnson', 'Andrew Jackson', 'Ulysses S. Grant', 'George H. W. Bush']),
+  ],
+
+  /* ======================= MYTHS ======================= */
+  myths: [
+    wiki('m_greek', 'Greek Gods', '⚡', ['Zeus', 'Poseidon', 'Hades', 'Athena', 'Ares', 'Apollo', 'Artemis', 'Aphrodite', 'Hermes', 'Hera', 'Hephaestus', 'Dionysus', 'Demeter', 'Hestia', 'Persephone', 'Kronos|Cronus', 'Nyx', 'Eros', 'Nemesis (mythology)|Nemesis', 'Helios']),
+    wiki('m_heroes', 'Greek Heroes & Monsters', '🏛️', ['Heracles|Hercules', 'Achilles', 'Perseus', 'Odysseus', 'Theseus', 'Jason', 'Medusa', 'Minotaur', 'Cerberus', 'Lernaean Hydra|Hydra', 'Pegasus', 'Cyclopes|Cyclops', 'Chimera (mythology)|Chimera', 'Sirens (mythology)|Sirens', 'Scylla', 'Atalanta', 'Hector', 'Prometheus', 'Typhon', 'Charybdis']),
+    wiki('m_norse', 'Norse Mythology', '🪓', ['Odin', 'Thor', 'Loki', 'Freyja', 'Frigg', 'Baldr', 'Týr', 'Heimdall', 'Hel (mythological being)|Hel', 'Fenrir', 'Jörmungandr', 'Sleipnir', 'Njörðr', 'Freyr', 'Ymir', 'Valkyrie', 'Surtr', 'Yggdrasil']),
+    wiki('m_egypt', 'Egyptian Gods', '𓂀', ['Ra', 'Osiris', 'Isis', 'Horus', 'Anubis', 'Set (deity)|Set', 'Thoth', 'Bastet', 'Sekhmet', 'Hathor', 'Ptah', 'Sobek', 'Amun', 'Nut (goddess)|Nut', 'Geb', 'Maat', 'Khepri', 'Bes', 'Apep', 'Khonsu']),
+    wiki('m_creatures', 'Mythical Creatures', '🐉', ['Dragon', 'Phoenix (mythology)|Phoenix', 'Unicorn', 'Griffin', 'Kraken', 'Mermaid', 'Werewolf', 'Vampire', 'Basilisk', 'Centaur', 'Sphinx', 'Kitsune', 'Golem', 'Wendigo', 'Banshee', 'Leviathan', 'Hippogriff', 'Fairy', 'Troll', 'Gorgon']),
+    wiki('m_cryptids', 'Cryptids & Legends', '👁️', ['Bigfoot', 'Loch Ness Monster', 'Mothman', 'Chupacabra', 'Yeti', 'Kraken', 'Wendigo', 'Jersey Devil', 'Jackalope', 'Slender Man', 'Mongolian death worm', 'Thunderbird (mythology)|Thunderbird', 'Kappa (folklore)|Kappa', 'Skinwalker', 'Bunyip', 'Ogopogo', 'Beast of Bodmin Moor', 'Flatwoods monster', 'Dover Demon', 'Black Shuck']),
+  ],
+};
