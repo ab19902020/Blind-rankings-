@@ -113,7 +113,7 @@ const tmdb = (path) => get(`https://api.themoviedb.org/3${path}${path.includes('
 const tmdbCache = new Map();
 const yearOf = x => +((x.release_date || x.first_air_date || '').slice(0, 4)) || 0;
 async function tmdbFind(q) {
-  const key = `${q.t}|${q.q}|${q.y || ''}`;
+  const key = `${q.t}|${q.q}|${q.y || ''}|${q.acting ? 'a' : ''}`;
   if (tmdbCache.has(key)) return tmdbCache.get(key);
   const kind = q.t === 'person' ? 'person' : q.t === 'tv' ? 'tv' : 'movie';
   const N = norm(q.q);
@@ -121,7 +121,7 @@ async function tmdbFind(q) {
   if (kind === 'person') {
     const r = await tmdb(`/search/person?query=${encodeURIComponent(q.q)}`);
     // Exact name only; if several people share it, the most famous one.
-    m = (r?.results || []).filter(x => x.profile_path && norm(x.name) === N).sort((a, b) => (b.popularity || 0) - (a.popularity || 0))[0] || null;
+    m = (r?.results || []).filter(x => x.profile_path && norm(x.name) === N && (!q.acting || x.known_for_department === 'Acting')).sort((a, b) => (b.popularity || 0) - (a.popularity || 0))[0] || null;
   } else {
     const titles = x => [x.title, x.name, x.original_title, x.original_name].filter(Boolean).map(norm);
     const exact = x => titles(x).includes(N);
@@ -407,7 +407,7 @@ async function sparqlFor(g, limit) {
   if (g.where) w.push(g.where);
   if (!w.length) w.push('?item wdt:P31 wd:Q5 .');
   // Fame cut straight after the first pattern so huge groups (all footballers) stay fast.
-  w.splice(1, 0, `?item wikibase:sitelinks ?links . FILTER(?links >= ${g.minLinks ?? 6})`);
+  w.splice(1, 0, `?item wikibase:sitelinks ?sl . FILTER(?sl >= ${g.minLinks ?? 6})`);
   if (human && !w.some(x => x.includes('wd:Q5 .'))) w.push('?item wdt:P31 wd:Q5 .');
   if (g.sex) w.push(`?item wdt:P21 wd:${g.sex === 'f' ? 'Q6581072' : 'Q6581097'} .`);
   if (g.country) w.push(`?item (wdt:P27|wdt:P495|wdt:P17) ?cty . VALUES ?cty { ${arr(g.country).map(c => 'wd:' + COUNTRY[c]).join(' ')} }`);
@@ -418,10 +418,18 @@ async function sparqlFor(g, limit) {
   const bad = human ? await qidsFor([...ADULT, ...arr(g.exclude)]) : [];
   const excl = bad.length ? `FILTER NOT EXISTS { ?item wdt:P106 ?bad . VALUES ?bad { ${bad.map(q => 'wd:' + q).join(' ')} } }` : '';
   const perf = g.albums ? 'OPTIONAL { ?item wdt:P175 ?pf . ?pf rdfs:label ?pfl . FILTER(LANG(?pfl) = "en") }' : '';
-  return `SELECT ?item ?title ?label ?img ?logo ?flag ?yt ?tw ?pfl ?links WHERE {
-  { SELECT DISTINCT ?item ?links WHERE { hint:Query hint:optimizer "None" .
+  // Ranking: Wikipedia coverage, or for creators their YouTube subscriber count.
+  const inner = g.ytSubs
+    ? `SELECT ?item (MAX(?subs) AS ?links) WHERE { hint:Query hint:optimizer "None" .
     ${w.join('\n    ')}
-  } ORDER BY DESC(?links) LIMIT ${limit} }
+    ?item p:P8687 ?st . ?st ps:P8687 ?subs ; pq:P2397 ?ych .
+  } GROUP BY ?item ORDER BY DESC(?links) LIMIT ${limit}`
+    : `SELECT DISTINCT ?item ?links WHERE { hint:Query hint:optimizer "None" .
+    ${w.join('\n    ')}
+    BIND(?sl AS ?links)
+  } ORDER BY DESC(?links) LIMIT ${limit}`;
+  return `SELECT ?item ?title ?label ?img ?logo ?flag ?yt ?tw ?pfl ?links WHERE {
+  { ${inner} }
   ${politic}
   ${excl}
   ?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?title .
@@ -520,6 +528,14 @@ async function resolveCurated(it) {
       const have = new Set(parsed.flatMap(p => [norm(p.name), norm(stripParen(p.title))]));
       const extra = [];
       for (const g of grows) {
+        if (g.deezerGenre != null) {
+          const r = await get(`https://api.deezer.com/genre/${g.deezerGenre}/artists`);
+          for (const a of r?.data || []) {
+            if (!a.picture_xl || /\/artist\/\//.test(a.picture_xl) || have.has(norm(a.name))) continue;
+            have.add(norm(a.name)); extra.push({ title: a.name, name: a.name, src: [], img: a.picture_xl });
+          }
+          continue;
+        }
         for (const o of await growWikidata(g, Math.max(170, target + 60))) {
           if (have.has(norm(o.name)) || have.has(norm(stripParen(o.title)))) continue;
           have.add(norm(o.name)); have.add(norm(stripParen(o.title)));
@@ -530,9 +546,10 @@ async function resolveCurated(it) {
       addGrown(it.id, extra.map(e => e.name));
       parsed.push(...extra.slice(0, Math.round((target - parsed.length) * 1.35)));
     }
-    const out = new Array(parsed.length).fill(null);
+    const out = parsed.map(p => (p.img ? { img: p.img, src: 'deezer' } : null));
     // 1) creators: their own channel picture
     await mapLimit(parsed, 3, async (p, i) => {
+      if (out[i]) return;
       for (const s of p.src) {
         const wants = [p.name, p.title];
         const trusted = s.endsWith('!'); const h = trusted ? s.slice(0, -1) : s;
@@ -568,7 +585,7 @@ async function resolveCurated(it) {
         } else {
           for (const o of await growWikidata(g, Math.max(170, target + 60))) {
             if (have.has(norm(o.name))) continue; have.add(norm(o.name));
-            queries.push({ q: o.name, n: o.name, t: 'person', title: o.title, grown: true });
+            queries.push({ q: o.name, n: o.name, t: 'person', title: o.title, grown: true, acting: !!g.acting });
           }
         }
       }
@@ -576,7 +593,7 @@ async function resolveCurated(it) {
     }
     const res = await mapLimit(queries, 6, q => tmdbFind(q));
     // grown people TMDB doesn't know: their Wikidata portrait instead
-    const noTmdb = queries.map((q, i) => [q, i]).filter(([q, i]) => !res[i] && q.title);
+    const noTmdb = queries.map((q, i) => [q, i]).filter(([q, i]) => !res[i] && q.title && !q.acting);
     const wk = await resolveWikiPicks(noTmdb.map(([q]) => ({ title: q.title, name: q.n })), 'person');
     noTmdb.forEach(([, i], k) => { if (wk[k]) res[i] = { img: wk[k].img }; });
     const pool = [], missing = []; let thumb = null;

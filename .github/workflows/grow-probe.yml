@@ -19,5 +19,5 @@ jobs:
           node-version: 20
       - working-directory: app
         run: |
-          node grow-probe.mjs "g_darts,fc_utd,a_rising,vg_best,fd_fast,mb_all,pl_cities,car_brands" GET
-          node grow-probe.mjs "f_all,f_now,f_gk,a_legends,a_brits,cr_uk,cr_us,c_box,g_ten,mu_country,hg_science,a_com" GET
+          node grow-probe.mjs "f_gk,c_box,g_ten,cr_uk,cr_us,cr_yt,cr_gaming,mu_emo,uk_grime,hg_royals" GET
+          node grow-probe.mjs "n_cats,car_jdm,pl_wonders,m_norse,m_heroes,vg_switch,fd_choc,fd_cereal,a_disney,tc_snl,b_mod,a_nfl_qbs" GET

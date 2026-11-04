@@ -366,7 +366,8 @@ const SINGER = ['singer', 'singer-songwriter'];
 const BAND = ['musical group', 'rock band', 'band', 'boy band', 'girl group', 'pop rock band'];
 const CHAIN = ['restaurant chain', 'fast food restaurant chain', 'fast casual restaurant chain', 'chain restaurant'];
 const BIG_TEAMS = ['Real Madrid CF', 'FC Barcelona', 'Manchester United F.C.', 'Liverpool F.C.', 'FC Bayern Munich', 'Juventus FC', 'AC Milan', 'Inter Milan', 'Chelsea F.C.', 'Arsenal F.C.', 'Manchester City F.C.', 'Paris Saint-Germain F.C.', 'Borussia Dortmund', 'Atlético Madrid', 'AFC Ajax', 'Tottenham Hotspur F.C.', 'S.L. Benfica', 'FC Porto', 'Brazil national football team', 'Argentina national football team', 'France national football team', 'Germany national football team', 'Italy national football team', 'Spain national football team', 'England national football team', 'Netherlands national football team', 'Portugal national football team'];
-const footy = team => ({ occ: 'association football player', team });
+const SPORT_EX = ['film actor', 'television actor', 'actor', 'singer', 'comedian', 'monarch', 'sovereign', 'aristocrat', 'physicist', 'skydiver', 'television presenter'];
+const footy = team => ({ occ: 'association football player', team, exclude: SPORT_EX });
 export const GROW = {
   // ---- Movies
   fr_horror: { tmdb: M + '&with_genres=27' }, fr_vgm: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=40', keyword: ['based on video game'] },
@@ -400,11 +401,11 @@ export const GROW = {
 
   // ---- Celebs (TMDB photos, Wikidata portrait as backup)
   a_men: { popularActors: true, gender: 2 }, a_women: { popularActors: true, gender: 1 },
-  a_action: { occ: ACT, where: '?item wdt:P106 ?o2 . VALUES ?o2L { "martial artist"@en "stunt performer"@en "bodybuilder"@en "professional wrestler"@en } ?o2 rdfs:label ?o2L .' },
-  a_brits: { occ: ACT, country: 'uk', born: [1930], minLinks: 15 }, a_com: { occ: ['comedian', 'stand-up comedian'], country: ANGLO, born: [1935], where: '?item wdt:P106 ?o2 . VALUES ?o2L { "actor"@en "film actor"@en } ?o2 rdfs:label ?o2L .' },
-  a_rising: { occ: ACT, country: ANGLO, born: [1994], minLinks: 10 }, a_reality: { occ: ['television personality', 'socialite', 'reality television participant'], country: ['us', 'uk'], born: [1960] },
-  a_standup: { occ: 'stand-up comedian', country: ANGLO }, a_legends: { occ: ACT, born: [1870, 1935], minLinks: 25 }, a_kidstars: { occ: 'child actor', born: [1925] },
-  a_disney: { where: 'VALUES ?netL { "Disney Channel"@en } ?net rdfs:label ?netL . ?show wdt:P449 ?net . ?show wdt:P161 ?item .', human: true },
+  a_action: { occ: ACT, acting: true, where: '?item wdt:P106 ?o2 . VALUES ?o2L { "martial artist"@en "stunt performer"@en "bodybuilder"@en "professional wrestler"@en } ?o2 rdfs:label ?o2L .' },
+  a_brits: { occ: ACT, acting: true, country: 'uk', born: [1930], minLinks: 15 }, a_com: { occ: ['comedian', 'stand-up comedian'], acting: true, country: ANGLO, born: [1935], where: '?item wdt:P106 ?o2 . VALUES ?o2L { "actor"@en "film actor"@en } ?o2 rdfs:label ?o2L .' },
+  a_rising: { occ: ACT, acting: true, country: ANGLO, born: [1994], minLinks: 10 }, a_reality: { occ: ['television personality', 'socialite', 'reality television participant'], country: ['us', 'uk'], born: [1960] },
+  a_standup: { occ: 'stand-up comedian', country: ANGLO }, a_legends: { occ: ACT, acting: true, born: [1870, 1935], minLinks: 25 }, a_kidstars: { occ: 'child actor', acting: true, born: [1925] },
+  a_disney: { acting: true, where: 'VALUES ?netL { "Disney Channel"@en } ?net rdfs:label ?netL . ?show wdt:P449 ?net . ?show wdt:P161 ?item .', human: true },
   a_ceos: { occ: ['entrepreneur', 'business executive', 'business magnate', 'chief executive officer'], born: [1925] }, a_chefs: { occ: ['chef', 'restaurateur', 'television chef'] },
   a_models: { occ: ['model', 'fashion model'], sex: 'f', born: [1950] },
 
@@ -428,7 +429,7 @@ export const GROW = {
   f_all: { team: BIG_TEAMS, minLinks: 25 }, f_now: { team: BIG_TEAMS, born: [1995], minLinks: 12 },
   f_prem: { occ: 'association football player', born: [1965], team: ['Manchester United F.C.', 'Arsenal F.C.', 'Chelsea F.C.', 'Liverpool F.C.', 'Manchester City F.C.', 'Tottenham Hotspur F.C.', 'Everton F.C.', 'Newcastle United F.C.'] },
   f_eng: footy('England national football team'), f_liga: { occ: 'association football player', born: [1960], team: ['Real Madrid CF', 'FC Barcelona', 'Atlético Madrid', 'Sevilla FC', 'Valencia CF'] },
-  f_mgr: { occ: 'association football manager', minLinks: 20 }, f_ballon: { award: "Ballon d'Or" }, f_gk: { position: ['goalkeeper', 'association football goalkeeper'], minLinks: 15 },
+  f_mgr: { occ: 'association football manager', minLinks: 20 }, f_ballon: { award: "Ballon d'Or" }, f_gk: { team: BIG_TEAMS, position: ['goalkeeper', 'association football goalkeeper'], minLinks: 10, exclude: SPORT_EX },
   f_lionesses: { team: ["England women's national football team", "England women's national association football team"] },
   f_pl_clubs: { inst: ['association football club'], country: 'uk' }, f_eu_clubs: { inst: ['association football club'] },
   f_nations: { inst: ['sovereign state', 'country'], human: false },
@@ -438,22 +439,22 @@ export const GROW = {
   a_mlb: { league: 'Major League Baseball' }, a_mlb_now: { league: 'Major League Baseball', born: [1992] }, a_nhl: { league: 'National Hockey League' },
   a_wnba: { league: "Women's National Basketball Association" }, a_teamusa: { occ: ['swimmer', 'athletics competitor', 'artistic gymnast', 'alpine skier', 'figure skater', 'snowboarder', 'sprinter'], country: 'us' },
   a_college: { inst: ['college football team', 'college sports team'], human: false },
-  c_ufc_goat: { occ: 'mixed martial artist' }, c_box: { occ: 'boxer', minLinks: 12 }, c_wwe_att: { occ: 'professional wrestler', born: [1940, 1985] }, c_wwe_now: { occ: 'professional wrestler', born: [1980] },
-  g_f1: { occ: 'Formula One driver' }, g_ten: { occ: 'tennis player', minLinks: 15 }, g_darts: { occ: 'darts player' }, g_snooker: { occ: 'snooker player' }, g_golf: { occ: 'golfer' },
-  g_olymp: { occ: ['swimmer', 'athletics competitor', 'artistic gymnast', 'sprinter', 'long-distance runner', 'track cyclist'], minLinks: 30 }, g_cricket: { occ: 'cricketer', minLinks: 10 }, g_rugby: { occ: 'rugby union player' },
+  c_ufc_goat: { occ: 'mixed martial artist', exclude: SPORT_EX }, c_box: { occ: 'boxer', minLinks: 12, exclude: SPORT_EX }, c_wwe_att: { occ: 'professional wrestler', born: [1940, 1985] }, c_wwe_now: { occ: 'professional wrestler', born: [1980] },
+  g_f1: { occ: 'Formula One driver', exclude: SPORT_EX }, g_ten: { occ: 'tennis player', minLinks: 15, exclude: SPORT_EX }, g_darts: { occ: 'darts player', exclude: SPORT_EX }, g_snooker: { occ: 'snooker player', exclude: SPORT_EX }, g_golf: { occ: 'golfer', exclude: SPORT_EX },
+  g_olymp: { occ: ['swimmer', 'athletics competitor', 'artistic gymnast', 'sprinter', 'long-distance runner', 'track cyclist'], minLinks: 30 }, g_cricket: { occ: 'cricketer', minLinks: 10, exclude: SPORT_EX }, g_rugby: { occ: 'rugby union player', exclude: SPORT_EX },
 
   // ---- Music (Deezer artist photos)
-  mu_now: { occ: SINGER, genre: ['pop music', 'dance-pop', 'electropop'], born: [1993] }, mu_pop: { occ: SINGER, genre: ['pop music', 'dance-pop'] }, mu_rap: { occ: 'rapper' },
+  mu_now: [{ deezerGenre: 132 }, { occ: SINGER, genre: ['pop music', 'dance-pop', 'electropop'], born: [1993] }], mu_pop: [{ deezerGenre: 132 }, { occ: SINGER, genre: ['pop music', 'dance-pop'] }], mu_rap: [{ deezerGenre: 116 }, { occ: 'rapper' }],
   mu_rock: { occ: SINGER, sex: 'm', genre: ['rock music', 'hard rock', 'alternative rock', 'rock and roll'] }, mu_divas: { occ: SINGER, sex: 'f', genre: ['pop music', 'contemporary R&B', 'soul music'] },
-  mu_rb: { occ: SINGER, genre: ['contemporary R&B', 'soul music', 'rhythm and blues', 'neo soul'] },
-  mu_kpop: [{ genre: 'K-pop', inst: BAND, human: false }, { genre: 'K-pop', occ: SINGER }], mu_country: { occ: SINGER, genre: 'country music' },
+  mu_rb: [{ deezerGenre: 165 }, { occ: SINGER, genre: ['contemporary R&B', 'soul music', 'rhythm and blues', 'neo soul'] }],
+  mu_kpop: [{ genre: 'K-pop', inst: BAND, human: false }, { genre: 'K-pop', occ: SINGER }], mu_country: [{ deezerGenre: 84 }, { occ: SINGER, genre: 'country music', exclude: ['martial artist', 'businessperson'] }],
   uk_grime: { occ: 'rapper', country: 'uk' }, uk_britpop: { inst: BAND, country: 'uk', human: false }, uk_pop: { occ: SINGER, country: 'uk', genre: ['pop music', 'pop rock', 'soul music'] },
   mb_all: { inst: BAND, human: false }, mb_boy: { inst: ['boy band', 'girl group'], human: false },
   md_2010: { occ: SINGER, born: [1984, 1999], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'dance-pop'] }, md_2000: { occ: SINGER, born: [1972, 1986], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'pop rock'] },
   md_1990: { occ: SINGER, born: [1960, 1977], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'alternative rock'] }, md_1980: { occ: SINGER, born: [1945, 1966], genre: ['pop music', 'new wave', 'synth-pop', 'rock music'] },
-  mu_rapnow: { occ: 'rapper', country: 'us', born: [1990] }, mu_popgirls: { occ: SINGER, sex: 'f', genre: ['pop music', 'dance-pop'], born: [1982] },
-  mu_emo: { inst: BAND, genre: ['emo', 'pop-punk', 'pop punk', 'post-hardcore'], human: false }, mu_latin: { genre: ['reggaeton', 'Latin pop', 'Latin trap', 'regional Mexican', 'bachata'], occ: SINGER },
-  mu_rnb00: { occ: SINGER, genre: ['contemporary R&B', 'hip hop soul'], born: [1970, 1990] }, mu_countrynow: { occ: SINGER, genre: 'country music', born: [1975] },
+  mu_rapnow: [{ deezerGenre: 116 }, { occ: 'rapper', country: 'us', born: [1990] }], mu_popgirls: [{ deezerGenre: 132 }, { occ: SINGER, sex: 'f', genre: ['pop music', 'dance-pop'], born: [1982] }],
+  mu_emo: { inst: BAND, genre: ['emo', 'pop-punk', 'pop punk', 'post-hardcore'], human: false }, mu_latin: [{ deezerGenre: 197 }, { genre: ['reggaeton', 'Latin pop', 'Latin trap', 'regional Mexican', 'bachata'], occ: SINGER }],
+  mu_rnb00: [{ deezerGenre: 165 }, { occ: SINGER, genre: ['contemporary R&B', 'hip hop soul'], born: [1970, 1990] }], mu_countrynow: [{ deezerGenre: 84 }, { occ: SINGER, genre: 'country music', born: [1975] }],
   mu_90shiphop: { occ: 'rapper', born: [1960, 1980] },
   al_greatest: { inst: ['album', 'studio album'], human: false }, al_modern: { inst: ['album', 'studio album'], since: 2008, human: false },
   al_uk: { inst: ['album', 'studio album'], country: 'uk', human: false }, al_hiphop: { inst: ['album', 'studio album'], genre: ['hip hop music', 'hardcore hip hop', 'trap music'], human: false },
@@ -467,9 +468,9 @@ export const GROW = {
   vg_horror: { inst: 'video game', genre: ['survival horror', 'psychological horror'], human: false }, vg_shooters: { inst: 'video game', genre: ['first-person shooter', 'battle royale game', 'third-person shooter', 'hero shooter'], human: false },
 
   // ---- Creators (channel pictures come straight from the YouTube/Twitch IDs on Wikidata)
-  cr_us: { occ: ['YouTuber', 'vlogger'], country: 'us', exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] }, cr_uk: { occ: ['YouTuber', 'vlogger'], country: 'uk', exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] }, cr_yt: { occ: 'YouTuber', exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] },
+  cr_us: { occ: ['YouTuber', 'vlogger'], country: 'us', ytSubs: true, exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] }, cr_uk: { occ: ['YouTuber', 'vlogger'], country: 'uk', ytSubs: true, exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] }, cr_yt: { occ: 'YouTuber', ytSubs: true, exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] },
   cr_stream: { occ: ['streamer', 'Twitch streamer', 'live streamer', 'video game streamer'] }, cr_tiktok: { occ: ['TikToker', 'social media influencer'], exclude: ['model', 'politician'] },
-  cr_pods: { occ: 'podcaster' }, cr_gaming: { occ: ['YouTuber', 'streamer', 'esports player'], where: '?item wdt:P101 ?fw . VALUES ?fwL { "video game"@en "video games"@en "gaming"@en } ?fw rdfs:label ?fwL .' },
+  cr_pods: { occ: 'podcaster' }, cr_gaming: { occ: ['YouTuber', 'streamer', 'esports player'], ytSubs: true, where: '?item wdt:P101 ?fw . VALUES ?fwL { "video game"@en "video games"@en "gaming"@en } ?fw rdfs:label ?fwL .' },
   cr_beauty: { occ: ['beauty vlogger', 'makeup artist', 'YouTuber'], sex: 'f', where: '?item wdt:P101 ?fw . VALUES ?fwL { "cosmetics"@en "beauty"@en "fashion"@en } ?fw rdfs:label ?fwL .' },
 
   // ---- Food
