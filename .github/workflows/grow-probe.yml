@@ -1,0 +1,18 @@
+name: Grow probe
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: 'Category ids'
+        default: 'g_darts,fc_utd,a_men,mu_rap,vg_best,n_dogs,cr_uk,hg_pres'
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - working-directory: app
+        run: node grow-probe.mjs "${{ inputs.ids }}"
