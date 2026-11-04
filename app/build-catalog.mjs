@@ -390,12 +390,18 @@ async function qidsFor(labels) {
     // Wikidata labels differ in capitalisation ("monarch of England" vs "Monarch of England").
     const variants = l => [...new Set([l, l[0].toUpperCase() + l.slice(1), l[0].toLowerCase() + l.slice(1)])];
     const back = new Map(); need.forEach(l => variants(l).forEach(v => back.set(v, l)));
-    const d = await sparql(`SELECT ?x ?l ?n WHERE { VALUES ?l { ${[...back.keys()].map(l => JSON.stringify(l) + '@en').join(' ')} } ?x rdfs:label ?l . OPTIONAL { ?x wikibase:sitelinks ?n } }`, 30000);
+    const q = `SELECT ?x ?l ?n WHERE { VALUES ?l { ${[...back.keys()].map(l => JSON.stringify(l) + '@en').join(' ')} } ?x rdfs:label ?l . OPTIONAL { ?x wikibase:sitelinks ?n } }`;
+    let d = await sparql(q, 45000);
+    if (!d) { await sleep(4000); d = await sparql(q, 60000); }
     if (!d) return [];
     // A common word ("mountain") labels thousands of items: keep the best-known 3 per name.
+    // Exact-case matches win ("boxer" the job, not "Boxer" the dog); then the best-known.
     const hits = new Map(); need.forEach(l => hits.set(l, []));
-    for (const b of d.results?.bindings || []) hits.get(back.get(b.l.value))?.push([b.x.value.split('/').pop(), +(b.n?.value || 0)]);
-    for (const [l, h] of hits) qidCache.set(l, h.sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]));
+    for (const b of d.results?.bindings || []) { const l = back.get(b.l.value); hits.get(l)?.push([b.x.value.split('/').pop(), +(b.n?.value || 0), b.l.value === l]); }
+    for (const [l, h] of hits) {
+      const exact = h.filter(x => x[2]); const use = exact.length ? exact : h;
+      qidCache.set(l, use.sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]));
+    }
   }
   return [...new Set(arr(labels).flatMap(l => qidCache.get(l) || []))];
 }
