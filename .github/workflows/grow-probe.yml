@@ -20,4 +20,4 @@ jobs:
       - working-directory: app
         run: |
           node grow-probe.mjs "${{ inputs.ids }}" GET
-          node grow-probe.mjs "g_darts,a_men" POST
+          node grow-probe.mjs "f_all,mu_pop,a_women,b_all,fd_fast,car_super,m_greek,al_greatest" GET

@@ -39,7 +39,7 @@ const pace = {
 const hostDown = {};
 async function get(url, { json = true, headers = {}, ua = UA, timeout = 20000 } = {}) {
   const host = new URL(url).host;
-  if (hostDown[host] >= 8) return null; // stop hammering a host that is clearly blocking us
+  if (hostDown[host] >= 8 && host !== 'query.wikidata.org') return null; // stop hammering a host that is clearly blocking us
   if (pace[host]) { const wait = Math.max(0, (lastHit[host] || 0) + pace[host] - Date.now()); lastHit[host] = Date.now() + wait; if (wait) await sleep(wait); }
   for (let a = 0; a < 4; a++) {
     try {
@@ -376,37 +376,59 @@ const TARGET = 100;
 const COUNTRY = { us: 'Q30', uk: 'Q145', ca: 'Q16', au: 'Q408', ie: 'Q27', jp: 'Q17', kr: 'Q884', nz: 'Q664', fr: 'Q142', de: 'Q183', es: 'Q29', it: 'Q38', br: 'Q155', in: 'Q668', mx: 'Q96' };
 const PROP = { team: 'P54', position: 'P413', genre: 'P136', award: 'P166', universe: 'P1080', platform: 'P400', sport: 'P641', posHeld: 'P39', publisher: 'P123', maker: 'P176', series: 'P179', developer: 'P178', partOf: 'P361', network: 'P449' };
 const arr = x => (x == null ? [] : Array.isArray(x) ? x : [x]);
-const labs = (v, xs) => `VALUES ${v}L { ${arr(xs).map(x => JSON.stringify(x) + '@en').join(' ')} } ${v} rdfs:label ${v}L .`;
-function sparqlFor(g, limit) {
-  const w = [];
+const WDQS = 'https://query.wikidata.org/sparql';
+async function sparql(q, timeout = 70000) {
+  return get(`${WDQS}?format=json&query=${encodeURIComponent(q)}`, { headers: { Accept: 'application/sparql-results+json' }, timeout });
+}
+// English label -> QIDs. Label lookups are indexed and fast; doing them inside the big
+// query is what made Wikidata time out, so they are resolved up front and cached.
+const qidCache = new Map();
+async function qidsFor(labels) {
+  const need = [...new Set(arr(labels))].filter(l => !qidCache.has(l));
+  if (need.length) {
+    const d = await sparql(`SELECT ?x ?l WHERE { VALUES ?l { ${need.map(l => JSON.stringify(l) + '@en').join(' ')} } ?x rdfs:label ?l . }`, 30000);
+    need.forEach(l => qidCache.set(l, []));
+    for (const b of d?.results?.bindings || []) qidCache.get(b.l.value)?.push(b.x.value.split('/').pop());
+  }
+  return [...new Set(arr(labels).flatMap(l => qidCache.get(l) || []))];
+}
+const vals = (v, ids) => `VALUES ${v} { ${ids.map(q => 'wd:' + q).join(' ')} }`;
+async function sparqlFor(g, limit) {
+  const w = [];   // most selective patterns first; the optimizer is told to keep this order
   const human = g.human ?? !!(g.occ || g.team || g.league || g.position || g.castOf || g.posHeld);
-  if (human) w.push('?item wdt:P31 wd:Q5 .');
-  if (arr(g.inst).length) w.push(`?item wdt:P31 ?in . ${labs('?in', g.inst)}`);
-  if (arr(g.sub).length) w.push(`?item wdt:P279 ?sb . ${labs('?sb', g.sub)}`);
-  if (arr(g.occ).length) w.push(`?item wdt:P106 ?oc . ${labs('?oc', g.occ)}`);
-  for (const [k, pid] of Object.entries(PROP)) if (arr(g[k]).length) w.push(`?item wdt:${pid} ?${k}V . ${labs('?' + k + 'V', g[k])}`);
-  if (g.league) w.push(`?item wdt:P54 ?tl . ?tl wdt:P118 ?lg . ${labs('?lg', g.league)}`);
-  if (g.castOf) w.push(`?show wdt:P161 ?item . ${labs('?show', g.castOf)}`);
+  const need = async (label, xs) => { const ids = await qidsFor(xs); if (!ids.length) throw new Error(`no Wikidata item for ${label} ${JSON.stringify(xs)}`); return ids; };
+  if (g.castOf) w.push(`${vals('?show', await need('castOf', g.castOf))} ?show wdt:P161 ?item .`);
+  for (const [k, pid] of Object.entries(PROP)) if (arr(g[k]).length) w.push(`${vals('?' + k + 'V', await need(k, g[k]))} ?item wdt:${pid} ?${k}V .`);
+  if (g.league) w.push(`${vals('?lg', await need('league', g.league))} ?tl wdt:P118 ?lg . ?item wdt:P54 ?tl .`);
+  if (arr(g.occ).length) w.push(`${vals('?oc', await need('occ', g.occ))} ?item wdt:P106 ?oc .`);
+  if (arr(g.inst).length) w.push(`${vals('?in', await need('inst', g.inst))} ?item wdt:P31 ?in .`);
+  if (arr(g.sub).length) w.push(`${vals('?sb', await need('sub', g.sub))} ?item wdt:P279 ?sb .`);
+  if (g.where) w.push(g.where);
+  if (!w.length) w.push('?item wdt:P31 wd:Q5 .'); else if (human) w.push('?item wdt:P31 wd:Q5 .');
   if (g.sex) w.push(`?item wdt:P21 wd:${g.sex === 'f' ? 'Q6581072' : 'Q6581097'} .`);
   if (g.country) w.push(`?item (wdt:P27|wdt:P495|wdt:P17) ?cty . VALUES ?cty { ${arr(g.country).map(c => 'wd:' + COUNTRY[c]).join(' ')} }`);
   if (g.born) { w.push('?item wdt:P569 ?dob .'); if (g.born[0]) w.push(`FILTER(YEAR(?dob) >= ${g.born[0]})`); if (g.born[1]) w.push(`FILTER(YEAR(?dob) <= ${g.born[1]})`); }
   if (g.since || g.until) { w.push('?item (wdt:P577|wdt:P571|wdt:P580) ?pd .'); if (g.since) w.push(`FILTER(YEAR(?pd) >= ${g.since})`); if (g.until) w.push(`FILTER(YEAR(?pd) <= ${g.until})`); }
-  if (human && !g.politicians) w.push('FILTER NOT EXISTS { ?item wdt:P106 wd:Q82955 }'); // no politicians sneaking into "actors"
-  if (g.where) w.push(g.where);
+  const politic = human && !g.politicians ? 'FILTER NOT EXISTS { ?item wdt:P106 wd:Q82955 }' : ''; // applied to the short list only
   const perf = g.albums ? 'OPTIONAL { ?item wdt:P175 ?pf . ?pf rdfs:label ?pfl . FILTER(LANG(?pfl) = "en") }' : '';
   return `SELECT ?item ?title ?label ?img ?logo ?flag ?yt ?tw ?pfl ?links WHERE {
-  { SELECT DISTINCT ?item ?links WHERE { ${w.join('\n')} ?item wikibase:sitelinks ?links . } ORDER BY DESC(?links) LIMIT ${limit} }
+  { SELECT DISTINCT ?item ?links WHERE { hint:Query hint:optimizer "None" .
+    ${w.join('\n    ')}
+    ?item wikibase:sitelinks ?links . } ORDER BY DESC(?links) LIMIT ${limit} }
+  ${politic}
   ?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?title .
   OPTIONAL { ?item rdfs:label ?label . FILTER(LANG(?label) = "en") }
   OPTIONAL { ?item wdt:P18 ?img } OPTIONAL { ?item wdt:P154 ?logo } OPTIONAL { ?item wdt:P41 ?flag }
   OPTIONAL { ?item wdt:P2397 ?yt } OPTIONAL { ?item wdt:P5797 ?tw } ${perf}
 } ORDER BY DESC(?links)`;
 }
-const growStats = { queries: 0, failed: 0 };
+const growStats = { queries: 0, failed: 0, errors: [] };
 async function growWikidata(g, limit = 170) {
   growStats.queries++;
-  const d = await get(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(sparqlFor(g, limit))}`, { headers: { Accept: 'application/sparql-results+json' }, timeout: 75000 });
-  if (!d) { growStats.failed++; return []; }
+  let q;
+  try { q = await sparqlFor(g, limit); } catch (e) { growStats.failed++; growStats.errors.push(e.message); return []; }
+  const d = await sparql(q, 75000);
+  if (!d) { growStats.failed++; growStats.errors.push('timeout/err ' + JSON.stringify(g).slice(0, 80)); return []; }
   const file = v => v ? decodeURIComponent(v.value.split('/Special:FilePath/')[1] || '').replace(/_/g, ' ') : null;
   const by = new Map();
   for (const b of d.results?.bindings || []) {
@@ -788,6 +810,7 @@ async function main() {
   console.log(`catalog: ${report.length - bad.length} categories, ${bad.length} dropped, ${totalPicks} picks, ${(fs.statSync(OUT).size / 1024).toFixed(0)} KB`);
   console.log(`sources: ${JSON.stringify(srcTotals)}`);
   console.log(`wikidata grow queries: ${growStats.queries} (${growStats.failed} failed)`);
+  if (growStats.errors.length) console.log('grow errors:\n  ' + growStats.errors.slice(0, 40).join('\n  '));
 }
 
 export { resolveCurated, finishLeaf, report, imgKey, sparqlFor };

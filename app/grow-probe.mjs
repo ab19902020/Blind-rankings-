@@ -1,6 +1,7 @@
 // Quick check of Wikidata grow queries: status, time, result count, first names.
 process.env.CATALOG_NO_RUN = '1';
 const { sparqlFor } = await import('./build-catalog.mjs');
+const { qidsLog } = {};
 const { GROW } = await import('./src/data-more.js');
 const UA = 'BlindRankCatalog/2.0 (https://github.com/ab19902020/Blind-rankings-; catalog bot)';
 const ids = (process.argv[2] || 'g_darts,fc_utd,a_men,mu_rap,vg_best,n_dogs,cr_uk,hg_pres').split(',');
@@ -17,4 +18,4 @@ async function run(label, q, method) {
   } catch (e) { console.log(`${label} ${method} → ERROR ${e.name} after ${((Date.now() - t) / 1000).toFixed(1)}s`); }
 }
 await run('trivial', 'SELECT ?x WHERE { wd:Q42 wdt:P31 ?x }', 'GET');
-for (const id of ids) { const g = Array.isArray(GROW[id]) ? GROW[id][0] : GROW[id]; await run(id, sparqlFor(g, 170), process.argv[3] || 'GET'); }
+for (const id of ids) { const g = Array.isArray(GROW[id]) ? GROW[id][0] : GROW[id]; const q = await sparqlFor(g, 170); if (id === ids[0]) console.log(q); await run(id, q, process.argv[3] || 'GET'); }
