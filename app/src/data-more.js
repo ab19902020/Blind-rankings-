@@ -358,7 +358,8 @@ export function extendMenu(M) {
  *   TMDB spec      { tmdb: '/discover/...', keyword, company } or { person, job } for filmographies.
  * Every grown pick still goes through the same strict picture checks. */
 const M = '/discover/movie?sort_by=vote_count.desc&vote_count.gte=250';
-const T = '/discover/tv?sort_by=vote_count.desc&vote_count.gte=80&without_genres=10763,10767';
+const T = '/discover/tv?sort_by=vote_count.desc&vote_count.gte=80&with_original_language=en';
+const NO = (...g) => `&without_genres=${['10763', '10767', ...g].join(',')}`;
 const ACT = ['actor', 'film actor', 'television actor'];
 const ANGLO = ['us', 'uk', 'ca', 'au', 'nz', 'ie'];
 const SINGER = ['singer', 'singer-songwriter'];
@@ -371,20 +372,20 @@ export const GROW = {
   fr_pixar: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=50', company: 'Pixar' },
   mc_marvel: { universe: 'Marvel Universe', inst: ['superhero', 'fictional human', 'comics character', 'mutant', 'fictional superhero', 'fictional character'], human: false },
   mc_dc: { universe: 'DC Universe', inst: ['superhero', 'fictional human', 'comics character', 'supervillain', 'fictional superhero', 'fictional character'], human: false },
-  d_nolan: { person: 'Christopher Nolan', job: 'Director', minVotes: 30 }, d_taran: { person: 'Quentin Tarantino', job: 'Director', minVotes: 30 },
-  d_spiel: { person: 'Steven Spielberg', job: 'Director', minVotes: 50 }, d_scors: { person: 'Martin Scorsese', job: 'Director', minVotes: 50 },
-  d_kubri: { person: 'Stanley Kubrick', job: 'Director', minVotes: 30 }, d_finch: { person: 'David Fincher', job: 'Director', minVotes: 30 },
-  d_ridley: { person: 'Ridley Scott', job: 'Director', minVotes: 50 }, d_ritchie: { person: 'Guy Ritchie', job: 'Director', minVotes: 30 },
-  d_villeneuve: { person: 'Denis Villeneuve', job: 'Director', minVotes: 30 }, d_wes: { person: 'Wes Anderson', job: 'Director', minVotes: 30 },
-  d_burton: { person: 'Tim Burton', job: 'Director', minVotes: 50 },
+  d_nolan: { person: 'Christopher Nolan', job: 'Director', minVotes: 150 }, d_taran: { person: 'Quentin Tarantino', job: 'Director', minVotes: 150 },
+  d_spiel: { person: 'Steven Spielberg', job: 'Director', minVotes: 150 }, d_scors: { person: 'Martin Scorsese', job: 'Director', minVotes: 150 },
+  d_kubri: { person: 'Stanley Kubrick', job: 'Director', minVotes: 150 }, d_finch: { person: 'David Fincher', job: 'Director', minVotes: 150 },
+  d_ridley: { person: 'Ridley Scott', job: 'Director', minVotes: 150 }, d_ritchie: { person: 'Guy Ritchie', job: 'Director', minVotes: 150 },
+  d_villeneuve: { person: 'Denis Villeneuve', job: 'Director', minVotes: 150 }, d_wes: { person: 'Wes Anderson', job: 'Director', minVotes: 150 },
+  d_burton: { person: 'Tim Burton', job: 'Director', minVotes: 150 },
   l_xmas: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=60', keyword: ['christmas', 'christmas party', 'christmas eve'] },
   l_heist: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=150', keyword: ['heist', 'bank robbery'] },
   l_romcom: { tmdb: M + '&with_genres=10749,35' }, l_sport: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=150', keyword: ['sports', 'boxing', 'basketball', 'american football', 'football (soccer)'] },
   l_scifi: { tmdb: M + '&with_genres=878' }, l_kids: { tmdb: M + '&with_genres=10751&primary_release_date.lte=2012-12-31' },
-  l_teen: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=150', keyword: ['high school', 'teenager', 'coming of age'] },
+  l_teen: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=150', keyword: ['high school', 'teenager'] },
   l_brit: { tmdb: M + '&with_origin_country=GB' }, l_uscom: { tmdb: M + '&with_genres=35&with_origin_country=US' },
-  l_halloween: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=100', keyword: ['halloween', 'witch', 'haunted house'] },
-  l_musicals: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=100', keyword: ['musical'] },
+  l_halloween: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=100', keyword: ['halloween'] },
+  l_musicals: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=100&without_genres=16', keyword: ['musical'] },
   l_2000s: { tmdb: M + '&primary_release_date.gte=2000-01-01&primary_release_date.lte=2009-12-31&with_genres=12|28' },
   s_disney: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=50', company: 'Walt Disney Animation Studios' },
   s_ghibli: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=20', company: 'Studio Ghibli' },
@@ -407,16 +408,16 @@ export const GROW = {
   a_models: { occ: ['model', 'fashion model'], sex: 'f', born: [1950] },
 
   // ---- TV (TMDB discovery)
-  tc_sitcom: { tmdb: T + '&with_genres=35&without_genres=16,10764&with_origin_country=US|GB' }, tc_drama: { tmdb: T + '&with_genres=18&without_genres=16,10764,10766' },
-  tc_anim: { tmdb: T + '&with_genres=16&with_origin_country=US|GB|CA' }, tc_crime: { tmdb: T + '&with_genres=80' }, tc_scifi: { tmdb: T + '&with_genres=10765&without_genres=16' },
+  tc_sitcom: { tmdb: T + '&with_genres=35&with_origin_country=US|GB' + NO('16', '10764') }, tc_drama: { tmdb: T + '&with_genres=18' + NO('16', '10764', '10766') },
+  tc_anim: { tmdb: T + '&with_genres=16&with_origin_country=US|GB|CA' + NO() }, tc_crime: { tmdb: T + '&with_genres=80' + NO('16') }, tc_scifi: { tmdb: T + '&with_genres=10765' + NO('16') },
   tc_ukcom: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=15&with_genres=35&with_origin_country=GB' }, tc_ukdrama: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=20&with_genres=18&with_origin_country=GB&without_genres=10766' },
   ct_cn: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_networks=56' }, ct_nick: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_networks=13' },
   ct_disney: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_networks=54' }, ct_uk: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=5&with_origin_country=GB&with_genres=10762' },
   rt_uk: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=5&with_genres=10764&with_origin_country=GB' },
   rt_comp: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_genres=10764&with_origin_country=GB|US' },
-  tc_network: { tmdb: T + '&with_networks=6|16|2|19&without_genres=16,10764' }, tc_teen: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=50', keyword: ['teen drama', 'high school', 'teenager'] },
-  tc_ushits: { tmdb: T + '&with_genres=18&with_origin_country=US&without_genres=16,10764,10766' }, tc_usreal: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_genres=10764&with_origin_country=US' },
-  tc_kids: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=15&with_genres=10762' }, tc_00s: { tmdb: T + '&first_air_date.gte=2000-01-01&first_air_date.lte=2009-12-31' },
+  tc_network: { tmdb: T + '&with_networks=6|16|2|19' + NO('16', '10764') }, tc_teen: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=50&with_original_language=en&without_genres=16', keyword: ['teen drama', 'high school'] },
+  tc_ushits: { tmdb: T + '&with_genres=18&with_origin_country=US' + NO('16', '10764', '10766') }, tc_usreal: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_genres=10764&with_origin_country=US&without_genres=16' },
+  tc_kids: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=15&with_genres=10762' }, tc_00s: { tmdb: T + '&first_air_date.gte=2000-01-01&first_air_date.lte=2009-12-31' + NO('10764') },
   tc_late: { occ: ['talk show host', 'television presenter'], country: ['us', 'uk'], born: [1930] }, tc_snl: { castOf: 'Saturday Night Live' },
 
   // ---- Football
