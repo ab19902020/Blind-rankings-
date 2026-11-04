@@ -1,0 +1,37 @@
+name: Build catalog
+
+on:
+  schedule:
+    - cron: '23 3 * * *'   # every night, 03:23 UTC
+  push:
+    branches: [app-v2]
+    paths: ['app/src/data.js', 'app/build-catalog.mjs']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: catalog
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Resolve every category + generate fresh ones
+        working-directory: app
+        run: node build-catalog.mjs catalog.json
+      - name: Publish to catalog branch
+        run: |
+          mkdir /tmp/pub && cp app/catalog.json app/catalog-report.md app/catalog-report.json /tmp/pub/
+          cd /tmp/pub
+          git init -q -b catalog
+          git config user.name "catalog-bot"; git config user.email "actions@github.com"
+          git add -A && git commit -q -m "Catalog $(date -u +%F)"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" catalog
+      - name: Refresh CDN
+        run: curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@catalog/catalog.json" || true

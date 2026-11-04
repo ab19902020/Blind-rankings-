@@ -19,6 +19,13 @@ jobs:
         with:
           node-version: 20
 
+      - name: Get latest catalog
+        run: |
+          mkdir -p app/public
+          if git fetch -q --depth 1 origin catalog; then git show FETCH_HEAD:catalog.json > app/public/catalog.json; fi
+          if [ ! -s app/public/catalog.json ]; then (cd app && node build-catalog.mjs public/catalog.json); fi
+          ls -la app/public
+
       - name: Build web app
         working-directory: app
         run: |

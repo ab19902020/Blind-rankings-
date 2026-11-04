@@ -33,6 +33,8 @@ await esbuild.build({
 });
 
 fs.copyFileSync(path.join(here, 'src/index.html'), path.join(out, 'index.html'));
+const cat = path.join(here, 'public/catalog.json');
+if (fs.existsSync(cat)) { fs.copyFileSync(cat, path.join(out, 'catalog.json')); console.log('catalog bundled'); } else console.log('no catalog to bundle — app will use live lookups');
 
 // face-api (UMD build + tiny face detector model) if installed
 const fa = nodePaths.map(p => path.join(p, '@vladmandic/face-api')).find(p => fs.existsSync(p));
