@@ -20,7 +20,7 @@ const Y = NOW.getFullYear();
 
 /* ---------------- polite fetch ---------------- */
 const lastHit = {};
-const pace = { 'en.wikipedia.org': 110, 'api.jikan.moe': 1100, 'itunes.apple.com': 350, 'api.deezer.com': 120 };
+const pace = { 'en.wikipedia.org': 110, 'api.jikan.moe': 1100, 'itunes.apple.com': 3200, 'api.deezer.com': 120 };
 async function get(url, { json = true } = {}) {
   const host = new URL(url).host;
   if (pace[host]) { const wait = Math.max(0, (lastHit[host] || 0) + pace[host] - Date.now()); lastHit[host] = Date.now() + wait; if (wait) await sleep(wait); }
@@ -101,6 +101,16 @@ async function wikiImages(titles) {
 const parseWiki = s => { const [title, display] = s.split('|'); return { title, name: display || title.replace(/ \([^)]*\)$/, '') }; };
 
 /* ---------------- other sources ---------------- */
+async function deezerAlbum(album, artist) {
+  const norm = s => (s || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '');
+  const r = await get(`https://api.deezer.com/search/album?q=${encodeURIComponent(`artist:"${artist}" album:"${album}"`)}&limit=10`);
+  let list = r?.data || [];
+  if (!list.length) list = (await get(`https://api.deezer.com/search/album?q=${encodeURIComponent(artist + ' ' + album)}&limit=15`))?.data || [];
+  const A = norm(album), R = norm(artist).slice(0, 5);
+  const m = list.find(x => norm(x.title).startsWith(A) && norm(x.artist?.name).includes(R)) || list.find(x => norm(x.title).includes(A) && norm(x.artist?.name).includes(R));
+  return m?.cover_xl || null;
+}
+async function albumArt(album, artist) { return (await deezerAlbum(album, artist)) || (await itunesAlbum(album, artist)); }
 async function itunesAlbum(album, artist) {
   const norm = s => (s || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '');
   const A = norm(album), R = norm(artist);
@@ -140,7 +150,7 @@ async function resolveCurated(it) {
     return { pool, thumb, missing: [] };
   }
   if (it.type === 'albums') {
-    const res = await mapLimit(it.items, 2, s => { const [a, b] = s.split('|'); return itunesAlbum(a, b); });
+    const res = await mapLimit(it.items, 2, s => { const [a, b] = s.split('|'); return albumArt(a, b); });
     const pool = [], missing = [];
     it.items.forEach((s, i) => { const [a] = s.split('|'); res[i] ? pool.push([a, res[i]]) : missing.push(s); });
     return { pool, missing };
