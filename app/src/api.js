@@ -19,6 +19,7 @@ export function expandImg(code, size = 'w500') {
   if (code.startsWith('t:')) return `${TMDB_IMG}${size}${code.slice(2)}`;
   if (code.startsWith('b:')) return `${TMDB_IMG}w780${code.slice(2)}`;
   if (code.startsWith('w:')) return 'https://upload.wikimedia.org/wikipedia/' + code.slice(2);
+  if (code.startsWith('W:')) return 'https://thumb.wikimedia.org/wikipedia/' + code.slice(2);
   return code;
 }
 

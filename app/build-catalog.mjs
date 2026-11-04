@@ -44,7 +44,13 @@ async function mapLimit(list, n, fn) {
 /* ---------------- image codes (keeps the catalog small) ---------------- */
 const tPoster = p => p ? 't:' + p : null;          // image.tmdb.org/t/p/w500
 const tBack = p => p ? 'b:' + p : null;            // image.tmdb.org/t/p/w780
-const wImg = u => u ? (u.startsWith('https://upload.wikimedia.org/wikipedia/') ? 'w:' + u.slice(39) : u) : null;
+const wImg = u => {
+  if (!u) return null;
+  u = u.replace(/\?utm_[^#]*$/, '');
+  if (u.startsWith('https://upload.wikimedia.org/wikipedia/')) return 'w:' + u.slice(39);
+  if (u.startsWith('https://thumb.wikimedia.org/wikipedia/')) return 'W:' + u.slice(38);
+  return u;
+};
 
 /* ---------------- TMDB ---------------- */
 const tmdb = (path) => get(`https://api.themoviedb.org/3${path}${path.includes('?') ? '&' : '?'}api_key=${TMDB_KEY}&language=en-GB&include_adult=false`);
