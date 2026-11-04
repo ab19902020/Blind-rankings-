@@ -393,7 +393,7 @@ async function qidsFor(labels) {
     const q = `SELECT ?x ?l ?n WHERE { VALUES ?l { ${[...back.keys()].map(l => JSON.stringify(l) + '@en').join(' ')} } ?x rdfs:label ?l . OPTIONAL { ?x wikibase:sitelinks ?n } }`;
     let d = await sparql(q, 45000);
     if (!d) { await sleep(4000); d = await sparql(q, 60000); }
-    if (!d) return [];
+    if (!d) return [...new Set(arr(labels).filter(l => /^Q\d+$/.test(l)))]; // keep any raw IDs
     // A common word ("mountain") labels thousands of items: keep the best-known 3 per name.
     // Exact-case matches win ("boxer" the job, not "Boxer" the dog); then the best-known.
     const hits = new Map(); need.forEach(l => hits.set(l, []));
