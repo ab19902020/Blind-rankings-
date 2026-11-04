@@ -18,4 +18,4 @@ async function run(label, q, method) {
   } catch (e) { console.log(`${label} ${method} → ERROR ${e.name} after ${((Date.now() - t) / 1000).toFixed(1)}s`); }
 }
 await run('trivial', 'SELECT ?x WHERE { wd:Q42 wdt:P31 ?x }', 'GET');
-for (const id of ids) { const g = Array.isArray(GROW[id]) ? GROW[id][0] : GROW[id]; const q = await sparqlFor(g, 170);  await run(id, q, process.argv[3] || 'GET'); }
+for (const id of ids) { const g = Array.isArray(GROW[id]) ? GROW[id][0] : GROW[id]; let q; try { q = await sparqlFor(g, 170); } catch (e) { console.log(id, 'SKIP', e.message); continue; }  await run(id, q, process.argv[3] || 'GET'); }

@@ -386,9 +386,13 @@ const qidCache = new Map();
 async function qidsFor(labels) {
   const need = [...new Set(arr(labels))].filter(l => !qidCache.has(l));
   if (need.length) {
-    const d = await sparql(`SELECT ?x ?l WHERE { VALUES ?l { ${need.map(l => JSON.stringify(l) + '@en').join(' ')} } ?x rdfs:label ?l . }`, 30000);
+    // Wikidata labels differ in capitalisation ("monarch of England" vs "Monarch of England").
+    const variants = l => [...new Set([l, l[0].toUpperCase() + l.slice(1), l[0].toLowerCase() + l.slice(1)])];
+    const back = new Map(); need.forEach(l => variants(l).forEach(v => back.set(v, l)));
+    const d = await sparql(`SELECT ?x ?l WHERE { VALUES ?l { ${[...back.keys()].map(l => JSON.stringify(l) + '@en').join(' ')} } ?x rdfs:label ?l . }`, 30000);
+    if (!d) return [];
     need.forEach(l => qidCache.set(l, []));
-    for (const b of d?.results?.bindings || []) qidCache.get(b.l.value)?.push(b.x.value.split('/').pop());
+    for (const b of d.results?.bindings || []) qidCache.get(back.get(b.l.value))?.push(b.x.value.split('/').pop());
   }
   return [...new Set(arr(labels).flatMap(l => qidCache.get(l) || []))];
 }

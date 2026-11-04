@@ -494,7 +494,7 @@ export const GROW = {
   pl_wonders: { inst: ['mountain', 'waterfall', 'canyon', 'volcano', 'lake', 'glacier', 'coral reef'], human: false }, pl_parks: { inst: ['amusement park', 'theme park'], human: false },
   pl_stadiums: { inst: ['stadium', 'association football venue', 'multi-purpose stadium', 'sports venue'], human: false }, pl_natparks: { inst: 'national park of the United States', human: false },
   pl_states: { inst: 'U.S. state', human: false },
-  hg_royals: { posHeld: ['monarch of England', 'monarch of the United Kingdom', 'monarch of Scotland', 'monarch of Great Britain'], politicians: true },
+  hg_royals: { posHeld: ['monarch of England', 'monarch of the United Kingdom', 'monarch of Scotland', 'monarch of Great Britain', 'King of England', 'Queen of England', 'British monarch', 'King of the United Kingdom'], politicians: true },
   hg_empires: { inst: ['empire', 'historical country', 'colonial empire'], human: false }, hg_flags: { inst: 'sovereign state', human: false },
   hg_pres: { posHeld: 'President of the United States', politicians: true }, hg_civil: { occ: ['civil rights activist', 'human rights activist', 'abolitionist', "women's rights activist"], politicians: true },
   hg_science: { occ: ['physicist', 'chemist', 'inventor', 'mathematician', 'biologist', 'astronomer'], minLinks: 40 }, hg_space: { occ: 'astronaut' },
