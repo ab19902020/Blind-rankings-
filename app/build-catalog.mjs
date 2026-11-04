@@ -392,6 +392,7 @@ async function qidsFor(labels) {
   }
   return [...new Set(arr(labels).flatMap(l => qidCache.get(l) || []))];
 }
+const ADULT = ['pornographic actor', 'pornographic film actor', 'adult model', 'erotic model', 'OnlyFans creator', 'webcam model', 'pornographic film director', 'glamour model'];
 const vals = (v, ids) => `VALUES ${v} { ${ids.map(q => 'wd:' + q).join(' ')} }`;
 async function sparqlFor(g, limit) {
   const w = [];   // most selective patterns first; the optimizer is told to keep this order
@@ -404,18 +405,25 @@ async function sparqlFor(g, limit) {
   if (arr(g.inst).length) w.push(`${vals('?in', await need('inst', g.inst))} ?item wdt:P31 ?in .`);
   if (arr(g.sub).length) w.push(`${vals('?sb', await need('sub', g.sub))} ?item wdt:P279 ?sb .`);
   if (g.where) w.push(g.where);
-  if (!w.length) w.push('?item wdt:P31 wd:Q5 .'); else if (human) w.push('?item wdt:P31 wd:Q5 .');
+  if (!w.length) w.push('?item wdt:P31 wd:Q5 .');
+  // Fame cut straight after the first pattern so huge groups (all footballers) stay fast.
+  w.splice(1, 0, `?item wikibase:sitelinks ?links . FILTER(?links >= ${g.minLinks ?? 6})`);
+  if (human && !w.some(x => x.includes('wd:Q5 .'))) w.push('?item wdt:P31 wd:Q5 .');
   if (g.sex) w.push(`?item wdt:P21 wd:${g.sex === 'f' ? 'Q6581072' : 'Q6581097'} .`);
   if (g.country) w.push(`?item (wdt:P27|wdt:P495|wdt:P17) ?cty . VALUES ?cty { ${arr(g.country).map(c => 'wd:' + COUNTRY[c]).join(' ')} }`);
   if (g.born) { w.push('?item wdt:P569 ?dob .'); if (g.born[0]) w.push(`FILTER(YEAR(?dob) >= ${g.born[0]})`); if (g.born[1]) w.push(`FILTER(YEAR(?dob) <= ${g.born[1]})`); }
   if (g.since || g.until) { w.push('?item (wdt:P577|wdt:P571|wdt:P580) ?pd .'); if (g.since) w.push(`FILTER(YEAR(?pd) >= ${g.since})`); if (g.until) w.push(`FILTER(YEAR(?pd) <= ${g.until})`); }
   const politic = human && !g.politicians ? 'FILTER NOT EXISTS { ?item wdt:P106 wd:Q82955 }' : ''; // applied to the short list only
+  // Never: adult-industry people. Optionally: people who are mainly something else.
+  const bad = human ? await qidsFor([...ADULT, ...arr(g.exclude)]) : [];
+  const excl = bad.length ? `FILTER NOT EXISTS { ?item wdt:P106 ?bad . VALUES ?bad { ${bad.map(q => 'wd:' + q).join(' ')} } }` : '';
   const perf = g.albums ? 'OPTIONAL { ?item wdt:P175 ?pf . ?pf rdfs:label ?pfl . FILTER(LANG(?pfl) = "en") }' : '';
   return `SELECT ?item ?title ?label ?img ?logo ?flag ?yt ?tw ?pfl ?links WHERE {
   { SELECT DISTINCT ?item ?links WHERE { hint:Query hint:optimizer "None" .
     ${w.join('\n    ')}
-    ?item wikibase:sitelinks ?links . } ORDER BY DESC(?links) LIMIT ${limit} }
+  } ORDER BY DESC(?links) LIMIT ${limit} }
   ${politic}
+  ${excl}
   ?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?title .
   OPTIONAL { ?item rdfs:label ?label . FILTER(LANG(?label) = "en") }
   OPTIONAL { ?item wdt:P18 ?img } OPTIONAL { ?item wdt:P154 ?logo } OPTIONAL { ?item wdt:P41 ?flag }
@@ -453,6 +461,19 @@ async function tmdbIdFor(kind, name) {
   return tmdbIdCache.get(k);
 }
 async function growTmdb(g) {
+  if (g.popularActors) {
+    const out = []; const seen = new Set();
+    for (let p = 1; p <= (g.pages || 30); p++) {
+      const r = await tmdb(`/person/popular?page=${p}`); if (!r?.results?.length) break;
+      for (const x of r.results) {
+        if (!x.profile_path || x.known_for_department !== 'Acting' || seen.has(x.name) || (g.gender && x.gender !== g.gender) || x.adult) continue;
+        const kf = x.known_for || []; const en = kf.filter(k => k.original_language === 'en').length;
+        if (!kf.length || en * 2 < kf.length) continue;
+        seen.add(x.name); out.push([x.name, tPoster(x.profile_path)]);
+      }
+    }
+    return out;
+  }
   if (g.person) {
     const id = await tmdbIdFor('person', g.person); if (!id) return [];
     const tv = g.media === 'tv';
