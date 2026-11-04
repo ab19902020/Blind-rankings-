@@ -373,7 +373,7 @@ async function heroImage(name) {
 // Curated picks come first (the iconic ones), then the builder tops each category up
 // from Wikidata (ranked by how many Wikipedias cover them = fame) or TMDB discovery.
 const TARGET = 100;
-const COUNTRY = { us: 'Q30', uk: 'Q145', ca: 'Q16', au: 'Q408', ie: 'Q27', jp: 'Q17', kr: 'Q884', nz: 'Q664', fr: 'Q142', de: 'Q183', es: 'Q29', it: 'Q38', br: 'Q155', in: 'Q668', mx: 'Q96' };
+const COUNTRY = { pt: 'Q45', nl: 'Q55', tr: 'Q43', be: 'Q31', gr: 'Q41', sc: 'Q22', at: 'Q40', ch: 'Q39', ru: 'Q159', ua: 'Q212', us: 'Q30', uk: 'Q145', ca: 'Q16', au: 'Q408', ie: 'Q27', jp: 'Q17', kr: 'Q884', nz: 'Q664', fr: 'Q142', de: 'Q183', es: 'Q29', it: 'Q38', br: 'Q155', in: 'Q668', mx: 'Q96' };
 const PROP = { team: 'P54', position: 'P413', genre: 'P136', award: 'P166', universe: 'P1080', platform: 'P400', sport: 'P641', posHeld: 'P39', publisher: 'P123', maker: 'P176', series: 'P179', developer: 'P178', partOf: 'P361', network: 'P449' };
 const arr = x => (x == null ? [] : Array.isArray(x) ? x : [x]);
 const WDQS = 'https://query.wikidata.org/sparql';
@@ -474,9 +474,17 @@ async function growWikidata(g, limit = 170) {
 // Relevance check for grown items: the item's one-line Wikidata description must match
 // what the category is about (g.must), and must not match g.not. No description = out.
 const audit = {};
+// Never in any category: adult-industry, convicted / extremist people, and a few named exceptions.
+const NEVER = /pornograph|adult film|adult content|adult entertainer|OnlyFans|erotic|sex worker|stripper|convicted|sex offender|murderer|serial killer|criminal|terrorist|fraudster|mercenary|oligarch|white nationalist|white supremacist|far-right|alt-right|neo-Nazi|conspiracy theorist/i;
+const NEVER_NAMES = new Set(['Andrew Tate', 'Tristan Tate', 'Ghislaine Maxwell', 'Yevgeny Prigozhin', 'Nick Fuentes', 'Gavin McInnes', 'Bonnie Blue', 'R. Kelly', 'Bill Cosby', 'Jimmy Savile', 'Harvey Weinstein', 'Rolf Harris', 'Gary Glitter', 'Josh Duggar', 'Oscar Pistorius', 'Aaron Hernandez', 'O. J. Simpson', '6ix9ine', 'Sean Combs', 'Diddy', 'Chris Benoit', 'Marilyn Manson', 'Lil Pump', 'Danny Masterson', 'Kevin Spacey', 'Gérard Depardieu', 'Roman Polanski', 'Woody Allen', 'Phil Spector', 'Jared Fogle', 'Ian Watkins', 'Jian Ghomeshi', 'Russell Brand']);
 function relevant(id, g, o) {
   const d = o.desc || '';
-  const ok = (!g.must || new RegExp(g.must, 'i').test(d)) && !(g.not && new RegExp(g.not, 'i').test(d)) && !!d;
+  // The main thing they are: "American actor and former football player" -> "American actor".
+  const head = d.split(/ and | & |, |;| \(| who | known for | best known /)[0];
+  const ok = !!d && !NEVER.test(d) && !NEVER_NAMES.has(o.name)
+    && (!g.must || new RegExp(g.must, 'i').test(g.head === false ? d : head))
+    && (!g.also || new RegExp(g.also, 'i').test(d))
+    && !(g.not && new RegExp(g.not, 'i').test(d));
   const a = audit[id] ||= { kept: [], dropped: [] };
   (ok ? a.kept : a.dropped).push(`${o.name}${d ? ' — ' + d : ''}`);
   return ok;

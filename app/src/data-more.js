@@ -252,7 +252,7 @@ const MUSIC = {
     wiki('mu_latin', 'Latin Superstars', '💃', ['Bad Bunny', 'Shakira', 'J Balvin', 'Karol G', 'Daddy Yankee', 'Ozuna (singer)|Ozuna', 'Maluma', 'Peso Pluma', 'Rauw Alejandro', 'Anuel AA', 'Nicky Jam', 'Rosalía', 'Becky G', 'Enrique Iglesias', 'Ricky Martin', 'Jennifer Lopez', 'Marc Anthony', 'Pitbull (rapper)|Pitbull', 'Feid', 'Myke Towers', 'Romeo Santos', 'Selena (singer)|Selena', 'Luis Fonsi', 'Camilo (singer)|Camilo', 'Grupo Frontera', 'Carín León', 'Sebastián Yatra', 'Anitta (singer)|Anitta', 'Farruko']),
     wiki('mu_rnb00', '2000s R&B', '💜', ['Usher (musician)|Usher', 'Beyoncé', 'Alicia Keys', 'Rihanna', 'Ne-Yo', 'Chris Brown', 'Mary J. Blige', "Destiny's Child", 'Ciara', 'Akon', 'T-Pain', 'Mariah Carey', 'Aaliyah', 'Ashanti (singer)|Ashanti', 'Keyshia Cole', 'Brandy (singer)|Brandy', 'Monica (singer)|Monica', 'John Legend', 'Mario (singer)|Mario', 'Omarion', 'Trey Songz', 'Sean Paul', 'Nelly', 'Amerie', 'Keri Hilson', 'Jordin Sparks', 'Craig David', 'Justin Timberlake']),
     wiki('mu_countrynow', 'Modern Country', '🛻', ['Morgan Wallen', 'Luke Combs', 'Zach Bryan', 'Chris Stapleton', 'Lainey Wilson', 'Jelly Roll (rapper)|Jelly Roll', 'Kane Brown', 'Luke Bryan', 'Thomas Rhett', 'Jason Aldean', 'Carrie Underwood', 'Miranda Lambert', 'Kacey Musgraves', 'Shaboozey', 'Post Malone', 'Bailey Zimmerman', 'Megan Moroney', 'Cody Johnson', 'Riley Green', 'Kenny Chesney', 'Florida Georgia Line', 'Dan + Shay', 'Old Dominion (band)|Old Dominion', 'Brad Paisley', 'Toby Keith', 'Alan Jackson', 'George Strait', 'Ella Langley'], US),
-    wiki('mu_90shiphop', '90s Hip-Hop', '📻', ['Tupac Shakur', 'The Notorious B.I.G.', 'Nas', 'Jay-Z', 'Dr. Dre', 'Snoop Dogg', 'Ice Cube', 'Wu-Tang Clan', 'Outkast', 'A Tribe Called Quest', 'Lauryn Hill', 'Missy Elliott', 'DMX', 'Busta Rhymes', 'Lil\' Kim', 'Queen Latifah', 'Method Man', 'Puff Daddy|Diddy', 'Salt-N-Pepa', 'Bone Thugs-n-Harmony', 'Eazy-E', 'LL Cool J', 'Mobb Deep', 'Fugees', 'Coolio', 'Will Smith', 'MC Hammer', 'Vanilla Ice'], US),
+    wiki('mu_90shiphop', '90s Hip-Hop', '📻', ['Tupac Shakur', 'The Notorious B.I.G.', 'Nas', 'Jay-Z', 'Dr. Dre', 'Snoop Dogg', 'Ice Cube', 'Wu-Tang Clan', 'Outkast', 'A Tribe Called Quest', 'Lauryn Hill', 'Missy Elliott', 'DMX', 'Busta Rhymes', 'Lil\' Kim', 'Queen Latifah', 'Method Man', 'Salt-N-Pepa', 'Bone Thugs-n-Harmony', 'Eazy-E', 'LL Cool J', 'Mobb Deep', 'Fugees', 'Coolio', 'Will Smith', 'MC Hammer', 'Vanilla Ice'], US),
   ],
   mu_albums_more: [
     albums('al_hiphop', 'Hip-Hop Albums', '💽', ['Illmatic|Nas', 'The Chronic|Dr. Dre', 'Ready to Die|The Notorious B.I.G.', 'The Marshall Mathers LP|Eminem', 'The Blueprint|Jay-Z', 'My Beautiful Dark Twisted Fantasy|Kanye West', 'To Pimp a Butterfly|Kendrick Lamar', 'good kid, m.A.A.d city|Kendrick Lamar', 'The College Dropout|Kanye West', "Get Rich or Die Tryin'|50 Cent", 'All Eyez on Me|2Pac', 'The Miseducation of Lauryn Hill|Lauryn Hill', 'Reasonable Doubt|Jay-Z', 'Aquemini|Outkast', 'Enter the Wu-Tang (36 Chambers)|Wu-Tang Clan', 'Graduation|Kanye West', 'Take Care|Drake', 'Astroworld|Travis Scott', 'DAMN.|Kendrick Lamar', 'The Eminem Show|Eminem', 'Doggystyle|Snoop Dogg', 'Tha Carter III|Lil Wayne', '2014 Forest Hills Drive|J. Cole', 'Igor|Tyler, the Creator', 'Speakerboxxx/The Love Below|Outkast', 'Late Registration|Kanye West', 'Nothing Was the Same|Drake', 'Life After Death|The Notorious B.I.G.', 'GNX|Kendrick Lamar'], US),
@@ -572,3 +572,46 @@ for (const [id, re] of Object.entries(MUST)) {
   GROW[id] = Array.isArray(GROW[id]) ? GROW[id].map(add) : add(GROW[id]);
 }
 export const MUST_IDS = Object.keys(MUST);
+
+/* ---- Audit fixes (every category reviewed) ---- */
+// Wikidata's data is too thin/odd here: hand-picked lists only.
+for (const id of ['fd_dessert', 'fd_candy', 'fd_choc', 'fd_drinks', 'fd_cereal', 'fd_uk_food', 'fd_us_candy', 'fd_us_soda', 'fd_coffee', 'fd_pizza_chains', 'car_hot',
+  'cr_beauty', 'm_heroes', 'm_norse', 'al_uk', 'al_hiphop', 'al_rock', 'mu_now', 'mc_marvel']) delete GROW[id];
+const ANGLO_MUSIC = ['us', 'uk', 'ca', 'au', 'ie', 'nz'];
+const BRIT = 'British|English|Scottish|Welsh|Northern Irish|UK';
+const patch = (id, extra) => { if (!GROW[id]) return; GROW[id] = Array.isArray(GROW[id]) ? GROW[id].map(g => ({ ...g, ...extra })) : { ...GROW[id], ...extra }; };
+for (const id of ['mu_pop', 'mu_divas', 'mu_rb', 'mu_rock', 'mu_country', 'md_2010', 'md_2000', 'md_1990', 'md_1980', 'mu_popgirls', 'mu_rnb00', 'mu_90shiphop', 'mu_rap', 'mu_rapnow', 'mu_countrynow', 'mb_all']) patch(id, { country: ANGLO_MUSIC });
+patch('mu_rap', { must: 'rapper|hip hop|hip-hop|MC' }); patch('mu_rapnow', { must: 'rapper|hip hop|hip-hop' }); patch('mu_90shiphop', { must: 'rapper|hip hop|hip-hop' });
+patch('uk_grime', { must: 'rapper|grime|MC|drill', also: BRIT });
+patch('mu_rock', { must: 'rock|metal|punk|grunge|guitarist|frontman|lead singer|vocalist' });
+patch('mu_country', { must: 'country' }); patch('mu_countrynow', { must: 'country' });
+patch('mu_divas', { must: 'singer' }); patch('mu_popgirls', { must: 'singer' }); patch('uk_pop', { must: 'singer|songwriter|musician', also: BRIT });
+patch('mu_latin', { also: 'Latin|Puerto Ric|Colombian|Mexican|Spanish|Argentin|Cuban|Dominican|Venezuelan|Chilean|Peruvian|Brazilian|Panamanian|Ecuadorian|Uruguayan|Guatemalan' });
+for (const id of ['al_greatest', 'al_modern', 'al_pop']) patch(id, { must: 'studio album', head: false, not: 'compilation|live album|soundtrack|EP|remix' });
+patch('vg_chars', { must: 'video game|game character|Nintendo|Sega|Capcom|Pokémon|Mario|Sonic|Street Fighter|Mortal Kombat|Tekken|Final Fantasy|Zelda|Halo|Overwatch', head: false });
+patch('vg_nintendo', { must: 'Nintendo|Mario|Zelda|Pokémon|Kirby|Donkey Kong|Metroid|Animal Crossing|Star Fox|Fire Emblem|Splatoon|Xenoblade|F-Zero|Pikmin|Wario|Yoshi|EarthBound|Kid Icarus', head: false });
+patch('tch_icons', { not: 'Tolkien|legendarium|Conan Doyle|Star Wars|DC Comics|Marvel Comics|comic|novel|Journey to the West|literary|mytholog|video game|film series' });
+patch('a_brits', { also: BRIT }); patch('a_com', { must: 'comedian|comedy|comic actor' });
+patch('a_action', { where: '?item wdt:P106 ?o2 . VALUES ?o2L { "martial artist"@en "bodybuilder"@en "kickboxer"@en } ?o2 rdfs:label ?o2L .' });
+patch('a_reality', { must: 'television personality|reality|socialite|media personality|TV personality|star of' });
+patch('a_ceos', { must: 'business|entrepreneur|executive|investor|founder|CEO|magnate|industrialist|billionaire' });
+patch('a_chefs', { must: 'chef|cook|restaurateur|culinary|baker|food writer' }); patch('a_models', { must: 'model' });
+patch('tc_late', { must: 'talk show|television host|TV host|late-night|presenter|broadcaster|comedian|host' });
+patch('cr_pods', { must: 'podcast|comedian|host|presenter|broadcaster', not: 'political|politic|conservative|commentator|pundit|activist|far-right|journalist' });
+for (const id of ['cr_us', 'cr_uk', 'cr_yt', 'cr_stream', 'cr_gaming', 'cr_tiktok']) patch(id, { not: 'political|politic|commentator|pundit|activist|far-right' });
+patch('c_ufc_goat', { must: 'mixed martial|UFC|MMA', not: 'kickboxer|influencer|professional wrestler' });
+patch('c_box', { not: 'rugby|wrestler|actor' });
+for (const id of ['a_nfl_all', 'a_nfl_now', 'a_nfl_qbs']) patch(id, { must: 'american football|quarterback|NFL|football player', not: 'association football|soccer|wrestler|sprinter|actor' });
+patch('a_wnba', { sex: 'f' }); patch('g_olymp', { not: 'princess|royal' }); patch('g_rugby', { born: [1940] }); patch('g_golf', { born: [1900] });
+patch('fd_fast', { country: ANGLO_MUSIC, must: 'fast food|fast-food|fast casual|quick-service|drive-in|hamburger|burger|fried chicken|pizza|sandwich|taco|doughnut|chicken', not: 'casual dining|steakhouse|family restaurant|theme restaurant|sports bar' });
+patch('fd_us_fast', { must: 'fast food|fast-food|fast casual|quick-service|drive-in|hamburger|burger|fried chicken|pizza|sandwich|taco|chicken', not: 'casual dining|steakhouse|family restaurant|theme restaurant|sports bar|doughnut|coffee' });
+patch('fd_us_sit', { must: 'casual dining|restaurant chain|steakhouse|diner|family restaurant|bar and grill|buffet|seafood|pancake', not: 'fast food|fast-food|fast casual|quick-service|pizza delivery|coffee|doughnut' });
+patch('fd_dish', { minLinks: 40 }); patch('fd_us_food', { minLinks: 15 });
+patch('car_brands', { must: 'car manufacturer|automobile manufacturer|automaker|car brand|marque|car maker|automotive', not: 'subsidiary|holding|motorcycle|truck manufacturer|division|group|tractor|bus', minLinks: 30 });
+patch('car_usbrands', { must: 'car manufacturer|automobile manufacturer|automaker|car brand|marque|car maker|automotive|automobile', not: 'self-driving|motorcycle|truck manufacturer|tractor|bus|subsidiary|division' });
+patch('car_jdm', { sub: ['sports car', 'grand tourer'] }); patch('car_trucks', { minLinks: 15 });
+patch('car_ev', { must: 'electric|battery', not: 'scooter|^(class|type) of|motorcycle|bicycle' });
+patch('pl_parks', { not: 'abandoned|ghost|city park|public park|garden' });
+patch('hg_empires', { must: 'empire|dynasty|caliphate|khanate|sultanate' }); patch('hg_civil', { must: 'civil rights|abolitionist|suffrag|activist' });
+patch('m_egypt', { also: 'Egypt' }); patch('m_greek', { also: 'Greek' }); patch('m_creatures', { minLinks: 15 });
+patch('f_eu_clubs', { country: ['uk', 'es', 'it', 'de', 'fr', 'pt', 'nl', 'tr', 'be', 'gr', 'sc', 'at', 'ch', 'ru', 'ua'] });
