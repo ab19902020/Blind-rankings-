@@ -8,6 +8,10 @@ on:
     paths: ['app/src/data.js', 'app/src/data-more.js', 'app/build-catalog.mjs', '.github/workflows/catalog-preview.yml']
   workflow_dispatch:
 
+concurrency:
+  group: catalog-preview-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   preview:
     runs-on: ubuntu-latest
@@ -26,6 +30,8 @@ jobs:
           cat catalog-report.md
           echo; echo "### Categories with missing pictures"
           node -e 'const r=require("./catalog-report.json"); for (const x of r) if (x.missing.length) console.log(`${x.ok?"ok ":"DROP"} ${x.id} ${x.found} | ${x.missing.join(" ; ")}`)'
+          echo; echo "### Pool sizes + sample of added picks"
+          node -e 'const r=require("./catalog-report.json"); for (const x of r) console.log(`${String(x.found).padStart(3)} ${x.id}${x.grown ? " + " + x.grown.slice(0, 12).join(", ") : ""}`)'
           echo; echo "### Creator picture sources"
           node -e 'const r=require("./catalog-report.json"); for (const x of r) if (/^cr_/.test(x.id) && x.picks) console.log(x.id, Object.entries(x.picks).map(([k,v])=>k+"="+v).join(", "))'
       - uses: actions/upload-artifact@v4
