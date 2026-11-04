@@ -1,5 +1,8 @@
 name: Grow probe
 on:
+  push:
+    branches: ['ccr-**']
+    paths: ['app/grow-probe.mjs', '.github/workflows/grow-probe.yml']
   workflow_dispatch:
     inputs:
       ids:
@@ -15,4 +18,6 @@ jobs:
         with:
           node-version: 20
       - working-directory: app
-        run: node grow-probe.mjs "${{ inputs.ids }}"
+        run: |
+          node grow-probe.mjs "${{ inputs.ids }}" GET
+          node grow-probe.mjs "g_darts,a_men" POST
