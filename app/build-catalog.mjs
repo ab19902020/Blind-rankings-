@@ -82,11 +82,15 @@ const wImg = u => {
 };
 // The file a picture really is, so two picks can't share one.
 const imgKey = code => {
-  let s = decodeURIComponent(String(code)).toLowerCase();
-  s = s.replace(/^[a-z]:/, '').split('?')[0];
-  const parts = s.split('/'); let last = parts.pop() || parts.pop();
-  if (/^\d+px-/.test(last) || /^lossy-page/.test(last)) last = parts.pop();
-  return last.replace(/=s\d+.*$/, '');
+  let s = decodeURIComponent(String(code)).toLowerCase().split('?')[0];
+  // Wikimedia: the same file can come as an original or any thumbnail size.
+  if (/^[wW]:|wikimedia\.org\//i.test(String(code))) {
+    const parts = s.split('/'); let last = parts.pop();
+    if (/^\d+px-/.test(last) || /^lossy-page/.test(last)) last = parts.pop();
+    return 'wm:' + last;
+  }
+  // Everything else (Deezer, Apple, ESPN, YouTube…): the whole address, minus size hints.
+  return s.replace(/=s\d+.*$/, '').replace(/\/\d+x\d+[a-z0-9-]*\.(jpg|png|webp)$/, '');
 };
 
 /* ---------------- picture sanity ---------------- */
@@ -256,7 +260,7 @@ async function resolveWikiPicks(parsed, kind) {
 
 /* ---------------- creators: YouTube + Twitch avatars ---------------- */
 const avatarCache = new Map();
-async function youtubeAvatar(handle, wants) {
+async function youtubeAvatar(handle, wants, trusted = false) {
   const key = 'yt:' + handle.toLowerCase();
   if (!avatarCache.has(key)) {
     avatarCache.set(key, (async () => {
@@ -272,7 +276,7 @@ async function youtubeAvatar(handle, wants) {
   }
   const r = await avatarCache.get(key);
   if (!r) return null;
-  if (!sameName(r.title, wants)) { avatarFlags.push(`YouTube ${handle} is "${r.title}", expected ${wants[0]}`); return null; }
+  if (!trusted && !sameName(r.title, wants)) { avatarFlags.push(`YouTube ${handle} is "${r.title}", expected ${wants[0]}`); return null; }
   return { img: r.img, src: 'youtube' };
 }
 async function twitchAvatar(login, wants) {
@@ -378,7 +382,8 @@ async function resolveCurated(it) {
     await mapLimit(parsed, 3, async (p, i) => {
       for (const s of p.src) {
         const wants = [p.name, p.title];
-        const r = s.startsWith('tw:') ? await twitchAvatar(s.slice(3), wants) : s.startsWith('@') ? await youtubeAvatar(s, wants) : null;
+        const trusted = s.endsWith('!'); const h = trusted ? s.slice(0, -1) : s;
+        const r = h.startsWith('tw:') ? await twitchAvatar(h.slice(3), wants) : h.startsWith('@') ? await youtubeAvatar(h, wants, trusted) : null;
         if (r) { out[i] = r; return; }
       }
     });
@@ -426,7 +431,7 @@ async function resolveCurated(it) {
 const fresh = (id, name, icon, fn, kind, extra = {}) => ({ id, name, icon, fn, kind, ...extra });
 const GB = 'watch_region=GB', US = 'watch_region=US';
 const PROVIDERS = [['Netflix', 8, 'N'], ['Prime Video', 9, '📦'], ['Disney+', 337, '🏰'], ['Apple TV+', 350, '🍎'], ['BBC iPlayer', 38, '📻']];
-const US_PROVIDERS = [['Hulu', 15, '🟩'], ['HBO Max', 1899, '🟦'], ['Paramount+', 531, '⛰️'], ['Peacock', 386, '🦚']];
+const US_PROVIDERS = [['Hulu', 15, '🟩'], ['HBO Max', 1899, '🟦'], ['Peacock', 386, '🦚']];
 
 function generators() {
   const movieNow = [
