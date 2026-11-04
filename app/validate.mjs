@@ -1,6 +1,21 @@
 // Checks every challenge against the live TMDB + Wikipedia APIs.
 // Writes validation-report.json and validation-report.md. Run in CI: node validate.mjs
 import fs from 'fs';
+
+// Wikimedia requires an identifying User-Agent for automated clients, and rate-limits bursts.
+const realFetch = globalThis.fetch;
+let lastWiki = 0;
+globalThis.fetch = async (url, opts = {}) => {
+  const isWiki = String(url).includes('wikipedia.org');
+  if (isWiki) { const wait = Math.max(0, lastWiki + 120 - Date.now()); lastWiki = Date.now() + wait; if (wait) await new Promise(r => setTimeout(r, wait)); }
+  const headers = { ...(opts.headers || {}), 'User-Agent': 'BlindRankValidator/1.0 (https://github.com/ab19902020/Blind-rankings-)' };
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await realFetch(url, { ...opts, headers });
+    if (res.status !== 429 && res.status < 500) return res;
+    await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+  }
+  return realFetch(url, { ...opts, headers });
+};
 import { MENU_DATA } from './src/data.js';
 import { wikiResolve, tmdbImage, liveResults, parseWikiItem } from './src/resolve.js';
 
@@ -31,8 +46,8 @@ async function check({ it, path }) {
 }
 
 const out = [];
-for (let i = 0; i < leaves.length; i += 4) {
-  out.push(...await Promise.all(leaves.slice(i, i + 4).map(check)));
+for (let i = 0; i < leaves.length; i += 2) {
+  out.push(...await Promise.all(leaves.slice(i, i + 2).map(check)));
   process.stdout.write(`${out.length}/${leaves.length}\r`);
 }
 fs.writeFileSync('validation-report.json', JSON.stringify(out, null, 1));

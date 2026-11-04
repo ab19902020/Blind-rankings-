@@ -7,6 +7,7 @@ import { initAudio, playSound, setSoundEnabled } from './audio.js';
 import { load, save, DEFAULT_SETTINGS } from './storage.js';
 import { haptic, saveVideo, shareText, shareVideo, setHapticsEnabled } from './native.js';
 import { themeVars, itemTheme, Toast, leafInfo } from './ui.jsx';
+import { markSeen } from './api.js';
 import { Onboarding, HomeTab, DiscoverTab, RankingsTab, CategoryScreen, ReadyScreen, SettingsSheet } from './screens.jsx';
 import { GameScreen, ResultScreen } from './game.jsx';
 import * as Ic from './icons.jsx';
@@ -36,29 +37,58 @@ function App() {
   useEffect(() => { setHapticsEnabled(settings.haptics); }, [settings.haptics]);
   const buzz = haptic;
 
-  /* ---------- camera ---------- */
+  /* ---------- camera ----------
+     The camera is only switched on while a challenge is open (Ready / Game / Result),
+     so it never sits running in the menus. camWanted remembers the player's choice. */
+  const [camWanted, setCamWanted] = useState(() => load('camWanted', false));
+  const [camError, setCamError] = useState(null); // denied | nocamera | busy | error
+  const acquiring = useRef(null);
+  const attachStream = async stream => {
+    const v = videoRef.current;
+    if (v && v.srcObject !== stream) { v.srcObject = stream; v.muted = true; v.playsInline = true; }
+    if (v) { try { await v.play(); } catch (e) {} }
+  };
   const requestCamera = useCallback(async () => {
-    if (streamRef.current) { setCamState('on'); return true; }
-    try {
-      let stream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: { echoCancellation: true, noiseSuppression: true } });
-      } catch (e) {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    if (streamRef.current && streamRef.current.getVideoTracks().some(t => t.readyState === 'live')) {
+      await attachStream(streamRef.current); setCamState('on'); return true;
+    }
+    if (acquiring.current) return acquiring.current;
+    acquiring.current = (async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setCamState('denied'); setCamError('error'); return false; }
+      setCamState('starting');
+      const video = { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } };
+      let stream = null, err = null;
+      try { stream = await navigator.mediaDevices.getUserMedia({ video, audio: { echoCancellation: true, noiseSuppression: true } }); }
+      catch (e) {
+        err = e;
+        try { stream = await navigator.mediaDevices.getUserMedia({ video, audio: false }); err = null; }
+        catch (e2) {
+          err = e2;
+          try { stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); err = null; } catch (e3) { err = e3; }
+        }
+      }
+      if (!stream) {
+        const n = err && err.name;
+        setCamError(n === 'NotAllowedError' || n === 'SecurityError' ? 'denied' : n === 'NotFoundError' || n === 'OverconstrainedError' ? 'nocamera' : n === 'NotReadableError' || n === 'AbortError' ? 'busy' : 'error');
+        setCamState('denied');
+        return false;
       }
       streamRef.current = stream;
-      const v = videoRef.current;
-      if (v) { v.srcObject = stream; v.muted = true; try { await v.play(); } catch (e) {} }
-      setCamState('on'); save('camWanted', true);
+      stream.getVideoTracks().forEach(t => { t.onended = () => { if (streamRef.current === stream) { streamRef.current = null; setCamState('off'); } }; });
+      await attachStream(stream);
+      setCamError(null); setCamState('on');
+      setCamWanted(true); save('camWanted', true);
       return true;
-    } catch (e) { setCamState('denied'); return false; }
+    })();
+    const r = await acquiring.current; acquiring.current = null; return r;
   }, []);
-  const stopCamera = () => {
+  const releaseCamera = () => {
     streamRef.current && streamRef.current.getTracks().forEach(t => t.stop());
     streamRef.current = null; if (videoRef.current) videoRef.current.srcObject = null;
-    setCamState('off'); save('camWanted', false);
+    setCamState('off');
   };
-  useEffect(() => { if (onboarded && load('camWanted', false)) requestCamera(); }, []);
+  const stopCamera = () => { releaseCamera(); setCamWanted(false); save('camWanted', false); };
+  const toggleCamera = () => { tap(); if (camState === 'on') stopCamera(); else requestCamera().then(ok => !ok && say('Camera unavailable — see the camera check')); };
 
   /* ---------- engine ---------- */
   useEffect(() => {
@@ -72,6 +102,18 @@ function App() {
 
   /* ---------- navigation ---------- */
   const top = stack[stack.length - 1];
+  const inChallenge = stack.some(v => v.name === 'ready' || v.name === 'game');
+  useEffect(() => {
+    if (inChallenge && camWanted && camState !== 'on' && camState !== 'starting') requestCamera();
+    if (!inChallenge && camState === 'on') { const t = setTimeout(() => { if (!engineRef.current?.isRecording()) releaseCamera(); }, 4000); return () => clearTimeout(t); }
+  }, [inChallenge, camWanted, camState]);
+  useEffect(() => { if (top?.name === 'game' && streamRef.current) attachStream(streamRef.current); }, [top?.name]);
+  // Resume the preview if Android paused it (app switch, screen off).
+  useEffect(() => {
+    const onVis = () => { if (!document.hidden && streamRef.current) attachStream(streamRef.current); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
   const push = v => setStack(s => [...s, v]);
   const pop = () => setStack(s => s.slice(0, -1));
   const goHome = () => { setStack([]); setTab('home'); };
@@ -94,6 +136,7 @@ function App() {
 
   const finishGame = ({ slots, timeMs, recording }) => {
     const g = top;
+    markSeen(g.item, slots);
     const record = {
       id: Date.now().toString(36), title: g.item.name, itemId: g.item.id, domain: g.domain,
       themeKey: g.item.themeOverride || g.domain, date: Date.now(), timeMs,
@@ -181,8 +224,8 @@ function App() {
         if (hidden) return null;
         if (v.name === 'ready') return (
           <ReadyScreen key={i + v.item.id} item={v.item} domain={v.domain} group={v.group} deckRef={deckRef}
-            camOn={camState === 'on'} micOn={settings.mic}
-            onToggleCam={() => { tap(); camState === 'on' ? stopCamera() : requestCamera().then(ok => !ok && say('Camera blocked — allow it in phone settings')); }}
+            camOn={camState === 'on'} camState={camState} camError={camError} stream={streamRef.current} faceStatus={faceStatus} micOn={settings.mic}
+            onToggleCam={toggleCamera} onRetryCam={() => requestCamera()}
             onToggleMic={() => { tap(); setSetting('mic', !settings.mic); }}
             onBack={() => { tap(); pop(); }} onStart={startGame} onOptions={() => { tap(); setSheet(true); }} />
         );
@@ -208,7 +251,7 @@ function App() {
 
       {sheet && (
         <SettingsSheet settings={settings} setSetting={(k, v) => { tap(); setSetting(k, v); }} camState={camState}
-          onEnableCam={() => { tap(); camState === 'on' ? stopCamera() : requestCamera().then(ok => !ok && say('Camera blocked — allow it in phone settings')); }}
+          camWanted={camWanted} onEnableCam={() => { tap(); if (camWanted) stopCamera(); else { setCamWanted(true); save('camWanted', true); if (inChallenge) requestCamera(); else say('Camera will switch on when you start a challenge'); } }}
           onClose={() => setSheet(false)} onHowTo={() => { setSheet(false); setOnboarded(false); }}
           onClearHistory={() => { setHistory([]); save('history', []); say('Rankings cleared'); }}
           onFullscreen={() => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {}); else document.exitFullscreen?.(); }} />
@@ -216,7 +259,7 @@ function App() {
 
       {!onboarded && (
         <Onboarding
-          onCamera={async () => { initAudio(); playSound('pop'); await requestCamera(); setOnboarded(true); save('onboarded', true); }}
+          onCamera={async () => { initAudio(); playSound('pop'); const ok = await requestCamera(); setOnboarded(true); save('onboarded', true); if (ok) setTimeout(releaseCamera, 400); else say('Camera blocked — you can turn it on later'); }}
           onSkip={() => { initAudio(); setOnboarded(true); save('onboarded', true); }} />
       )}
       <Toast msg={toast} />

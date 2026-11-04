@@ -329,6 +329,35 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void openAppSettings() {
+            Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ui.post(() -> { try { startActivity(i); } catch (Exception ignored) {} });
+        }
+
+        /** Saves a PNG (base64) to Pictures/Blind Rank and opens the share sheet. */
+        @JavascriptInterface
+        public boolean shareImage(String b64, String filename) {
+            try {
+                byte[] data = Base64.decode(b64, Base64.DEFAULT);
+                ContentResolver cr = getContentResolver();
+                ContentValues cv = new ContentValues();
+                cv.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
+                cv.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                cv.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Blind Rank");
+                Uri uri = cr.insert(MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY), cv);
+                if (uri == null) return false;
+                try (OutputStream out = cr.openOutputStream(uri)) { out.write(data); }
+                Intent i = new Intent(Intent.ACTION_SEND);
+                i.setType("image/png");
+                i.putExtra(Intent.EXTRA_STREAM, uri);
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                ui.post(() -> startActivity(Intent.createChooser(i, "Share your top 10")));
+                return true;
+            } catch (Exception e) { return false; }
+        }
+
+        @JavascriptInterface
         public String version() {
             try {
                 PackageInfo p = getPackageManager().getPackageInfo(getPackageName(), 0);

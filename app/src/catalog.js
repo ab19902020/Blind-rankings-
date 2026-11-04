@@ -16,6 +16,8 @@ export const DOMAIN_META = {
   food:     { tagline: 'Fast food, cereal, candy',     tertiary: '#F43F5E' },
   history:  { tagline: 'Landmarks, flags, figures',    tertiary: '#F59E0B' },
   myths:    { tagline: 'Greek gods & cryptids',        tertiary: '#EC4899' },
+  cars:     { tagline: 'Supercars, brands, JDM',       tertiary: '#F97316' },
+  places:   { tagline: 'Cities, islands, wonders',     tertiary: '#22D3EE' },
 };
 
 const KEEP_UPPER = new Set(['TV', 'NBA', 'UFC', 'F1', 'US', 'MCU', '007', 'A24', 'WWE', 'NFL', 'MLB', 'DC', 'HBO', 'CN', 'AMC', 'K-POP', 'R&B', 'GOATS', 'GOAT']);
@@ -86,10 +88,17 @@ export function hexA(hex, a) {
 }
 
 export function sourceLabel(item) {
-  if (item.type === 'game') return 'Live chart';
-  if (item.type === 'custom') return `${item.queries.length} picks`;
+  if (item.type === 'game') return 'Live chart · changes daily';
+  if (item.type === 'custom') {
+    const n = item.queries.length;
+    return item.kind === 'films' ? `${n} films` : item.kind === 'shows' ? `${n} shows` : item.kind === 'people' ? `${n} stars` : `${n} picks`;
+  }
   if (item.type === 'wiki') return `${item.items.length} picks`;
   return '';
+}
+
+export function poolSize(item) {
+  return item.type === 'custom' ? item.queries.length : item.type === 'wiki' ? item.items.length : null;
 }
 
 // Deterministic daily challenge — same for everyone on the same day.

@@ -444,3 +444,69 @@ export function DomainArt({ domain, className, style, item, theme }) {
   const C = DOMAIN_ART[domain] || PopcornArt;
   return <C className={className} style={style} />;
 }
+
+/* ---------- Supercar ---------- */
+export function CarArt({ className, style }) {
+  const id = useIds('b', 'w', 'sh', 'r', 'gl');
+  return (
+    <Svg className={className} style={style}>
+      <defs>
+        <linearGradient id={id.b} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FF7A7A" /><stop offset="0.45" stopColor="#E11D2E" /><stop offset="1" stopColor="#6B0710" /></linearGradient>
+        <linearGradient id={id.w} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#9FD8FF" stopOpacity="0.9" /><stop offset="1" stopColor="#0B1622" /></linearGradient>
+        <radialGradient id={id.r} cx="0.4" cy="0.35" r="0.7"><stop offset="0" stopColor="#E5E7EB" /><stop offset="0.6" stopColor="#6B7280" /><stop offset="1" stopColor="#1F2937" /></radialGradient>
+        <radialGradient id={id.gl} cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#FFE9A8" /><stop offset="1" stopColor="#FFE9A8" stopOpacity="0" /></radialGradient>
+        <SoftShadow id={id.sh} std={6} />
+      </defs>
+      <ellipse cx="100" cy="150" rx="92" ry="10" fill="#000" opacity="0.7" filter={u(id.sh)} />
+      <path d="M8 128 C 10 112, 28 104, 52 100 L 78 80 C 92 70, 128 68, 148 80 L 170 96 C 186 100, 194 110, 194 124 L 192 136 L 12 138 Z" fill={u(id.b)} />
+      <path d="M82 84 C 94 76, 124 74, 140 82 L 156 96 L 70 98 Z" fill={u(id.w)} />
+      <path d="M110 78 L 112 98" stroke="#5A0610" strokeWidth="3" />
+      <path d="M20 116 C 60 108, 140 106, 188 114" stroke="#fff" strokeOpacity="0.35" strokeWidth="2.5" fill="none" />
+      <path d="M60 126 L 150 126" stroke="#000" strokeOpacity="0.35" strokeWidth="3" />
+      <ellipse cx="186" cy="114" rx="12" ry="7" fill={u(id.gl)} />
+      <rect x="8" y="118" width="12" height="5" rx="2" fill="#FF3B3B" />
+      {[54, 152].map(x => (
+        <g key={x}>
+          <circle cx={x} cy="136" r="21" fill="#0B0B0F" />
+          <circle cx={x} cy="136" r="14" fill={u(id.r)} />
+          {[0, 72, 144, 216, 288].map(a => <rect key={a} x={x - 1.5} y="124" width="3" height="12" rx="1.5" fill="#111" transform={`rotate(${a} ${x} 136)`} />)}
+          <circle cx={x} cy="136" r="4" fill="#E11D2E" />
+        </g>
+      ))}
+    </Svg>
+  );
+}
+
+/* ---------- Globe + plane (places) ---------- */
+export function GlobeArt({ className, style }) {
+  const id = useIds('o', 'l', 'sh', 'c', 'p');
+  return (
+    <Svg className={className} style={style}>
+      <defs>
+        <radialGradient id={id.o} cx="0.35" cy="0.3" r="0.85"><stop offset="0" stopColor="#7DD3FC" /><stop offset="0.55" stopColor="#0284C7" /><stop offset="1" stopColor="#082F49" /></radialGradient>
+        <linearGradient id={id.l} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#86EFAC" /><stop offset="1" stopColor="#15803D" /></linearGradient>
+        <linearGradient id={id.p} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#FFFFFF" /><stop offset="1" stopColor="#CBD5E1" /></linearGradient>
+        <clipPath id={id.c}><circle cx="96" cy="104" r="66" /></clipPath>
+        <SoftShadow id={id.sh} std={6} />
+      </defs>
+      <ellipse cx="96" cy="182" rx="56" ry="7" fill="#000" opacity="0.6" filter={u(id.sh)} />
+      <circle cx="96" cy="104" r="66" fill={u(id.o)} />
+      <g clipPath={u(id.c)} fill={u(id.l)}>
+        <path d="M44 70 C 60 50, 90 54, 92 70 C 94 84, 76 88, 74 102 C 72 116, 56 118, 48 106 C 40 94, 34 82, 44 70Z" />
+        <path d="M104 52 C 124 44, 150 54, 154 72 C 158 86, 140 90, 132 84 C 120 76, 104 70, 104 52Z" />
+        <path d="M110 112 C 124 104, 146 110, 148 128 C 150 146, 132 164, 118 156 C 104 148, 98 122, 110 112Z" />
+      </g>
+      <ellipse cx="74" cy="72" rx="22" ry="12" fill="#fff" opacity="0.28" transform="rotate(-30 74 72)" />
+      <path d="M20 60 C 60 20, 150 14, 186 54" stroke="#fff" strokeOpacity="0.7" strokeWidth="2.5" strokeDasharray="6 7" fill="none" />
+      <g transform="translate(176 46) rotate(32)">
+        <path d="M-18 0 L 16 -3 C 22 -3, 22 3, 16 3 Z" fill={u(id.p)} />
+        <path d="M0 -2 L -8 -16 L -2 -16 L 8 -2Z M0 2 L -8 16 L -2 16 L 8 2Z" fill={u(id.p)} />
+        <path d="M-16 -1 L -20 -8 L -16 -8 L -12 -1Z" fill={u(id.p)} />
+      </g>
+    </Svg>
+  );
+}
+DOMAIN_ART.cars = CarArt;
+DOMAIN_ART.places = GlobeArt;
+HEADER_ART.cars = CarArt;
+HEADER_ART.places = GlobeArt;

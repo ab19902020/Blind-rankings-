@@ -291,7 +291,7 @@ const TAGLINES = {
   history: 'Ten icons of history. One shot each.', myths: 'Ten legends. Rank them blind.',
 };
 
-export function ReadyScreen({ item, domain, group, camOn, micOn, onToggleCam, onToggleMic, onBack, onStart, onOptions, deckRef }) {
+export function ReadyScreen({ item, domain, group, camOn, camState, camError, stream, faceStatus, micOn, onToggleCam, onRetryCam, onToggleMic, onBack, onStart, onOptions, deckRef }) {
   const t = itemTheme(item, domain);
   const [deck, setDeck] = useState({ status: 'loading', n: 0 });
   const [attempt, setAttempt] = useState(0);
@@ -331,9 +331,9 @@ export function ReadyScreen({ item, domain, group, camOn, micOn, onToggleCam, on
             <div><Ic.ListNum size={24} />Choose a rank from 1–10</div>
             <div><Ic.Lock size={24} />Keep going — future picks stay hidden</div>
           </div>
+          <CameraCheck camState={camState} camError={camError} stream={stream} onToggle={onToggleCam} onRetry={onRetryCam} />
           <div className="toggles fade-up" style={{ animationDelay: '120ms' }}>
-            <button className={`pill-toggle ${camOn ? 'on' : 'off'}`} onClick={onToggleCam}><Ic.Camera size={20} solid={camOn} />Camera: {camOn ? 'On' : 'Off'}</button>
-            <button className={`pill-toggle ${micOn && camOn ? 'on' : 'off'}`} onClick={onToggleMic}><Ic.Mic size={20} solid={micOn && camOn} />Microphone: {micOn && camOn ? 'On' : 'Off'}</button>
+            {camOn && <button className={`pill-toggle ${micOn ? 'on' : 'off'}`} onClick={onToggleMic}><Ic.Mic size={20} solid={micOn} />Record my voice: {micOn ? 'On' : 'Off'}</button>}
           </div>
           <div style={{ marginTop: 20 }} className="fade-up">
             <button className="cta theme" disabled={deck.status !== 'ready'} onClick={() => deck.status === 'ready' && onStart()}>
@@ -357,8 +357,45 @@ export function ReadyScreen({ item, domain, group, camOn, micOn, onToggleCam, on
   );
 }
 
+/* Live camera preview so players can see it's working before they start. */
+function CameraCheck({ camState, camError, stream, onToggle, onRetry }) {
+  const vref = useRef(null);
+  useEffect(() => {
+    const v = vref.current; if (!v) return;
+    if (stream && v.srcObject !== stream) { v.srcObject = stream; v.muted = true; v.play().catch(() => {}); }
+    if (!stream) v.srcObject = null;
+  }, [stream, camState]);
+  const on = camState === 'on';
+  const msg = {
+    denied: ['Camera is blocked', 'Allow camera access for Blind Rank in your phone’s Settings › Apps › Blind Rank › Permissions, then tap Try again.'],
+    nocamera: ['No front camera found', 'You can still play — the picks will float in the middle of the screen.'],
+    busy: ['Camera is busy', 'Another app is using the camera. Close it, then tap Try again.'],
+    error: ['Camera couldn’t start', 'Tap Try again. If it keeps failing, restart the app.'],
+  }[camError] || null;
+  return (
+    <div className={`camcheck fade-up ${on ? 'ok' : camState === 'denied' ? 'bad' : ''}`}>
+      <div className="cc-view">
+        <video ref={vref} autoPlay playsInline muted style={{ opacity: on ? 1 : 0 }} />
+        {!on && <div className="cc-off">{camState === 'starting' ? <Ic.Spinner size={26} /> : <Ic.Camera size={28} />}</div>}
+        {on && <span className="cc-live">LIVE</span>}
+      </div>
+      <div className="cc-body">
+        {on && <><b>Camera ready</b><span>You’re in shot — this is what gets recorded.</span></>}
+        {camState === 'starting' && <><b>Starting camera…</b><span>Allow access if your phone asks.</span></>}
+        {camState === 'off' && <><b>Camera is off</b><span>Turn it on to film your reaction with each pick above your head.</span>
+          <div className="cc-actions"><button className="mini-btn primary" onClick={onToggle}><Ic.Camera size={16} solid />Turn on</button></div></>}
+        {camState === 'denied' && msg && <><b>{msg[0]}</b><span>{msg[1]}</span>
+          <div className="cc-actions">
+            <button className="mini-btn primary" onClick={onRetry}><Ic.Repeat size={16} />Try again</button>
+            {camError === 'denied' && isNative() && window.BlindRankNative.openAppSettings && <button className="mini-btn" onClick={() => window.BlindRankNative.openAppSettings()}><Ic.Gear size={16} />Settings</button>}
+          </div></>}
+      </div>
+    </div>
+  );
+}
+
 /* ======================= Settings ======================= */
-export function SettingsSheet({ settings, setSetting, camState, onEnableCam, onClose, onHowTo, onClearHistory, onFullscreen }) {
+export function SettingsSheet({ settings, setSetting, camState, camWanted, onEnableCam, onClose, onHowTo, onClearHistory, onFullscreen }) {
   const row = (key, icon, title, sub) => (
     <button className="opt" onClick={() => setSetting(key, !settings[key])}>{icon}<span className="ot">{title}{sub && <span className="os">{sub}</span>}</span><Switch on={settings[key]} /></button>
   );
@@ -369,9 +406,9 @@ export function SettingsSheet({ settings, setSetting, camState, onEnableCam, onC
       <div className="group">
         <button className="opt" onClick={onEnableCam}>
           <Ic.Camera size={22} solid />
-          <span className="ot">Camera{camState === 'on' ? ' is on' : camState === 'denied' ? ' is blocked' : ' is off'}
-            <span className="os">{camState === 'on' ? 'Your face is tracked so picks float above your head.' : camState === 'denied' ? 'Allow camera access for Blind Rank in your phone settings, then tap here.' : 'Tap to turn on — needed to film your reactions.'}</span></span>
-          <span className="face-dot" style={{ background: camState === 'on' ? 'var(--green)' : camState === 'denied' ? 'var(--red)' : undefined }} />
+          <span className="ot">Use camera
+            <span className="os">{camState === 'denied' ? 'Blocked — allow camera access for Blind Rank in phone settings.' : 'Films your reaction. Only switches on during a challenge.'}</span></span>
+          <Switch on={!!camWanted} />
         </button>
         {row('mic', <Ic.Mic size={22} />, 'Record microphone', 'Capture your commentary in the video')}
         {row('record', <Ic.Download size={22} />, 'Record video', 'Make a 9:16 clip of every round')}

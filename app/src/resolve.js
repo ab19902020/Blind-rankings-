@@ -46,7 +46,10 @@ export async function wikiResolve(titles, cache) {
     try { Object.assign(result, await wikiBatch(need.slice(i, i + 50))); } catch (e) {}
   }
   const misses = need.filter(t => !result[t]);
-  await Promise.all(misses.map(async t => { result[t] = await wikiSearch(t.replace(/[()]/g, ' ')); }));
+  // Search fallback for anything not matched exactly — a few at a time to stay polite.
+  for (let i = 0; i < misses.length; i += 3) {
+    await Promise.all(misses.slice(i, i + 3).map(async t => { result[t] = await wikiSearch(t.replace(/[()]/g, ' ')); }));
+  }
   if (cache) for (const t of need) if (result[t]) cache.set(t, result[t]);
   return result;
 }
