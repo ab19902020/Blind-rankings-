@@ -405,7 +405,7 @@ export const GROW = {
   a_brits: { occ: ACT, acting: true, country: 'uk', born: [1930], minLinks: 15 }, a_com: { occ: ['comedian', 'stand-up comedian'], acting: true, country: ANGLO, born: [1935], where: '?item wdt:P106 ?o2 . VALUES ?o2L { "actor"@en "film actor"@en } ?o2 rdfs:label ?o2L .' },
   a_rising: { occ: ACT, acting: true, country: ANGLO, born: [1994], minLinks: 10 }, a_reality: { occ: ['television personality', 'socialite', 'reality television participant'], country: ['us', 'uk'], born: [1960] },
   a_standup: { occ: 'stand-up comedian', country: ANGLO }, a_legends: { occ: ACT, acting: true, born: [1870, 1935], minLinks: 25 }, a_kidstars: { occ: 'child actor', acting: true, born: [1925] },
-  a_disney: { acting: true, where: 'VALUES ?netL { "Disney Channel"@en } ?net rdfs:label ?netL . ?show wdt:P449 ?net . ?show wdt:P161 ?item .', human: true },
+  a_disney: { acting: true, born: [1983], where: 'VALUES ?netL { "Disney Channel"@en } ?net rdfs:label ?netL . ?show wdt:P449 ?net . ?show wdt:P161 ?item .', human: true },
   a_ceos: { occ: ['entrepreneur', 'business executive', 'business magnate', 'chief executive officer'], born: [1925] }, a_chefs: { occ: ['chef', 'restaurateur', 'television chef'] },
   a_models: { occ: ['model', 'fashion model'], sex: 'f', born: [1950] },
 
@@ -448,12 +448,12 @@ export const GROW = {
   mu_rock: { occ: SINGER, sex: 'm', genre: ['rock music', 'hard rock', 'alternative rock', 'rock and roll'] }, mu_divas: { occ: SINGER, sex: 'f', genre: ['pop music', 'contemporary R&B', 'soul music'] },
   mu_rb: [{ deezerGenre: 165 }, { occ: SINGER, genre: ['contemporary R&B', 'soul music', 'rhythm and blues', 'neo soul'] }],
   mu_kpop: [{ genre: 'K-pop', inst: BAND, human: false }, { genre: 'K-pop', occ: SINGER }], mu_country: [{ deezerGenre: 84 }, { occ: SINGER, genre: 'country music', exclude: ['martial artist', 'businessperson'] }],
-  uk_grime: { occ: 'rapper', country: 'uk' }, uk_britpop: { inst: BAND, country: 'uk', human: false }, uk_pop: { occ: SINGER, country: 'uk', genre: ['pop music', 'pop rock', 'soul music'] },
+  uk_grime: { occ: 'rapper', country: 'uk', exclude: ['film actor', 'television actor', 'actor'] }, uk_britpop: { inst: BAND, country: 'uk', human: false }, uk_pop: { occ: SINGER, country: 'uk', genre: ['pop music', 'pop rock', 'soul music'] },
   mb_all: { inst: BAND, human: false }, mb_boy: { inst: ['boy band', 'girl group'], human: false },
   md_2010: { occ: SINGER, born: [1984, 1999], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'dance-pop'] }, md_2000: { occ: SINGER, born: [1972, 1986], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'pop rock'] },
   md_1990: { occ: SINGER, born: [1960, 1977], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'alternative rock'] }, md_1980: { occ: SINGER, born: [1945, 1966], genre: ['pop music', 'new wave', 'synth-pop', 'rock music'] },
   mu_rapnow: [{ deezerGenre: 116 }, { occ: 'rapper', country: 'us', born: [1990] }], mu_popgirls: [{ deezerGenre: 132 }, { occ: SINGER, sex: 'f', genre: ['pop music', 'dance-pop'], born: [1982] }],
-  mu_emo: { inst: BAND, genre: ['emo', 'pop-punk', 'pop punk', 'post-hardcore'], human: false }, mu_latin: [{ deezerGenre: 197 }, { genre: ['reggaeton', 'Latin pop', 'Latin trap', 'regional Mexican', 'bachata'], occ: SINGER }],
+  mu_emo: { inst: BAND, genre: ['emo', 'pop-punk', 'pop punk', 'post-hardcore'], country: ['us', 'uk', 'ca', 'au'], human: false }, mu_latin: [{ deezerGenre: 197 }, { genre: ['reggaeton', 'Latin pop', 'Latin trap', 'regional Mexican', 'bachata'], occ: SINGER }],
   mu_rnb00: [{ deezerGenre: 165 }, { occ: SINGER, genre: ['contemporary R&B', 'hip hop soul'], born: [1970, 1990] }], mu_countrynow: [{ deezerGenre: 84 }, { occ: SINGER, genre: 'country music', born: [1975] }],
   mu_90shiphop: { occ: 'rapper', born: [1960, 1980] },
   al_greatest: { inst: ['album', 'studio album'], human: false }, al_modern: { inst: ['album', 'studio album'], since: 2008, human: false },
@@ -463,14 +463,14 @@ export const GROW = {
   // ---- Gaming
   vg_best: { inst: 'video game', human: false }, vg_chars: { inst: ['video game character', 'player character'], human: false }, vg_franchise: { inst: 'video game series', human: false },
   vg_consoles: { inst: ['home video game console', 'handheld game console', 'video game console'], human: false }, vg_mobile: { inst: 'video game', platform: ['iOS', 'Android'], human: false },
-  vg_rockstar: { inst: 'video game', publisher: 'Rockstar Games', human: false }, vg_switch: { inst: 'video game', platform: 'Nintendo Switch', human: false },
-  vg_ps: { inst: 'video game', platform: ['PlayStation 4', 'PlayStation 5', 'PlayStation 3'], human: false }, vg_xbox: { inst: 'video game', platform: ['Xbox 360', 'Xbox One', 'Xbox Series X and Series S'], human: false },
+  vg_rockstar: { inst: 'video game', publisher: 'Rockstar Games', human: false }, vg_switch: { inst: 'video game', platform: ['Nintendo Switch', 'Q19610114', 'Nintendo Switch 2'], human: false },
+  vg_ps: { inst: 'video game', platform: ['PlayStation 4', 'PlayStation 5', 'PlayStation 3', 'Q5014725', 'Q63184502', 'Q10683'], human: false }, vg_xbox: { inst: 'video game', platform: ['Xbox 360', 'Xbox One', 'Xbox Series X and Series S', 'Q48263', 'Q13361286', 'Q64513817'], human: false },
   vg_horror: { inst: 'video game', genre: ['survival horror', 'psychological horror'], human: false }, vg_shooters: { inst: 'video game', genre: ['first-person shooter', 'battle royale game', 'third-person shooter', 'hero shooter'], human: false },
 
   // ---- Creators (channel pictures come straight from the YouTube/Twitch IDs on Wikidata)
   cr_us: { occ: ['YouTuber', 'vlogger'], country: 'us', ytSubs: true, exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] }, cr_uk: { occ: ['YouTuber', 'vlogger'], country: 'uk', ytSubs: true, exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] }, cr_yt: { occ: 'YouTuber', ytSubs: true, exclude: ['singer', 'singer-songwriter', 'guitarist', 'chef', 'diver', 'film actor', 'television actor', 'association football player', 'politician', 'model', 'journalist', 'television presenter'] },
   cr_stream: { occ: ['streamer', 'Twitch streamer', 'live streamer', 'video game streamer'] }, cr_tiktok: { occ: ['TikToker', 'social media influencer'], exclude: ['model', 'politician'] },
-  cr_pods: { occ: 'podcaster' }, cr_gaming: { occ: ['YouTuber', 'streamer', 'esports player'], ytSubs: true, where: '?item wdt:P101 ?fw . VALUES ?fwL { "video game"@en "video games"@en "gaming"@en } ?fw rdfs:label ?fwL .' },
+  cr_pods: { occ: 'podcaster' }, cr_gaming: { occ: ['esports player', 'streamer', 'Twitch streamer', 'video game streamer', 'Let\'s Player'], ytSubs: true },
   cr_beauty: { occ: ['beauty vlogger', 'makeup artist', 'YouTuber'], sex: 'f', where: '?item wdt:P101 ?fw . VALUES ?fwL { "cosmetics"@en "beauty"@en "fashion"@en } ?fw rdfs:label ?fwL .' },
 
   // ---- Food
@@ -499,7 +499,8 @@ export const GROW = {
   hg_pres: { posHeld: 'President of the United States', politicians: true }, hg_civil: { occ: ['civil rights activist', 'human rights activist', 'abolitionist', "women's rights activist"], politicians: true },
   hg_science: { occ: ['physicist', 'chemist', 'inventor', 'mathematician', 'biologist', 'astronomer'], minLinks: 40 }, hg_space: { occ: 'astronaut' },
   m_greek: { inst: ['Greek deity', 'Olympian deity', 'primordial deity', 'Titan', 'Greek primordial deity'], human: false },
-  m_heroes: { universe: 'Greek mythology', human: false }, m_norse: { universe: 'Norse mythology', human: false },
+  m_heroes: { universe: 'Greek mythology', inst: ['mythological Greek character', 'legendary creature', 'Greek hero', 'demigod', 'mythological character', 'hero', 'monster'], human: false },
+  m_norse: { universe: 'Norse mythology', inst: ['Æsir', 'Vanir', 'deity', 'Norse deity', 'jötunn', 'legendary creature', 'mythological character', 'giant'], human: false },
   m_egypt: { inst: ['Egyptian deity', 'deity', 'ancient Egyptian deity'], human: false }, m_creatures: { inst: ['legendary creature', 'mythical creature', 'creature'], human: false },
   m_cryptids: { inst: 'cryptid', human: false },
 };

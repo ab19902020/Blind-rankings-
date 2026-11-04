@@ -384,15 +384,18 @@ async function sparql(q, timeout = 70000) {
 // query is what made Wikidata time out, so they are resolved up front and cached.
 const qidCache = new Map();
 async function qidsFor(labels) {
+  arr(labels).filter(l => /^Q\d+$/.test(l)).forEach(l => qidCache.set(l, [l])); // raw IDs pass straight through
   const need = [...new Set(arr(labels))].filter(l => !qidCache.has(l));
   if (need.length) {
     // Wikidata labels differ in capitalisation ("monarch of England" vs "Monarch of England").
     const variants = l => [...new Set([l, l[0].toUpperCase() + l.slice(1), l[0].toLowerCase() + l.slice(1)])];
     const back = new Map(); need.forEach(l => variants(l).forEach(v => back.set(v, l)));
-    const d = await sparql(`SELECT ?x ?l WHERE { VALUES ?l { ${[...back.keys()].map(l => JSON.stringify(l) + '@en').join(' ')} } ?x rdfs:label ?l . }`, 30000);
+    const d = await sparql(`SELECT ?x ?l ?n WHERE { VALUES ?l { ${[...back.keys()].map(l => JSON.stringify(l) + '@en').join(' ')} } ?x rdfs:label ?l . OPTIONAL { ?x wikibase:sitelinks ?n } }`, 30000);
     if (!d) return [];
-    need.forEach(l => qidCache.set(l, []));
-    for (const b of d.results?.bindings || []) qidCache.get(back.get(b.l.value))?.push(b.x.value.split('/').pop());
+    // A common word ("mountain") labels thousands of items: keep the best-known 3 per name.
+    const hits = new Map(); need.forEach(l => hits.set(l, []));
+    for (const b of d.results?.bindings || []) hits.get(back.get(b.l.value))?.push([b.x.value.split('/').pop(), +(b.n?.value || 0)]);
+    for (const [l, h] of hits) qidCache.set(l, h.sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]));
   }
   return [...new Set(arr(labels).flatMap(l => qidCache.get(l) || []))];
 }
