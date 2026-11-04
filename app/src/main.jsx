@@ -106,8 +106,9 @@ function App() {
   const inChallenge = stack.some(v => v.name === 'ready' || v.name === 'game');
   useEffect(() => {
     if (inChallenge && camWanted && camState !== 'on' && camState !== 'starting') requestCamera();
+    if (inChallenge && camState === 'on' && settings.tracking) engineRef.current?.warmUp();
     if (!inChallenge && camState === 'on') { const t = setTimeout(() => { if (!engineRef.current?.isRecording()) releaseCamera(); }, 4000); return () => clearTimeout(t); }
-  }, [inChallenge, camWanted, camState]);
+  }, [inChallenge, camWanted, camState, settings.tracking]);
   useEffect(() => { if (top?.name === 'game' && streamRef.current) attachStream(streamRef.current); }, [top?.name]);
   // Resume the preview if Android paused it (app switch, screen off).
   useEffect(() => {
@@ -269,4 +270,5 @@ function App() {
   );
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+import { initCatalog } from './catalogLoader.js';
+initCatalog().finally(() => createRoot(document.getElementById('root')).render(<App />));

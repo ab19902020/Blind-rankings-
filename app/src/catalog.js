@@ -35,7 +35,9 @@ export const cleanName = (n = '') => n.split(' (')[0];
 // Build an index of every playable challenge and which domain it belongs to.
 const leaves = [];
 const domainOfMenu = {};
-(function walk() {
+function rebuildIndex() {
+  leaves.length = 0;
+  for (const k of Object.keys(domainOfMenu)) delete domainOfMenu[k];
   for (const dom of MENU_DATA.domain) {
     const visit = (menuId, group) => {
       domainOfMenu[menuId] = dom.id;
@@ -46,7 +48,19 @@ const domainOfMenu = {};
     };
     visit(dom.id, null);
   }
-})();
+}
+rebuildIndex();
+
+/** Swap in a pre-built catalog (all images resolved, fresh categories included). */
+export let catalogInfo = { source: 'built-in', generatedAt: null };
+export function applyCatalog(cat, source) {
+  if (!cat || !cat.menu || !Array.isArray(cat.menu.domain)) return false;
+  for (const k of Object.keys(MENU_DATA)) delete MENU_DATA[k];
+  Object.assign(MENU_DATA, cat.menu);
+  rebuildIndex();
+  catalogInfo = { source, generatedAt: cat.generatedAt };
+  return true;
+}
 
 export const ALL_CHALLENGES = leaves;
 export const domainForMenu = (menuId) => domainOfMenu[menuId];
@@ -88,6 +102,11 @@ export function hexA(hex, a) {
 }
 
 export function sourceLabel(item) {
+  if (item.type === 'pool') {
+    if (item.fresh) return `Updated daily · ${item.pool.length} picks`;
+    const n = item.pool.length;
+    return item.kind === 'films' ? `${n} films` : item.kind === 'shows' ? `${n} shows` : item.kind === 'people' ? `${n} stars` : item.kind === 'game' ? `Chart · ${n} picks` : item.kind === 'albums' ? `${n} albums` : `${n} picks`;
+  }
   if (item.type === 'game') return 'Live chart · changes daily';
   if (item.type === 'custom') {
     const n = item.queries.length;
@@ -97,7 +116,13 @@ export function sourceLabel(item) {
   return '';
 }
 
+export function searchText(item) {
+  const names = item.pool ? item.pool.map(p => p[0]) : item.items ? item.items : item.queries ? item.queries.map(q => q.n) : [];
+  return [item.name, ...names.slice(0, 60)].join(' ').toLowerCase();
+}
+
 export function poolSize(item) {
+  if (item.pool) return item.pool.length;
   return item.type === 'custom' ? item.queries.length : item.type === 'wiki' ? item.items.length : null;
 }
 

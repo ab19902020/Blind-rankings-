@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MENU_DATA, ALL_CHALLENGES, countChallenges, displayName, themeFor, dailyChallenge, DOMAIN_META, safeSecondary, featuredToday, sourceLabel } from './catalog.js';
+import { MENU_DATA, ALL_CHALLENGES, countChallenges, displayName, themeFor, dailyChallenge, DOMAIN_META, safeSecondary, featuredToday, sourceLabel, searchText, catalogInfo } from './catalog.js';
 import { loadDeck, cachedThumb } from './api.js';
 import { RankCardArt, PopcornArt, GamepadArt, CreatorArt, DomainArt, HEADER_ART, JerseyArt } from './art.jsx';
 import { ChallengeRow, FeatureBanner, Switch, Sheet, themeVars, itemTheme, themeLabel, useThumb, Ambient } from './ui.jsx';
@@ -156,7 +156,7 @@ export function DiscoverTab({ onPlay }) {
     const s = q.trim().toLowerCase();
     let l = ALL_CHALLENGES;
     if (dom !== 'all') l = l.filter(x => x.domain === dom);
-    if (s) l = l.filter(x => [x.item.name, x.group?.name, themeLabel(x.domain), ...(x.item.items || []).slice(0, 40), ...(x.item.queries || []).map(qq => qq.n)].join(' ').toLowerCase().includes(s));
+    if (s) l = l.filter(x => (searchText(x.item) + ' ' + (x.group?.name || '') + ' ' + themeLabel(x.domain)).toLowerCase().includes(s));
     return l;
   }, [q, dom]);
   return (
@@ -252,7 +252,7 @@ export function CategoryScreen({ domain, onBack, onPlay }) {
     if (chip === 'top') l = l.filter(x => !x.group);
     else if (chip !== 'all') l = l.filter(x => x.group && x.group.id === chip);
     const s = q.trim().toLowerCase();
-    if (s) l = l.filter(x => [x.item.name, x.group?.name, ...(x.item.items || []), ...(x.item.queries || []).map(qq => qq.n)].join(' ').toLowerCase().includes(s));
+    if (s) l = l.filter(x => (searchText(x.item) + ' ' + (x.group?.name || '')).toLowerCase().includes(s));
     return l;
   }, [chip, q, domain]);
   const [feat, ...rest] = filtered;
@@ -449,7 +449,7 @@ export function SettingsSheet({ settings, setSetting, camState, camWanted, onEna
         <button className="opt" onClick={onClearHistory}><Ic.Trash size={22} /><span className="ot">Clear my rankings</span></button>
       </div>
       <p className="fine">
-        Blind Rank {appVersion()}. Your videos are made and stored on your device — nothing is uploaded unless you share it.<br />
+        Blind Rank {appVersion()} · catalog {catalogInfo.generatedAt ? new Date(catalogInfo.generatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'built-in'}. Your videos are made and stored on your device — nothing is uploaded unless you share it.<br />
         This product uses the TMDB API but is not endorsed or certified by TMDB. Movie and TV data and images © TMDB. Other images via Wikipedia / Wikimedia Commons under their respective licences.
       </p>
     </Sheet>

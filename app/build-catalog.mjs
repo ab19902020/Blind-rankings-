@@ -102,10 +102,14 @@ const parseWiki = s => { const [title, display] = s.split('|'); return { title, 
 
 /* ---------------- other sources ---------------- */
 async function itunesAlbum(album, artist) {
-  const r = await get(`https://itunes.apple.com/search?term=${encodeURIComponent(artist + ' ' + album)}&entity=album&limit=8&country=GB`);
-  const list = r?.results || [];
-  const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const m = list.find(x => norm(x.collectionName).startsWith(norm(album)) && norm(x.artistName).includes(norm(artist).slice(0, 6))) || list.find(x => norm(x.collectionName).includes(norm(album)));
+  const norm = s => (s || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '');
+  const A = norm(album), R = norm(artist);
+  const pick = list => list.find(x => norm(x.collectionName).startsWith(A) && norm(x.artistName).includes(R.slice(0, 5)))
+    || list.find(x => norm(x.collectionName).includes(A) && norm(x.artistName).includes(R.slice(0, 5)));
+  let r = await get(`https://itunes.apple.com/search?term=${encodeURIComponent(artist + ' ' + album)}&entity=album&limit=15&country=GB`);
+  let m = pick(r?.results || []);
+  if (!m) { r = await get(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&entity=album&attribute=artistTerm&limit=200&country=GB`); m = pick(r?.results || []); }
+  if (!m) { r = await get(`https://itunes.apple.com/search?term=${encodeURIComponent(artist + ' ' + album)}&entity=album&limit=15&country=US`); m = pick(r?.results || []); }
   return m?.artworkUrl100 ? m.artworkUrl100.replace('100x100bb', '600x600bb') : null;
 }
 let heroData = null;
@@ -171,22 +175,35 @@ function generators() {
     fresh('ft_y1', `Best TV of ${Y - 1}`, '📅', () => tmdbList(`/discover/tv?first_air_date_year=${Y - 1}&sort_by=vote_count.desc&vote_count.gte=80&without_genres=10767,10763`, 3)),
     ...PROVIDERS.map(([n, id, ic]) => fresh(`ft_p${id}`, `Shows on ${n}`, ic, () => tmdbList(`/discover/tv?${GB}&with_watch_providers=${id}&sort_by=popularity.desc&vote_count.gte=50&without_genres=10767,10763`, 3))),
   ];
-  const jikan = async (path, map) => {
-    const out = []; const seen = new Set();
-    for (let p = 1; p <= 2; p++) {
-      const r = await get(`https://api.jikan.moe/v4${path}${path.includes('?') ? '&' : '?'}page=${p}`);
-      for (const x of r?.data || []) { const [n, img] = map(x); if (n && img && !seen.has(n)) { seen.add(n); out.push([n, img]); } }
+  // AniList GraphQL (free, no key) — primary anime source.
+  const anilist = async (query, variables, map) => {
+    for (let a = 0; a < 4; a++) {
+      try {
+        const r = await fetch('https://graphql.anilist.co', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'User-Agent': UA }, body: JSON.stringify({ query, variables }) });
+        if (r.status === 429) { await sleep(3000 * (a + 1)); continue; }
+        const d = await r.json();
+        const list = d?.data?.Page?.media || d?.data?.Page?.characters || [];
+        const seen = new Set(); const pool = [];
+        for (const x of list) { const [n, img] = map(x); if (n && img && !seen.has(n)) { seen.add(n); pool.push([n, img]); } }
+        await sleep(800);
+        return { pool };
+      } catch (e) { await sleep(2000); }
     }
-    return { pool: out };
+    return { pool: [] };
   };
-  const animeImg = x => x.images?.webp?.large_image_url || x.images?.jpg?.large_image_url;
+  const MEDIA = `query($sort:[MediaSort],$season:MediaSeason,$year:Int,$format:MediaFormat,$type:MediaType){ Page(perPage:50){ media(sort:$sort,season:$season,seasonYear:$year,format:$format,type:$type,isAdult:false){ title{ english romaji } coverImage{ extraLarge } } } }`;
+  const CHARS = `query{ Page(perPage:50){ characters(sort:FAVOURITES_DESC){ name{ full } image{ large } } } }`;
+  const mt = x => [x.title?.english || x.title?.romaji, x.coverImage?.extraLarge];
+  const m = NOW.getMonth();
+  const season = m < 3 ? 'WINTER' : m < 6 ? 'SPRING' : m < 9 ? 'SUMMER' : 'FALL';
   const anime = [
-    fresh('fa_season', 'This Season’s Anime', '🌸', () => jikan('/seasons/now?sfw=true&limit=25&filter=tv', x => [x.title_english || x.title, animeImg(x)])),
-    fresh('fa_top', 'Top Anime (MyAnimeList)', '⭐', () => jikan('/top/anime?limit=25&type=tv', x => [x.title_english || x.title, animeImg(x)])),
-    fresh('fa_pop', 'Most Popular Anime', '🔥', () => jikan('/top/anime?limit=25&filter=bypopularity', x => [x.title_english || x.title, animeImg(x)])),
-    fresh('fa_movies', 'Top Anime Movies', '🎞️', () => jikan('/top/anime?limit=25&type=movie', x => [x.title_english || x.title, animeImg(x)])),
-    fresh('fa_chars', 'Most Loved Anime Characters', '💖', () => jikan('/top/characters?limit=25', x => [x.name, x.images?.webp?.image_url || x.images?.jpg?.image_url])),
-    fresh('fa_manga', 'Top Manga', '📖', () => jikan('/top/manga?limit=25&type=manga', x => [x.title_english || x.title, animeImg(x)])),
+    fresh('fa_season', 'This Season’s Anime', '🌸', () => anilist(MEDIA, { sort: ['POPULARITY_DESC'], season, year: Y, type: 'ANIME' }, mt)),
+    fresh('fa_trend', 'Trending Anime', '🔥', () => anilist(MEDIA, { sort: ['TRENDING_DESC'], type: 'ANIME' }, mt)),
+    fresh('fa_top', 'Highest Rated Anime', '⭐', () => anilist(MEDIA, { sort: ['SCORE_DESC'], format: 'TV', type: 'ANIME' }, mt)),
+    fresh('fa_pop', 'Most Popular Anime Ever', '👑', () => anilist(MEDIA, { sort: ['POPULARITY_DESC'], type: 'ANIME' }, mt)),
+    fresh('fa_movies', 'Top Anime Movies', '🎞️', () => anilist(MEDIA, { sort: ['SCORE_DESC'], format: 'MOVIE', type: 'ANIME' }, mt)),
+    fresh('fa_chars', 'Most Loved Anime Characters', '💖', () => anilist(CHARS, {}, x => [x.name?.full, x.image?.large])),
+    fresh('fa_manga', 'Most Popular Manga', '📖', () => anilist(MEDIA, { sort: ['POPULARITY_DESC'], format: 'MANGA', type: 'MANGA' }, mt)),
   ];
   const deezer = async (path, map) => { const r = await get(`https://api.deezer.com${path}`); const seen = new Set(); const pool = []; for (const x of r?.data || []) { const [n, img] = map(x); if (n && img && !seen.has(n)) { seen.add(n); pool.push([n, img]); } } return { pool }; };
   const music = [

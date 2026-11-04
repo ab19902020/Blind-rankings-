@@ -42,11 +42,16 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
   const ctx = canvas.getContext('2d', { alpha: false });
   canvas.width = CW; canvas.height = CH;
 
-  loadFaceApi().then(() => { aiReady = true; }).catch(() => { aiReady = false; onFace && onFace('unavailable'); });
+  let aiRequested = false;
+  const ensureAI = () => {
+    if (aiRequested) return; aiRequested = true;
+    loadFaceApi().then(() => { aiReady = true; }).catch(() => { aiReady = false; onFace && onFace('unavailable'); });
+  };
 
   const aiTimer = setInterval(async () => {
-    if (!running || !aiReady || !trackingOn || detecting || !video || video.readyState < 2) return;
-    const st = getState(); if (st.phase !== 'playing' && st.phase !== 'countdown') return;
+    if (!running || !trackingOn || detecting || !video || video.readyState < 2) return;
+    const st = getState(); if (st.phase !== 'playing' && st.phase !== 'countdown' && st.phase !== 'idle-cam') return;
+    if (!aiReady) { ensureAI(); return; }
     detecting = true;
     try {
       const d = await window.faceapi.detectSingleFace(video, new window.faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.25 }));
@@ -258,6 +263,7 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
   requestAnimationFrame(frame);
 
   return {
+    warmUp() { ensureAI(); },
     setTracking(v) { trackingOn = v; if (!v) p.detected = false; },
     isRecording: () => recording,
     startRecording(audioTrack) {

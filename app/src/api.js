@@ -11,7 +11,16 @@ function persistentMap(key, limit = 2000) {
 const wikiCache = persistentMap('wikiimg3');
 const tmdbCache = persistentMap('tmdbimg1');
 
-export const itemKey = item => `${item.type}:${item.id}`;
+export const itemKey = item => `${item.type === 'pool' ? 'p' : item.type}:${item.id}`;
+
+/** Expand compact image codes from the catalog. */
+export function expandImg(code, size = 'w500') {
+  if (!code) return null;
+  if (code.startsWith('t:')) return `${TMDB_IMG}${size}${code.slice(2)}`;
+  if (code.startsWith('b:')) return `${TMDB_IMG}w780${code.slice(2)}`;
+  if (code.startsWith('w:')) return 'https://upload.wikimedia.org/wikipedia/' + code.slice(2);
+  return code;
+}
 
 /* ---------------- variety: avoid what you saw last time ---------------- */
 const seenStore = load('seen', {});
@@ -56,6 +65,7 @@ async function finalise(pool, onProgress) {
 }
 
 async function poolFor(item, need = 999) {
+  if (item.type === 'pool') return item.pool.map(([name, img]) => ({ id: name, name, img: expandImg(img) }));
   if (item.type === 'wiki') {
     const parsed = item.items.map(parseWikiItem);
     const imgs = await wikiResolve(parsed.map(p => p.title), wikiCache);
@@ -83,6 +93,8 @@ async function poolFor(item, need = 999) {
 export async function loadDeck(item, onProgress) {
   const pool = await poolFor(item, 14);
   const ordered = item.type === 'custom' ? pool : orderPool(item, pool);
+  // also warm the next few so a re-roll is instant
+  ordered.slice(10, 14).forEach(p => { const i = new Image(); i.src = p.img; });
   if (ordered.length < 10) throw new Error(`Couldn’t find 10 picks for this one right now (${ordered.length}/10). Check your connection and try again.`);
   return finalise(ordered, onProgress);
 }
@@ -94,9 +106,13 @@ let active = 0; const waiting = [];
 const slot = () => new Promise(r => { if (active < 4) { active++; r(); } else waiting.push(r); });
 const release = () => { active--; const n = waiting.shift(); if (n) { active++; n(); } };
 
-export function cachedThumb(item) { return thumbCache[itemKey(item)] || null; }
+export function cachedThumb(item) {
+  if (item.type === 'pool') return expandImg(item.thumb || item.pool[0][1], 'w780');
+  return thumbCache[itemKey(item)] || null;
+}
 
 export function thumbFor(item) {
+  if (item.type === 'pool') return Promise.resolve(cachedThumb(item));
   const key = itemKey(item);
   if (thumbCache[key]) return Promise.resolve(thumbCache[key]);
   if (inflight[key]) return inflight[key];
