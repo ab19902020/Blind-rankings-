@@ -563,7 +563,7 @@ async function resolveCurated(it) {
     if (grows.length && queries.length < target) {
       const have = new Set(queries.map(q => norm(q.n)));
       for (const g of grows) {
-        if (g.tmdb || g.person) {
+        if (g.tmdb || g.person || g.popularActors) {
           for (const [n, img] of await growTmdb(g)) if (!have.has(norm(n))) { have.add(norm(n)); tmdbGrown.push([n, img]); }
         } else {
           for (const o of await growWikidata(g, Math.max(170, target + 60))) {
