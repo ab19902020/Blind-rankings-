@@ -12,6 +12,9 @@ concurrency:
   group: catalog-preview-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_OPTIONS: --max-old-space-size=8192
+
 jobs:
   preview:
     runs-on: ubuntu-latest
