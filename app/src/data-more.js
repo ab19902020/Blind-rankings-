@@ -349,3 +349,156 @@ export function extendMenu(M) {
   M.cars.push(...PLACES.car_more);
   M.nature.push(...PLACES.n_more);
 }
+
+/* ======================= GROW: topping every category up towards 100 =======================
+ * The catalog builder keeps the hand-picked items first, then adds the most famous matches:
+ *   Wikidata spec  { occ, inst, sub, team, league, position, genre, award, platform, posHeld, castOf,
+ *                    country: ['us','uk',...], sex: 'm'|'f', born: [from, to], since, until, where }
+ *                  ranked by how many Wikipedias have an article (a good fame signal).
+ *   TMDB spec      { tmdb: '/discover/...', keyword, company } or { person, job } for filmographies.
+ * Every grown pick still goes through the same strict picture checks. */
+const M = '/discover/movie?sort_by=vote_count.desc&vote_count.gte=250';
+const T = '/discover/tv?sort_by=vote_count.desc&vote_count.gte=80&without_genres=10763,10767';
+const ACT = ['actor', 'film actor', 'television actor'];
+const ANGLO = ['us', 'uk', 'ca', 'au', 'nz', 'ie'];
+const SINGER = ['singer', 'singer-songwriter'];
+const BAND = ['musical group', 'rock band', 'band', 'boy band', 'girl group', 'pop rock band'];
+const CHAIN = ['restaurant chain', 'fast food restaurant chain', 'fast casual restaurant chain', 'chain restaurant'];
+const footy = team => ({ occ: 'association football player', team });
+export const GROW = {
+  // ---- Movies
+  fr_horror: { tmdb: M + '&with_genres=27' }, fr_vgm: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=40', keyword: ['based on video game'] },
+  fr_pixar: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=50', company: 'Pixar' },
+  mc_marvel: { universe: 'Marvel Universe', inst: ['superhero', 'fictional human', 'comics character', 'mutant', 'fictional superhero', 'fictional character'], human: false },
+  mc_dc: { universe: 'DC Universe', inst: ['superhero', 'fictional human', 'comics character', 'supervillain', 'fictional superhero', 'fictional character'], human: false },
+  d_nolan: { person: 'Christopher Nolan', job: 'Director', minVotes: 30 }, d_taran: { person: 'Quentin Tarantino', job: 'Director', minVotes: 30 },
+  d_spiel: { person: 'Steven Spielberg', job: 'Director', minVotes: 50 }, d_scors: { person: 'Martin Scorsese', job: 'Director', minVotes: 50 },
+  d_kubri: { person: 'Stanley Kubrick', job: 'Director', minVotes: 30 }, d_finch: { person: 'David Fincher', job: 'Director', minVotes: 30 },
+  d_ridley: { person: 'Ridley Scott', job: 'Director', minVotes: 50 }, d_ritchie: { person: 'Guy Ritchie', job: 'Director', minVotes: 30 },
+  d_villeneuve: { person: 'Denis Villeneuve', job: 'Director', minVotes: 30 }, d_wes: { person: 'Wes Anderson', job: 'Director', minVotes: 30 },
+  d_burton: { person: 'Tim Burton', job: 'Director', minVotes: 50 },
+  l_xmas: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=60', keyword: ['christmas', 'christmas party', 'christmas eve'] },
+  l_heist: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=150', keyword: ['heist', 'bank robbery'] },
+  l_romcom: { tmdb: M + '&with_genres=10749,35' }, l_sport: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=150', keyword: ['sports', 'boxing', 'basketball', 'american football', 'football (soccer)'] },
+  l_scifi: { tmdb: M + '&with_genres=878' }, l_kids: { tmdb: M + '&with_genres=10751&primary_release_date.lte=2012-12-31' },
+  l_teen: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=150', keyword: ['high school', 'teenager', 'coming of age'] },
+  l_brit: { tmdb: M + '&with_origin_country=GB' }, l_uscom: { tmdb: M + '&with_genres=35&with_origin_country=US' },
+  l_halloween: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=100', keyword: ['halloween', 'witch', 'haunted house'] },
+  l_musicals: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=100', keyword: ['musical'] },
+  l_2000s: { tmdb: M + '&primary_release_date.gte=2000-01-01&primary_release_date.lte=2009-12-31&with_genres=12|28' },
+  s_disney: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=50', company: 'Walt Disney Animation Studios' },
+  s_ghibli: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=20', company: 'Studio Ghibli' },
+  s_dream: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=50', company: 'DreamWorks Animation' },
+  s_pixar2: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=50', company: 'Pixar' },
+  fa_sandler: { person: 'Adam Sandler' }, fa_carrey: { person: 'Jim Carrey' }, fa_ferrell: { person: 'Will Ferrell' }, fa_leo: { person: 'Leonardo DiCaprio' },
+  fa_cruise: { person: 'Tom Cruise' }, fa_denzel: { person: 'Denzel Washington' }, fa_rock: { person: 'Dwayne Johnson' }, fa_wsmith: { person: 'Will Smith' },
+  fa_keanu: { person: 'Keanu Reeves' }, fa_hanks: { person: 'Tom Hanks' }, fa_eddie: { person: 'Eddie Murphy' }, fa_bullock: { person: 'Sandra Bullock' },
+  an_series: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=100&with_genres=16&with_origin_country=JP' },
+  an_films: { tmdb: '/discover/movie?sort_by=vote_count.desc&vote_count.gte=100&with_genres=16&with_origin_country=JP' },
+
+  // ---- Celebs (TMDB photos, Wikidata portrait as backup)
+  a_men: { occ: ACT, sex: 'm', country: ANGLO, born: [1935] }, a_women: { occ: ACT, sex: 'f', country: ANGLO, born: [1935] },
+  a_action: { occ: ACT, where: '?item wdt:P106 ?o2 . VALUES ?o2L { "martial artist"@en "stunt performer"@en "bodybuilder"@en "professional wrestler"@en } ?o2 rdfs:label ?o2L .' },
+  a_brits: { occ: ACT, country: 'uk', born: [1930] }, a_com: { occ: ['comedian', 'stand-up comedian'], country: ANGLO, born: [1935], where: '?item wdt:P106 ?o2 . VALUES ?o2L { "actor"@en "film actor"@en } ?o2 rdfs:label ?o2L .' },
+  a_rising: { occ: ACT, country: ANGLO, born: [1994] }, a_reality: { occ: ['television personality', 'socialite', 'reality television participant'], country: ['us', 'uk'], born: [1960] },
+  a_standup: { occ: 'stand-up comedian', country: ANGLO }, a_legends: { occ: ACT, born: [1870, 1935] }, a_kidstars: { occ: 'child actor', born: [1925] },
+  a_disney: { where: '?show wdt:P161 ?item . ?show wdt:P449 ?net . VALUES ?netL { "Disney Channel"@en } ?net rdfs:label ?netL .', human: true },
+  a_ceos: { occ: ['entrepreneur', 'business executive', 'business magnate', 'chief executive officer'], born: [1925] }, a_chefs: { occ: ['chef', 'restaurateur', 'television chef'] },
+  a_models: { occ: ['model', 'fashion model'], sex: 'f', born: [1950] },
+
+  // ---- TV (TMDB discovery)
+  tc_sitcom: { tmdb: T + '&with_genres=35&without_genres=16,10764&with_origin_country=US|GB' }, tc_drama: { tmdb: T + '&with_genres=18&without_genres=16,10764,10766' },
+  tc_anim: { tmdb: T + '&with_genres=16&with_origin_country=US|GB|CA' }, tc_crime: { tmdb: T + '&with_genres=80' }, tc_scifi: { tmdb: T + '&with_genres=10765&without_genres=16' },
+  tc_ukcom: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=15&with_genres=35&with_origin_country=GB' }, tc_ukdrama: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=20&with_genres=18&with_origin_country=GB&without_genres=10766' },
+  ct_cn: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_networks=56' }, ct_nick: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_networks=13' },
+  ct_disney: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_networks=54' }, ct_uk: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=5&with_origin_country=GB&with_genres=10762' },
+  rt_uk: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=5&with_genres=10764&with_origin_country=GB' },
+  rt_comp: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_genres=10764&with_origin_country=GB|US' },
+  tc_network: { tmdb: T + '&with_networks=6|16|2|19&without_genres=16,10764' }, tc_teen: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=50', keyword: ['teen drama', 'high school', 'teenager'] },
+  tc_ushits: { tmdb: T + '&with_genres=18&with_origin_country=US&without_genres=16,10764,10766' }, tc_usreal: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=10&with_genres=10764&with_origin_country=US' },
+  tc_kids: { tmdb: '/discover/tv?sort_by=vote_count.desc&vote_count.gte=15&with_genres=10762' }, tc_00s: { tmdb: T + '&first_air_date.gte=2000-01-01&first_air_date.lte=2009-12-31' },
+  tc_late: { occ: ['talk show host', 'television presenter'], country: ['us', 'uk'], born: [1930] }, tc_snl: { castOf: 'Saturday Night Live' },
+
+  // ---- Football
+  fc_utd: footy('Manchester United F.C.'), fc_city: footy('Manchester City F.C.'), fc_liverpool: footy('Liverpool F.C.'), fc_arsenal: footy('Arsenal F.C.'),
+  fc_chelsea: footy('Chelsea F.C.'), fc_spurs: footy('Tottenham Hotspur F.C.'), fc_newcastle: footy('Newcastle United F.C.'), fc_madrid: footy('Real Madrid CF'),
+  fc_barca: footy('FC Barcelona'), fc_bayern: footy('FC Bayern Munich'), fc_juve: footy('Juventus FC'),
+  f_all: { occ: 'association football player' }, f_now: { occ: 'association football player', born: [1995] },
+  f_prem: { occ: 'association football player', born: [1965], team: ['Manchester United F.C.', 'Arsenal F.C.', 'Chelsea F.C.', 'Liverpool F.C.', 'Manchester City F.C.', 'Tottenham Hotspur F.C.', 'Everton F.C.', 'Newcastle United F.C.'] },
+  f_eng: footy('England national football team'), f_liga: { occ: 'association football player', born: [1960], team: ['Real Madrid CF', 'FC Barcelona', 'Atlético Madrid', 'Sevilla FC', 'Valencia CF'] },
+  f_mgr: { occ: 'association football manager' }, f_ballon: { award: "Ballon d'Or" }, f_gk: { occ: 'association football player', position: ['goalkeeper', 'association football goalkeeper'] },
+  f_lionesses: { team: ["England women's national football team", "England women's national association football team"] },
+  f_pl_clubs: { inst: ['association football club'], country: 'uk' }, f_eu_clubs: { inst: ['association football club'] },
+  f_nations: { inst: ['sovereign state', 'country'], human: false },
+  // ---- US & other sports
+  b_all: { league: 'National Basketball Association' }, b_mod: { league: 'National Basketball Association', born: [1992] }, b_90: { league: 'National Basketball Association', born: [1962, 1980] },
+  a_nfl_all: { league: 'National Football League' }, a_nfl_now: { league: 'National Football League', born: [1994] }, a_nfl_qbs: { league: 'National Football League', position: 'quarterback' },
+  a_mlb: { league: 'Major League Baseball' }, a_mlb_now: { league: 'Major League Baseball', born: [1992] }, a_nhl: { league: 'National Hockey League' },
+  a_wnba: { league: "Women's National Basketball Association" }, a_teamusa: { occ: ['swimmer', 'athletics competitor', 'artistic gymnast', 'alpine skier', 'figure skater', 'snowboarder', 'sprinter'], country: 'us' },
+  a_college: { inst: ['college football team', 'college sports team'], human: false },
+  c_ufc_goat: { occ: 'mixed martial artist' }, c_box: { occ: 'boxer' }, c_wwe_att: { occ: 'professional wrestler', born: [1940, 1985] }, c_wwe_now: { occ: 'professional wrestler', born: [1980] },
+  g_f1: { occ: 'Formula One driver' }, g_ten: { occ: 'tennis player' }, g_darts: { occ: 'darts player' }, g_snooker: { occ: 'snooker player' }, g_golf: { occ: 'golfer' },
+  g_olymp: { occ: ['swimmer', 'athletics competitor', 'artistic gymnast', 'sprinter', 'long-distance runner', 'track cyclist'] }, g_cricket: { occ: 'cricketer' }, g_rugby: { occ: 'rugby union player' },
+
+  // ---- Music (Deezer artist photos)
+  mu_now: { occ: SINGER, genre: ['pop music', 'dance-pop', 'electropop'], born: [1993] }, mu_pop: { occ: SINGER, genre: ['pop music', 'dance-pop'] }, mu_rap: { occ: 'rapper' },
+  mu_rock: { occ: SINGER, sex: 'm', genre: ['rock music', 'hard rock', 'alternative rock', 'rock and roll'] }, mu_divas: { occ: SINGER, sex: 'f', genre: ['pop music', 'contemporary R&B', 'soul music'] },
+  mu_rb: { occ: SINGER, genre: ['contemporary R&B', 'soul music', 'rhythm and blues', 'neo soul'] },
+  mu_kpop: [{ genre: 'K-pop', inst: BAND, human: false }, { genre: 'K-pop', occ: SINGER }], mu_country: { occ: SINGER, genre: 'country music' },
+  uk_grime: { occ: 'rapper', country: 'uk' }, uk_britpop: { inst: BAND, country: 'uk', human: false }, uk_pop: { occ: SINGER, country: 'uk', genre: ['pop music', 'pop rock', 'soul music'] },
+  mb_all: { inst: BAND, human: false }, mb_boy: { inst: ['boy band', 'girl group'], human: false },
+  md_2010: { occ: SINGER, born: [1984, 1999], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'dance-pop'] }, md_2000: { occ: SINGER, born: [1972, 1986], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'pop rock'] },
+  md_1990: { occ: SINGER, born: [1960, 1977], genre: ['pop music', 'contemporary R&B', 'hip hop music', 'alternative rock'] }, md_1980: { occ: SINGER, born: [1945, 1966], genre: ['pop music', 'new wave', 'synth-pop', 'rock music'] },
+  mu_rapnow: { occ: 'rapper', country: 'us', born: [1990] }, mu_popgirls: { occ: SINGER, sex: 'f', genre: ['pop music', 'dance-pop'], born: [1982] },
+  mu_emo: { inst: BAND, genre: ['emo', 'pop-punk', 'pop punk', 'post-hardcore'], human: false }, mu_latin: { genre: ['reggaeton', 'Latin pop', 'Latin trap', 'regional Mexican', 'bachata'], occ: SINGER },
+  mu_rnb00: { occ: SINGER, genre: ['contemporary R&B', 'hip hop soul'], born: [1970, 1990] }, mu_countrynow: { occ: SINGER, genre: 'country music', born: [1975] },
+  mu_90shiphop: { occ: 'rapper', born: [1960, 1980] },
+  al_greatest: { inst: ['album', 'studio album'], human: false }, al_modern: { inst: ['album', 'studio album'], since: 2008, human: false },
+  al_uk: { inst: ['album', 'studio album'], country: 'uk', human: false }, al_hiphop: { inst: ['album', 'studio album'], genre: ['hip hop music', 'hardcore hip hop', 'trap music'], human: false },
+  al_pop: { inst: ['album', 'studio album'], genre: ['pop music', 'dance-pop'], human: false }, al_rock: { inst: ['album', 'studio album'], genre: ['rock music', 'hard rock', 'alternative rock', 'grunge', 'heavy metal music'], human: false },
+
+  // ---- Gaming
+  vg_best: { inst: 'video game', human: false }, vg_chars: { inst: ['video game character', 'player character'], human: false }, vg_franchise: { inst: 'video game series', human: false },
+  vg_consoles: { inst: ['home video game console', 'handheld game console', 'video game console'], human: false }, vg_mobile: { inst: 'video game', platform: ['iOS', 'Android'], human: false },
+  vg_rockstar: { inst: 'video game', publisher: 'Rockstar Games', human: false }, vg_switch: { inst: 'video game', platform: 'Nintendo Switch', human: false },
+  vg_ps: { inst: 'video game', platform: ['PlayStation 4', 'PlayStation 5', 'PlayStation 3'], human: false }, vg_xbox: { inst: 'video game', platform: ['Xbox 360', 'Xbox One', 'Xbox Series X and Series S'], human: false },
+  vg_horror: { inst: 'video game', genre: ['survival horror', 'psychological horror'], human: false }, vg_shooters: { inst: 'video game', genre: ['first-person shooter', 'battle royale game', 'third-person shooter', 'hero shooter'], human: false },
+
+  // ---- Creators (channel pictures come straight from the YouTube/Twitch IDs on Wikidata)
+  cr_us: { occ: ['YouTuber', 'vlogger'], country: 'us' }, cr_uk: { occ: ['YouTuber', 'vlogger'], country: 'uk' }, cr_yt: { occ: 'YouTuber' },
+  cr_stream: { occ: ['streamer', 'Twitch streamer', 'live streamer', 'video game streamer'] }, cr_tiktok: { occ: ['TikToker', 'influencer', 'social media influencer'] },
+  cr_pods: { occ: 'podcaster' }, cr_gaming: { occ: ['YouTuber', 'streamer', 'esports player'], where: '?item wdt:P101 ?fw . VALUES ?fwL { "video game"@en "video games"@en "gaming"@en } ?fw rdfs:label ?fwL .' },
+  cr_beauty: { occ: ['beauty vlogger', 'makeup artist', 'YouTuber'], sex: 'f', where: '?item wdt:P101 ?fw . VALUES ?fwL { "cosmetics"@en "beauty"@en "fashion"@en } ?fw rdfs:label ?fwL .' },
+
+  // ---- Food
+  fd_fast: { inst: CHAIN, human: false }, fd_dish: { inst: ['dish', 'national dish', 'food'], human: false }, fd_dessert: { inst: ['dessert', 'cake', 'pastry', 'confectionery'], human: false },
+  fd_choc: { inst: ['chocolate bar', 'candy bar', 'brand of chocolate'], human: false }, fd_candy: { inst: ['candy', 'confectionery', 'gummy candy', 'brand'], human: false },
+  fd_drinks: { inst: ['soft drink', 'cola', 'energy drink', 'carbonated soft drink', 'brand of soft drink'], human: false }, fd_cereal: { inst: ['breakfast cereal', 'brand of breakfast cereal'], human: false },
+  fd_us_fast: { inst: CHAIN, country: 'us', human: false }, fd_us_sit: { inst: CHAIN, country: 'us', human: false }, fd_us_candy: { inst: ['candy bar', 'chocolate bar', 'candy', 'confectionery'], country: 'us', human: false },
+  fd_us_soda: { inst: ['soft drink', 'cola', 'root beer', 'carbonated soft drink'], country: 'us', human: false }, fd_us_food: { inst: ['dish', 'food'], country: 'us', human: false },
+  fd_uk_food: { inst: ['dish', 'food'], country: 'uk', human: false }, fd_coffee: { inst: ['coffeehouse chain', 'coffeehouse', 'doughnut shop', 'bakery chain'], human: false },
+  fd_pizza_chains: { inst: ['pizza chain', 'pizzeria chain', 'pizzeria'], human: false },
+
+  // ---- Nature, cars, places, history, myths
+  n_dogs: { inst: 'dog breed', human: false }, n_cats: { inst: 'cat breed', human: false },
+  car_super: { sub: ['sports car', 'supercar', 'grand tourer', 'hypercar'], human: false }, car_brands: { inst: ['automobile manufacturer', 'automobile marque', 'car brand'], human: false },
+  car_jdm: { sub: ['sports car', 'compact car', 'grand tourer', 'kei car'], where: '?item wdt:P176 ?mk . ?mk wdt:P17 wd:Q17 .', human: false },
+  car_muscle: { sub: ['muscle car', 'pony car'], human: false }, car_trucks: { sub: ['pickup truck', 'full-size pickup truck', 'mid-size pickup truck'], human: false },
+  car_ev: { sub: ['electric car', 'battery electric vehicle'], human: false }, car_hot: { sub: ['hot hatch', 'hatchback'], human: false },
+  car_usbrands: { inst: ['automobile manufacturer', 'automobile marque', 'car brand'], country: 'us', human: false },
+  pl_cities: { inst: ['big city', 'city', 'megacity', 'global city', 'metropolis'], human: false }, pl_uk: { inst: ['city', 'big city', 'town', 'cathedral city'], country: 'uk', human: false },
+  pl_us_cities: { inst: ['city of the United States', 'big city', 'city', 'consolidated city-county'], country: 'us', human: false },
+  pl_wonders: { inst: ['mountain', 'waterfall', 'canyon', 'volcano', 'lake', 'glacier', 'coral reef'], human: false }, pl_parks: { inst: ['amusement park', 'theme park'], human: false },
+  pl_stadiums: { inst: ['stadium', 'association football venue', 'multi-purpose stadium', 'sports venue'], human: false }, pl_natparks: { inst: 'national park of the United States', human: false },
+  pl_states: { inst: 'U.S. state', human: false },
+  hg_figs: { human: true, politicians: true, where: '?item wikibase:sitelinks ?ll . FILTER(?ll > 160)' },
+  hg_royals: { posHeld: ['monarch of England', 'monarch of the United Kingdom', 'monarch of Scotland', 'monarch of Great Britain'], politicians: true },
+  hg_empires: { inst: ['empire', 'historical country', 'colonial empire'], human: false }, hg_flags: { inst: 'sovereign state', human: false },
+  hg_pres: { posHeld: 'President of the United States', politicians: true }, hg_civil: { occ: ['civil rights activist', 'human rights activist', 'abolitionist', "women's rights activist"], politicians: true },
+  hg_science: { occ: ['physicist', 'chemist', 'inventor', 'mathematician', 'biologist', 'astronomer'] }, hg_space: { occ: 'astronaut' },
+  m_greek: { inst: ['Greek deity', 'Olympian deity', 'deity', 'primordial deity', 'Titan'], where: '?item wdt:P1080|wdt:P361 ?gm . ?gm rdfs:label "Greek mythology"@en .', human: false },
+  m_heroes: { where: '?item wdt:P1080|wdt:P361 ?gm . ?gm rdfs:label "Greek mythology"@en .', human: false },
+  m_norse: { where: '?item wdt:P1080|wdt:P361 ?gm . ?gm rdfs:label "Norse mythology"@en .', human: false },
+  m_egypt: { inst: ['Egyptian deity', 'deity', 'ancient Egyptian deity'], human: false }, m_creatures: { inst: ['legendary creature', 'mythical creature', 'creature'], human: false },
+  m_cryptids: { inst: 'cryptid', human: false },
+};

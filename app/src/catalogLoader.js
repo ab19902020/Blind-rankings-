@@ -19,10 +19,23 @@ const MIN_VERSION = 4;
 const fresh = c => !!(c && c.menu && (c.version || 0) >= MIN_VERSION);
 const time = c => (fresh(c) && c.generatedAt ? Date.parse(c.generatedAt) : 0);
 
+// The catalog is a few MB — too big for localStorage, so keep it in the Cache API.
+async function readCached() {
+  try {
+    if (window.caches) { const r = await (await caches.open('blindrank')).match('/catalog-latest.json'); if (r) return await r.json(); }
+  } catch (e) {}
+  try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; }
+}
+async function writeCached(cat) {
+  try {
+    if (window.caches) { await (await caches.open('blindrank')).put('/catalog-latest.json', new Response(JSON.stringify(cat), { headers: { 'Content-Type': 'application/json' } })); try { localStorage.removeItem(KEY); } catch (e) {} return; }
+  } catch (e) {}
+  try { localStorage.setItem(KEY, JSON.stringify(cat)); } catch (e) {}
+}
+
 export async function initCatalog() {
   let bundled = await fetchJSON('catalog.json', 4000);
-  let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+  let cached = await readCached();
   const best = time(cached) > time(bundled) ? ['downloaded', cached] : fresh(bundled) ? ['bundled', bundled] : null;
   if (best) applyCatalog(best[1], best[0]);
   // Background refresh for next launch.
@@ -30,7 +43,7 @@ export async function initCatalog() {
     for (const url of REMOTES) {
       const remote = await fetchJSON(url, 15000);
       if (fresh(remote) && time(remote) > Math.max(time(bundled), time(cached))) {
-        try { localStorage.setItem(KEY, JSON.stringify(remote)); } catch (e) {}
+        await writeCached(remote);
         break;
       }
       if (fresh(remote)) break;

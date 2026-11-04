@@ -13,6 +13,7 @@ const tmdbCache = persistentMap('tmdbimg2');
 
 export const itemKey = item => `${item.type === 'pool' ? 'p' : item.type}:${item.id}`;
 
+const CDN = { 'd:': 'https://cdn-images.dzcdn.net/images/', 'D:': 'https://e-cdns-images.dzcdn.net/images/', 'y:': 'https://yt3.googleusercontent.com/', 'Y:': 'https://yt3.ggpht.com/', 'e:': 'https://a.espncdn.com/i/', 'j:': 'https://static-cdn.jtvnw.net/jtv_user_pictures/', 'a:': 'https://is1-ssl.mzstatic.com/image/thumb/' };
 /** Expand compact image codes from the catalog. */
 export function expandImg(code, size = 'w500') {
   if (!code) return null;
@@ -20,6 +21,8 @@ export function expandImg(code, size = 'w500') {
   if (code.startsWith('b:')) return `${TMDB_IMG}w780${code.slice(2)}`;
   if (code.startsWith('w:')) return 'https://upload.wikimedia.org/wikipedia/' + code.slice(2);
   if (code.startsWith('W:')) return 'https://thumb.wikimedia.org/wikipedia/' + code.slice(2);
+  const pre = CDN[code.slice(0, 2)];
+  if (pre) return pre + code.slice(2);
   return code;
 }
 
@@ -27,7 +30,14 @@ export function expandImg(code, size = 'w500') {
 const seenStore = load('seen', {});
 function orderPool(item, pool) {
   const seen = new Set(seenStore[itemKey(item)] || []);
-  const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  // Big pools are ordered most-famous first: favour the top so a round is mostly names
+  // everyone knows, with a few deep cuts (weighted shuffle, weight falls with rank).
+  const weighted = pool.length > 30 && item.type === 'pool' && !item.fresh;
+  const rank = new Map(pool.map((p, i) => [p.id, i]));
+  const shuffle = a => {
+    if (weighted) return a.map(p => [Math.pow(Math.random(), 1 + (rank.get(p.id) || 0) / 35), p]).sort((x, y) => y[0] - x[0]).map(x => x[1]);
+    const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b;
+  };
   const fresh = shuffle(pool.filter(p => !seen.has(p.id)));
   const old = shuffle(pool.filter(p => seen.has(p.id)));
   return [...fresh, ...old];
@@ -35,7 +45,7 @@ function orderPool(item, pool) {
 export function markSeen(item, picks) {
   const k = itemKey(item);
   const prev = seenStore[k] || [];
-  seenStore[k] = [...picks.map(p => p.id), ...prev].slice(0, 24);
+  seenStore[k] = [...picks.map(p => p.id), ...prev].slice(0, 40);
   save('seen', seenStore);
 }
 

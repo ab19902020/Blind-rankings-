@@ -12,7 +12,7 @@
 //   img:    'person' | 'artist' | 'logo' | 'flag'  — what a correct picture looks like
 //   league: 'nfl' | 'nba' | 'mlb' | 'nhl' | 'wnba' — use official ESPN headshots
 //   region: 'us' | 'uk'                            — shown in the USA / UK hubs
-import { extendMenu } from './data-more.js';
+import { extendMenu, GROW } from './data-more.js';
 
 export const THEME = {
   movies: { primary: '#FFB800', secondary: '#FF3D5A' },
@@ -434,6 +434,7 @@ extendMenu(MENU_DATA);
       if (it.type === 'nav') { visit(it.id, dom, seen); continue; }
       if (it.type === 'wiki' && !it.img) it.img = LOGO.has(it.id) ? 'logo' : FLAG.has(it.id) ? 'flag' : PERSON.has(it.id) ? 'person' : BY_DOMAIN[dom];
       if (!it.img) delete it.img;
+      if (GROW[it.id] && !it.grow) it.grow = GROW[it.id];
       if (!it.region && UK.has(it.id)) it.region = 'uk';
       if (!it.region && US.has(it.id)) it.region = 'us';
     }

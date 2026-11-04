@@ -37,13 +37,13 @@ const pace = {
   'decapi.me': 400, 'www.twitch.tv': 400, 'site.api.espn.com': 60, 'rss.applemarketingtools.com': 150,
 };
 const hostDown = {};
-async function get(url, { json = true, headers = {}, ua = UA } = {}) {
+async function get(url, { json = true, headers = {}, ua = UA, timeout = 20000 } = {}) {
   const host = new URL(url).host;
   if (hostDown[host] >= 8) return null; // stop hammering a host that is clearly blocking us
   if (pace[host]) { const wait = Math.max(0, (lastHit[host] || 0) + pace[host] - Date.now()); lastHit[host] = Date.now() + wait; if (wait) await sleep(wait); }
   for (let a = 0; a < 4; a++) {
     try {
-      const r = await fetch(url, { headers: { 'User-Agent': ua, Accept: json ? 'application/json' : 'text/html,*/*', ...headers }, signal: AbortSignal.timeout(20000) });
+      const r = await fetch(url, { headers: { 'User-Agent': ua, Accept: json ? 'application/json' : 'text/html,*/*', ...headers }, signal: AbortSignal.timeout(timeout) });
       if (r.status === 429 || r.status >= 500) { await sleep(1500 * (a + 1)); continue; }
       if (!r.ok) return null;
       hostDown[host] = 0;
@@ -92,6 +92,10 @@ const imgKey = code => {
   // Everything else (Deezer, Apple, ESPN, YouTube…): the whole address, minus size hints.
   return s.replace(/=s\d+.*$/, '').replace(/\/\d+x\d+[a-z0-9-]*\.(jpg|png|webp)$/, '');
 };
+
+// Short prefixes for the big image CDNs (the app expands them; see api.js expandImg).
+const PREFIX = [['https://cdn-images.dzcdn.net/images/', 'd:'], ['https://e-cdns-images.dzcdn.net/images/', 'D:'], ['https://yt3.googleusercontent.com/', 'y:'], ['https://yt3.ggpht.com/', 'Y:'], ['https://a.espncdn.com/i/', 'e:'], ['https://static-cdn.jtvnw.net/jtv_user_pictures/', 'j:'], ['https://is1-ssl.mzstatic.com/image/thumb/', 'a:']];
+const shortImg = u => { for (const [p, c] of PREFIX) if (u.startsWith(p)) return c + u.slice(p.length); return wImg(u); };
 
 /* ---------------- picture sanity ---------------- */
 const BAD_ANY = /(signature|autograph|_sig[._ -]|\bsig\.svg|signatur|unterschrift|firma[_ .]|placeholder|no[_ -]?image|question[_ ]book|ambox|wiki[_ ]letter|commons-logo|disambig|edit-clear|replace[_ ]this[_ ]image|silhouette|default[_ -]?(avatar|image|profile)|blank[_ .]|location[_ ]dot)/i;
@@ -253,7 +257,7 @@ async function resolveWikiPicks(parsed, kind) {
     const fromFile = f => f && fileOk(f, kind) && fileCache.get(f) ? { img: wImg(fileCache.get(f)), src: 'wikidata' } : null;
     const page = i.thumb && fileOk(i.file, kind) ? { img: wImg(i.thumb), src: 'wikipedia' } : null;
     if (kind === 'logo') return fromFile(w.p154) || page || fromFile(w.p18);
-    if (kind === 'flag') return page || fromFile(w.p41) || fromFile(w.p18);
+    if (kind === 'flag') return fromFile(w.p41) || page || fromFile(w.p18);
     return page || fromFile(w.p18);
   });
 }
@@ -264,7 +268,7 @@ async function youtubeAvatar(handle, wants, trusted = false) {
   const key = 'yt:' + handle.toLowerCase();
   if (!avatarCache.has(key)) {
     avatarCache.set(key, (async () => {
-      const page = await get(`https://www.youtube.com/${handle.startsWith('@') ? handle : '@' + handle}`, {
+      const page = await get(`https://www.youtube.com/${handle.startsWith('@') || handle.startsWith('channel/') ? handle : '@' + handle}`, {
         json: false, ua: BROWSER_UA, headers: { 'Accept-Language': 'en-US,en;q=0.9', Cookie: 'CONSENT=YES+cb.20240101-00-p0.en+FX+000; SOCS=CAI' },
       });
       if (!page) return null;
@@ -365,6 +369,93 @@ async function heroImage(name) {
   return r?.img || null;
 }
 
+/* ---------------- growing pools towards 100 ---------------- */
+// Curated picks come first (the iconic ones), then the builder tops each category up
+// from Wikidata (ranked by how many Wikipedias cover them = fame) or TMDB discovery.
+const TARGET = 100;
+const COUNTRY = { us: 'Q30', uk: 'Q145', ca: 'Q16', au: 'Q408', ie: 'Q27', jp: 'Q17', kr: 'Q884', nz: 'Q664', fr: 'Q142', de: 'Q183', es: 'Q29', it: 'Q38', br: 'Q155', in: 'Q668', mx: 'Q96' };
+const PROP = { team: 'P54', position: 'P413', genre: 'P136', award: 'P166', universe: 'P1080', platform: 'P400', sport: 'P641', posHeld: 'P39', publisher: 'P123', maker: 'P176', series: 'P179', developer: 'P178', partOf: 'P361', network: 'P449' };
+const arr = x => (x == null ? [] : Array.isArray(x) ? x : [x]);
+const labs = (v, xs) => `VALUES ${v}L { ${arr(xs).map(x => JSON.stringify(x) + '@en').join(' ')} } ${v} rdfs:label ${v}L .`;
+function sparqlFor(g, limit) {
+  const w = [];
+  const human = g.human ?? !!(g.occ || g.team || g.league || g.position || g.castOf || g.posHeld);
+  if (human) w.push('?item wdt:P31 wd:Q5 .');
+  if (arr(g.inst).length) w.push(`?item wdt:P31 ?in . ${labs('?in', g.inst)}`);
+  if (arr(g.sub).length) w.push(`?item wdt:P279 ?sb . ${labs('?sb', g.sub)}`);
+  if (arr(g.occ).length) w.push(`?item wdt:P106 ?oc . ${labs('?oc', g.occ)}`);
+  for (const [k, pid] of Object.entries(PROP)) if (arr(g[k]).length) w.push(`?item wdt:${pid} ?${k}V . ${labs('?' + k + 'V', g[k])}`);
+  if (g.league) w.push(`?item wdt:P54 ?tl . ?tl wdt:P118 ?lg . ${labs('?lg', g.league)}`);
+  if (g.castOf) w.push(`?show wdt:P161 ?item . ${labs('?show', g.castOf)}`);
+  if (g.sex) w.push(`?item wdt:P21 wd:${g.sex === 'f' ? 'Q6581072' : 'Q6581097'} .`);
+  if (g.country) w.push(`?item (wdt:P27|wdt:P495|wdt:P17) ?cty . VALUES ?cty { ${arr(g.country).map(c => 'wd:' + COUNTRY[c]).join(' ')} }`);
+  if (g.born) { w.push('?item wdt:P569 ?dob .'); if (g.born[0]) w.push(`FILTER(YEAR(?dob) >= ${g.born[0]})`); if (g.born[1]) w.push(`FILTER(YEAR(?dob) <= ${g.born[1]})`); }
+  if (g.since || g.until) { w.push('?item (wdt:P577|wdt:P571|wdt:P580) ?pd .'); if (g.since) w.push(`FILTER(YEAR(?pd) >= ${g.since})`); if (g.until) w.push(`FILTER(YEAR(?pd) <= ${g.until})`); }
+  if (human && !g.politicians) w.push('FILTER NOT EXISTS { ?item wdt:P106 wd:Q82955 }'); // no politicians sneaking into "actors"
+  if (g.where) w.push(g.where);
+  const perf = g.albums ? 'OPTIONAL { ?item wdt:P175 ?pf . ?pf rdfs:label ?pfl . FILTER(LANG(?pfl) = "en") }' : '';
+  return `SELECT ?item ?title ?label ?img ?logo ?flag ?yt ?tw ?pfl ?links WHERE {
+  { SELECT DISTINCT ?item ?links WHERE { ${w.join('\n')} ?item wikibase:sitelinks ?links . } ORDER BY DESC(?links) LIMIT ${limit} }
+  ?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?title .
+  OPTIONAL { ?item rdfs:label ?label . FILTER(LANG(?label) = "en") }
+  OPTIONAL { ?item wdt:P18 ?img } OPTIONAL { ?item wdt:P154 ?logo } OPTIONAL { ?item wdt:P41 ?flag }
+  OPTIONAL { ?item wdt:P2397 ?yt } OPTIONAL { ?item wdt:P5797 ?tw } ${perf}
+} ORDER BY DESC(?links)`;
+}
+const growStats = { queries: 0, failed: 0 };
+async function growWikidata(g, limit = 170) {
+  growStats.queries++;
+  const d = await get(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(sparqlFor(g, limit))}`, { headers: { Accept: 'application/sparql-results+json' }, timeout: 75000 });
+  if (!d) { growStats.failed++; return []; }
+  const file = v => v ? decodeURIComponent(v.value.split('/Special:FilePath/')[1] || '').replace(/_/g, ' ') : null;
+  const by = new Map();
+  for (const b of d.results?.bindings || []) {
+    const qid = b.item.value.split('/').pop();
+    let o = by.get(qid);
+    if (!o) { o = { qid, title: b.title.value, name: b.label?.value || stripParen(b.title.value), links: +b.links.value, yt: b.yt?.value, tw: b.tw?.value, artist: b.pfl?.value }; by.set(qid, o); }
+    const w = wdCache.get(qid) || {};
+    if (b.img && !w.p18) w.p18 = file(b.img); if (b.logo && !w.p154) w.p154 = file(b.logo); if (b.flag && !w.p41) w.p41 = file(b.flag);
+    wdCache.set(qid, w);
+  }
+  return [...by.values()].filter(o => !/^Q\d+$/.test(o.name)).sort((a, b) => b.links - a.links);
+}
+const tmdbIdCache = new Map();
+async function tmdbIdFor(kind, name) {
+  const k = kind + ':' + name;
+  if (!tmdbIdCache.has(k)) tmdbIdCache.set(k, (async () => {
+    const r = await tmdb(`/search/${kind}?query=${encodeURIComponent(name)}`);
+    const list = r?.results || [];
+    const m = list.filter(x => norm(x.name) === norm(name)).sort((a, b) => (b.popularity || 0) - (a.popularity || 0))[0] || (kind === 'keyword' ? null : null);
+    return m?.id || null;
+  })());
+  return tmdbIdCache.get(k);
+}
+async function growTmdb(g) {
+  if (g.person) {
+    const id = await tmdbIdFor('person', g.person); if (!id) return [];
+    const tv = g.media === 'tv';
+    const r = await tmdb(`/person/${id}/${tv ? 'tv' : 'movie'}_credits`);
+    const list = (g.job ? (r?.crew || []).filter(c => c.job === g.job) : (r?.cast || []).filter(c => !/^(Himself|Herself|Self)\b/i.test(c.character || '')))
+      .filter(m => m.poster_path && (m.vote_count || 0) >= (g.minVotes ?? 150))
+      .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+    const seen = new Set(); const out = [];
+    for (const m of list) { const n = m.title || m.name; if (!seen.has(n)) { seen.add(n); out.push([n, tPoster(m.poster_path)]); } }
+    return out;
+  }
+  let path = g.tmdb;
+  if (g.keyword) {
+    const ids = (await Promise.all(arr(g.keyword).map(k => tmdbIdFor('keyword', k)))).filter(Boolean);
+    if (!ids.length) return [];
+    path += `&with_keywords=${ids.join('|')}`;
+  }
+  if (g.company) {
+    const ids = (await Promise.all(arr(g.company).map(k => tmdbIdFor('company', k)))).filter(Boolean);
+    if (!ids.length) return [];
+    path += `&with_companies=${ids.join('|')}`;
+  }
+  return (await tmdbList(path, g.pages || 6)).pool;
+}
+
 /* ---------------- curated leaf -> pool ---------------- */
 // Wiki-style item: 'Wikipedia Title|Display name|@youtube,tw:twitch'
 const parseWiki = s => {
@@ -372,18 +463,39 @@ const parseWiki = s => {
   const name = display || stripParen(title);
   return { title: title || name, name, src: (src || '').split(',').map(x => x.trim()).filter(Boolean) };
 };
+const growSamples = {};
+function addGrown(id, list) { growSamples[id] = list.slice(0, 14); }
 
 async function resolveCurated(it) {
   const kind = it.img || 'any';
+  const grows = arr(it.grow);
+  const target = it.target || TARGET;
   if (it.type === 'wiki') {
     const parsed = it.items.map(parseWiki);
+    // top up from Wikidata
+    if (grows.length && parsed.length < target) {
+      const have = new Set(parsed.flatMap(p => [norm(p.name), norm(stripParen(p.title))]));
+      const extra = [];
+      for (const g of grows) {
+        for (const o of await growWikidata(g, Math.max(170, target + 60))) {
+          if (have.has(norm(o.name)) || have.has(norm(stripParen(o.title)))) continue;
+          have.add(norm(o.name)); have.add(norm(stripParen(o.title)));
+          const src = []; if (o.yt) src.push('ytc:' + o.yt); if (o.tw) src.push('tw:' + o.tw);
+          extra.push({ title: o.title, name: o.name, src, qid: o.qid });
+        }
+      }
+      addGrown(it.id, extra.map(e => e.name));
+      parsed.push(...extra.slice(0, Math.round((target - parsed.length) * 1.35)));
+    }
     const out = new Array(parsed.length).fill(null);
     // 1) creators: their own channel picture
     await mapLimit(parsed, 3, async (p, i) => {
       for (const s of p.src) {
         const wants = [p.name, p.title];
         const trusted = s.endsWith('!'); const h = trusted ? s.slice(0, -1) : s;
-        const r = h.startsWith('tw:') ? await twitchAvatar(h.slice(3), wants) : h.startsWith('@') ? await youtubeAvatar(h, wants, trusted) : null;
+        const r = h.startsWith('tw:') ? await twitchAvatar(h.slice(3), wants)
+          : h.startsWith('ytc:') ? await youtubeAvatar('channel/' + h.slice(4), wants, true) // channel ID straight from Wikidata
+          : h.startsWith('@') ? await youtubeAvatar(h, wants, trusted) : null;
         if (r) { out[i] = r; return; }
       }
     });
@@ -399,24 +511,55 @@ async function resolveCurated(it) {
     const wk = await resolveWikiPicks(rest.map(([p]) => p), kind);
     rest.forEach(([, i], k) => { out[i] = wk[k]; });
     const pool = [], missing = [], srcs = {};
-    parsed.forEach((p, i) => { if (out[i]?.img) { pool.push([p.name, out[i].img]); srcs[p.name] = out[i].src; } else missing.push(p.title); });
-    return { pool, missing, srcs };
+    parsed.forEach((p, i) => { if (out[i]?.img) { pool.push([p.name, out[i].img]); srcs[p.name] = out[i].src; } else if (!p.qid) missing.push(p.title); });
+    return { pool: pool.slice(0, Math.max(target, it.items.length)), missing, srcs };
   }
   if (it.type === 'custom') {
-    const res = await mapLimit(it.queries, 6, q => tmdbFind(q));
+    const queries = [...it.queries];
+    const tmdbGrown = [];
+    if (grows.length && queries.length < target) {
+      const have = new Set(queries.map(q => norm(q.n)));
+      for (const g of grows) {
+        if (g.tmdb || g.person) {
+          for (const [n, img] of await growTmdb(g)) if (!have.has(norm(n))) { have.add(norm(n)); tmdbGrown.push([n, img]); }
+        } else {
+          for (const o of await growWikidata(g, Math.max(170, target + 60))) {
+            if (have.has(norm(o.name))) continue; have.add(norm(o.name));
+            queries.push({ q: o.name, n: o.name, t: 'person', title: o.title, grown: true });
+          }
+        }
+      }
+      addGrown(it.id, [...tmdbGrown.map(x => x[0]), ...queries.filter(q => q.grown).map(q => q.n)]);
+    }
+    const res = await mapLimit(queries, 6, q => tmdbFind(q));
+    // grown people TMDB doesn't know: their Wikidata portrait instead
+    const noTmdb = queries.map((q, i) => [q, i]).filter(([q, i]) => !res[i] && q.title);
+    const wk = await resolveWikiPicks(noTmdb.map(([q]) => ({ title: q.title, name: q.n })), 'person');
+    noTmdb.forEach(([, i], k) => { if (wk[k]) res[i] = { img: wk[k].img }; });
     const pool = [], missing = []; let thumb = null;
-    it.queries.forEach((q, i) => { if (res[i]) { pool.push([q.n, res[i].img]); if (!thumb && res[i].back && q.t !== 'person') thumb = res[i].back; } else missing.push(q.q + (q.y ? ` (${q.y})` : '')); });
-    return { pool, missing, thumb };
+    queries.forEach((q, i) => { if (res[i]) { pool.push([q.n, res[i].img]); if (!thumb && res[i].back && q.t !== 'person') thumb = res[i].back; } else if (!q.grown) missing.push(q.q + (q.y ? ` (${q.y})` : '')); });
+    pool.push(...tmdbGrown);
+    return { pool: pool.slice(0, Math.max(target, it.queries.length)), missing, thumb };
   }
   if (it.type === 'game') {
-    const { pool, thumb } = await tmdbList(it.endpoint, Math.max(3, it.pages || 3));
+    const { pool, thumb } = await tmdbList(it.endpoint, Math.max(5, it.pages || 5));
     return { pool, thumb, missing: [] };
   }
   if (it.type === 'albums') {
-    const res = await mapLimit(it.items, 2, s => { const [a, b] = s.split('|'); return albumArt(a, b); });
+    const items = [...it.items];
+    if (grows.length && items.length < target) {
+      const have = new Set(items.map(s => norm(s.split('|')[0])));
+      const extra = [];
+      for (const g of grows) for (const o of await growWikidata({ ...g, albums: true }, Math.max(170, target + 60))) {
+        if (!o.artist || have.has(norm(o.name))) continue; have.add(norm(o.name)); extra.push(`${o.name}|${o.artist}|grown`);
+      }
+      addGrown(it.id, extra.map(x => x.split('|').slice(0, 2).join(' – ')));
+      items.push(...extra.slice(0, Math.round((target - items.length) * 1.4)));
+    }
+    const res = await mapLimit(items, 3, s => { const [a, b] = s.split('|'); return albumArt(a, b); });
     const pool = [], missing = [];
-    it.items.forEach((s, i) => { const [a] = s.split('|'); res[i] ? pool.push([a, res[i]]) : missing.push(s); });
-    return { pool, missing };
+    items.forEach((s, i) => { const [a, , g] = s.split('|'); res[i] ? pool.push([a, res[i]]) : g ? null : missing.push(s); });
+    return { pool: pool.slice(0, Math.max(target, it.items.length)), missing };
   }
   if (it.type === 'heroes') {
     const res = await mapLimit(it.items, 4, heroImage);
@@ -573,9 +716,9 @@ function finishLeaf(base, res, extra = {}) {
   }
   const missing = [...(res.missing || []), ...dups];
   const srcCount = {}; Object.values(res.srcs || {}).forEach(s => { srcCount[s] = (srcCount[s] || 0) + 1; });
-  report.push({ id: base.id, name: base.name, found: pool.length, missing, dups, srcs: srcCount, picks: res.srcs || null, ok: pool.length >= 10 });
+  report.push({ id: base.id, name: base.name, found: pool.length, missing, dups, srcs: srcCount, picks: res.srcs || null, grown: growSamples[base.id] || null, ok: pool.length >= 10 });
   if (pool.length < 10) return null;
-  const leaf = { type: 'pool', id: base.id, name: base.name, icon: base.icon, kind: extra.kind || base.kind || base.type, pool: pool.slice(0, 120) };
+  const leaf = { type: 'pool', id: base.id, name: base.name, icon: base.icon, kind: extra.kind || base.kind || base.type, pool: pool.slice(0, 120).map(([n, u]) => [n, shortImg(u)]) };
   if (res.thumb) leaf.thumb = res.thumb;
   if (base.themeOverride) leaf.themeOverride = base.themeOverride;
   if (base.region) leaf.region = base.region;
@@ -644,7 +787,8 @@ async function main() {
   fs.writeFileSync('catalog-report.json', JSON.stringify(report, null, 1));
   console.log(`catalog: ${report.length - bad.length} categories, ${bad.length} dropped, ${totalPicks} picks, ${(fs.statSync(OUT).size / 1024).toFixed(0)} KB`);
   console.log(`sources: ${JSON.stringify(srcTotals)}`);
+  console.log(`wikidata grow queries: ${growStats.queries} (${growStats.failed} failed)`);
 }
 
-export { resolveCurated, finishLeaf, report, imgKey };
+export { resolveCurated, finishLeaf, report, imgKey, sparqlFor };
 if (!process.env.CATALOG_NO_RUN) main();
