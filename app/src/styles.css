@@ -517,3 +517,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .dialog-close { position: absolute; right: 16px; top: 12px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ffffff30; color: white; background: #ffffff0a; font-size: 24px; }.sheet h2 { padding-right: 35px; }
 
 @keyframes slotGlow { 50% { border-color: #fff; box-shadow: 0 0 18px var(--p); } }
+
+/* Long challenge titles and failed thumbnail services remain readable. */
+.feature { height: auto; min-height: 190px; }
+.feature .f-body { top: auto; bottom: auto; left: auto; margin: 22px 70px 22px 20px; max-width: none; }
+.feature h2 { font-size: clamp(24px,7.4vw,30px); line-height: 1.02; overflow-wrap: anywhere; }
+.sports-broadcast .cat-title { padding-right: 40px; }
+.sports-broadcast .cat-title h1 { font-size: clamp(29px,9vw,36px); }
+.sports-broadcast .cat-art { animation: none; opacity: .20; }
+.sports-broadcast .sports-subtitle { position: relative; z-index: 2; margin: 16px 0 0; max-width: 280px; color: #c4dce7; }
+.pod .nm { display: block; overflow: visible; overflow-wrap: anywhere; -webkit-line-clamp: unset; }

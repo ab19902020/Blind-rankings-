@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { cachedThumb, thumbFor } from './api.js';
+import { cachedThumb, thumbFor, preload } from './api.js';
 import { displayName, sourceLabel, themeFor, inkOn, safeSecondary, domainForItem, ALL_CHALLENGES } from './catalog.js';
 import { DomainArt, HEADER_ART } from './art.jsx';
 import * as Ic from './icons.jsx';
@@ -15,13 +15,12 @@ export function itemTheme(item, domain) { return themeFor(item.themeOverride || 
 /* Lazily fetch a real image for a challenge once it scrolls into view. */
 export function useThumb(item) {
   const ref = useRef(null);
-  const [url, setUrl] = useState(() => cachedThumb(item));
+  const [url, setUrl] = useState(null);
   useEffect(() => {
-    setUrl(cachedThumb(item));
-    if (cachedThumb(item)) return;
+    setUrl(null);
     let alive = true;
     const el = ref.current;
-    const go = () => thumbFor(item).then(u => { if (alive && u) setUrl(u); });
+    const go = async () => { const u = cachedThumb(item) || await thumbFor(item); if (u && await preload(u) && alive) setUrl(u); };
     if (!el || !('IntersectionObserver' in window)) { go(); return () => { alive = false; }; }
     const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); go(); } }, { rootMargin: '200px' });
     io.observe(el);

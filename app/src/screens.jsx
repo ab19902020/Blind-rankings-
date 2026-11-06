@@ -286,8 +286,9 @@ export function CategoryScreen({ domain, onBack, onPlay }) {
             {Art && <div className="cat-art fade-up"><Art /></div>}
             <div className="cat-title fade-up">
               {domain === 'movies' ? <ClapperIcon /> : <Ic.DomainLine name={dom.icon} className="ic" size={40} sw={2.4} />}
-              <h1>{domain === 'sports' ? 'The sporting debate' : displayName(dom.name)}</h1>{domain === 'sports' && <p className="helper">Legends. Flops. Hard men. Your verdict.</p>}
+              <h1>{domain === 'sports' ? 'The sporting debate' : displayName(dom.name)}</h1>
             </div>
+            {domain === 'sports' && <p className="helper sports-subtitle">Legends. Flops. Hard men. Your verdict.</p>}
           </div>
           <div className="search fade-up">
             <Ic.Search size={22} />
