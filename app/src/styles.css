@@ -280,7 +280,7 @@ img { display: block; }
 .slot:first-child:not(.filled) { background: linear-gradient(135deg, rgba(255,212,92,0.38), rgba(255,150,0,0.12)); border-color: rgba(255,212,92,0.85); }
 .slot .num { font-size: clamp(18px, 4.8vw, 26px); font-weight: 900; font-style: italic; color: rgba(255,255,255,0.92); text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
 .slot:first-child .num { color: var(--gold-1); }
-.slot.next { border-color: var(--p); box-shadow: 0 0 0 2px color-mix(in srgb, var(--p) 45%, transparent), 0 0 24px color-mix(in srgb, var(--p) 55%, transparent); animation: nudge 1.4s ease-in-out infinite; }
+.slot.next { border-color: var(--p); box-shadow: 0 0 0 2px color-mix(in srgb, var(--p) 45%, transparent), 0 0 24px color-mix(in srgb, var(--p) 55%, transparent); animation: slotGlow 1.4s ease-in-out infinite; }
 @keyframes nudge { 50% { transform: scale(1.06); } }
 .slot.filled { border-color: var(--p); }
 .slot.filled:first-child { border-color: var(--gold-1); box-shadow: 0 0 18px rgba(255,201,60,0.5); }
@@ -515,3 +515,5 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .feature > .debate-art { position:absolute; inset:0; opacity:.8; }.feature > .debate-art .da-icon { font-size:100px; position:absolute; right:20px; top:24px; opacity:.65; }.feature > .debate-art .da-rank { width:48px; height:65px; font-size:32px; }.feature > .debate-art .da-one { left:auto; right:130px; top:15px; }.feature > .debate-art .da-ten { right:12px; bottom:12px; }.feature .f-body { position:relative; z-index:2; }
 .new-badge { display:inline-block; margin-left:7px; color:#75ebd7; font-size:9px; letter-spacing:.08em; vertical-align:middle; }.row .r-title { line-height:1.25; }
 .dialog-close { position: absolute; right: 16px; top: 12px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ffffff30; color: white; background: #ffffff0a; font-size: 24px; }.sheet h2 { padding-right: 35px; }
+
+@keyframes slotGlow { 50% { border-color: #fff; box-shadow: 0 0 18px var(--p); } }
