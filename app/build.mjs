@@ -2,8 +2,10 @@
 import * as esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'node:child_process';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
+execFileSync(process.execPath, [path.join(here, 'prepare-catalog.mjs')], { cwd: here, stdio: 'inherit' });
 const out = process.argv[2] || path.join(here, 'dist');
 const entry = process.argv[3] || 'src/main.jsx';
 fs.rmSync(out, { recursive: true, force: true });

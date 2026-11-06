@@ -1,3 +1,4 @@
+import { rankRule, modeLabel } from './rules.js';
 import React, { useEffect, useRef, useState } from 'react';
 import { cleanName, displayName, fitFor } from './catalog.js';
 import { RankCardArt } from './art.jsx';
@@ -16,7 +17,8 @@ const LINES = {
   last: ['Dead last 💀', 'Brutal. #10', 'Rock bottom 🪨', 'Sorry, not sorry'],
   forced: ['No choice now!', 'Last slot standing', 'Had to go somewhere…'],
 };
-function reaction(slot, remaining) {
+function reaction(slot, remaining, item) {
+  if (item.criterion) return slot === 0 ? `${item.criterion}: your #1` : slot === 9 ? 'Your #10. Locked in.' : `Rank ${slot + 1}. Bold call.`;
   if (remaining === 1) return pick(LINES.forced);
   if (slot === 0) return pick(LINES.top);
   if (slot === 9) return pick(LINES.last);
@@ -44,6 +46,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
   const timeouts = useRef([]);
   const later = (fn, ms) => { const t = setTimeout(fn, ms); timeouts.current.push(t); return t; };
   const finishT = useRef(null);
+  const placementLock = useRef(false);
   const title = displayName(item.name);
 
   useEffect(() => () => timeouts.current.forEach(clearTimeout), []);
@@ -51,7 +54,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
   // Share live state with the render engine.
   gameRef.current = {
     phase: phase === 'done' ? 'result' : phase === 'pre' ? 'idle' : phase,
-    slots, queue: deck, activeIndex: active, rolling, count, theme, title, caption: caption && caption.text, fit: fitFor(item),
+    slots, queue: deck, activeIndex: active, rolling, count, theme, title, caption: caption && caption.text, fit: fitFor(item), criterion: item.criterion, mode: settings.mode,
   };
 
   useEffect(() => {
@@ -75,13 +78,14 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
   };
 
   const place = i => {
-    if (phase !== 'playing' || rolling || slots[i] || active >= deck.length) return;
+    if (phase !== 'playing' || placementLock.current || rolling || slots[i] || active >= deck.length) return;
+    placementLock.current = true;
     haptic(35); playSound('thud');
     const n = [...slots]; n[i] = deck[active];
     const remaining = slots.filter(x => !x).length;
     setSlots(n); setFlash(i); later(() => setFlash(null), 600);
     clearTimeout(capT.current);
-    setCaption({ text: reaction(i, remaining), slot: i, k: Date.now() });
+    setCaption({ text: reaction(i, remaining, item), slot: i, k: Date.now() });
     capT.current = later(() => setCaption(null), 1300);
     setLast({ slot: i, idx: active });
     const next = active + 1;
@@ -94,12 +98,13 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
       }, 650);
     } else {
       setRolling(true); later(() => playSound('swoosh'), 150);
-      later(() => { setActive(next); setRolling(false); }, 700);
+      later(() => { setActive(next); setRolling(false); placementLock.current = false; }, 700);
     }
   };
 
   const undo = () => {
-    if (!last || rolling) return;
+    if (settings.mode !== 'casual' || !last || rolling) return;
+    placementLock.current = false;
     if (finishT.current) { clearTimeout(finishT.current); finishT.current = null; }
     haptic([15, 10, 15]); playSound('undo');
     const n = [...slots]; n[last.slot] = null; setSlots(n);
@@ -125,12 +130,13 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
         </div>
       </div>
 
+      <div className="game-rule">{rankRule(item)}<span>{settings.mode === 'casual' ? 'CASUAL' : 'STRICT'}</span></div>
       {phase !== 'pre' && phase !== 'countdown' && (
         <div className="slots">
           {slots.map((s, i) => (
             <button key={i} className={`slot ${s ? 'filled' : ''} ${i === nextEmpty && !rolling && phase === 'playing' ? 'next' : ''} ${flash === i ? 'flash' : ''}`}
-              disabled={!!s || rolling} onClick={() => place(i)} aria-label={`Rank ${i + 1}`}>
-              {s ? <><img src={s.img} alt="" /><span className="tag">{i + 1}</span></> : <span className="num">{i + 1}</span>}{flash === i && <span className="burst" />}
+              disabled={!!s || rolling || phase !== 'playing'} onClick={() => place(i)} aria-label={`Rank ${i + 1}${s ? `: ${s.name}` : ''}`}>
+              {s ? <><img src={s.img} alt="" /><span className="tag">{i + 1}</span><span className="slot-label">{s.name}</span></> : <span className="num">{i + 1}</span>}{flash === i && <span className="burst" />}
             </button>
           ))}
         </div>
@@ -140,7 +146,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
         <div className="fc-frame"><div className="fc-in">
           {cur && !rolling ? <img key={active} src={cur.img} alt="" /> : <span className="q">?</span>}
         </div></div>
-        <div className="fc-name">{rolling || !cur ? 'Shuffling…' : cleanName(cur.name)}</div>
+        <div className="fc-name">{rolling || !cur ? 'Shuffling…' : cleanName(cur.name)}</div>{!rolling && cur?.detail && <div className="fc-detail">{cur.detail}</div>}
       </div>
 
       {caption && phase !== 'pre' && (
@@ -149,7 +155,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
       {phase === 'playing' && (
         <div className="counter"><b>{placed}/10</b><span>PLACED</span></div>
       )}
-      {phase === 'playing' && last && !rolling && (
+      {phase === 'playing' && settings.mode === 'casual' && last && !rolling && (
         <button className="undo glass" onClick={undo}><Ic.Undo size={20} />Undo</button>
       )}
 
@@ -180,7 +186,7 @@ export function GameScreen({ item, theme, deck, settings, engine, audioTrack, ca
 }
 
 /* ======================= Result ======================= */
-export function ResultScreen({ record, theme, video, onHome, onAgain, onShareList, onShareImage, onSaveVideo, onShareVideo, fromHistory }) {
+export function ResultScreen({ record, theme, video, onHome, onAgain, onShareList, onShareImage, onSaveVideo, onShareVideo, fromHistory, onChallenge, onReport }) {
   const picks = record.picks;
   const [one, two, three] = picks;
   const rest = picks.slice(3);
@@ -191,7 +197,7 @@ export function ResultScreen({ record, theme, video, onHome, onAgain, onShareLis
         <div className="pic"><img src={p.img} alt="" /></div>
         <RankCardArt n={n} tone={n === 1 ? 'gold' : n === 2 ? 'silver' : 'bronze'} className="medal" />
       </div>
-      <div className="nm">{p.name}</div>
+      <div className="nm">{p.name}{p.detail && <small>{p.detail}</small>}</div>
     </div>
   );
   return (
@@ -206,7 +212,7 @@ export function ResultScreen({ record, theme, video, onHome, onAgain, onShareLis
           <div className="res-head fade-up">
             <div className="kick">{fromHistory ? new Date(record.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : 'Your top 10'}</div>
             <h1>{displayName(record.title)}</h1>
-            <p>Ranked blind in {fmt(record.timeMs || 0)}</p>
+            <div className="rank-rule">{rankRule(record)}</div><p>{modeLabel(record.mode)} · {fmt(record.timeMs || 0)}</p>
           </div>
           <div className="podium">
             {pod(two, 2, '', '120ms')}
@@ -216,7 +222,7 @@ export function ResultScreen({ record, theme, video, onHome, onAgain, onShareLis
           <div className="list">
             {rest.map((p, i) => (
               <div key={i} className="li" style={{ animationDelay: `${300 + i * 50}ms` }}>
-                <span className="n">{i + 4}</span><img src={p.img} alt="" /><span className="t">{p.name}</span>
+                <span className="n">{i + 4}</span><img src={p.img} alt="" /><span className="t">{p.name}{p.detail && <small>{p.detail}</small>}</span>
               </div>
             ))}
           </div>
@@ -239,10 +245,12 @@ export function ResultScreen({ record, theme, video, onHome, onAgain, onShareLis
 
           <div className="res-actions fade-up">
             {onAgain && <button className="cta theme" onClick={onAgain}><Ic.Repeat size={22} />Play again</button>}
+            {onChallenge && <button className="cta friend" onClick={onChallenge}>↗ Challenge a mate</button>}
             <div className="duo">
               <button className="btn-outline" onClick={onShareImage}><Ic.Share size={20} />Share image</button>
               <button className="btn-outline" onClick={onShareList}><Ic.List size={20} />Share text</button>
             </div>
+            {onReport && <button className="text-btn" onClick={onReport}>Report a wrong picture or pick</button>}
             <button className="btn-outline" onClick={onHome}><Ic.Home size={20} />Home</button>
           </div>
           <div style={{ height: 'calc(var(--sab) + 30px)' }} />

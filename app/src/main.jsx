@@ -1,3 +1,6 @@
+import { SavedChallenges, ChallengeImport, ReportPick } from './features.jsx';
+import { encodeChallenge } from './challenge.js';
+import { rankRule, modeLabel } from './rules.js';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
@@ -16,6 +19,11 @@ import * as Ic from './icons.jsx';
 function App() {
   const [settings, setSettings] = useState(() => ({ ...DEFAULT_SETTINGS, mic: true, tracking: true, ...load('settings', {}) }));
   const [onboarded, setOnboarded] = useState(() => load('onboarded', false));
+  const [favourites, setFavourites] = useState(() => load('favourites', []));
+  const [recent, setRecent] = useState(() => load('recent', []));
+  const [joining, setJoining] = useState(false);
+  const [reporting, setReporting] = useState(null);
+  const toggleFavourite = id => setFavourites(prev => { const next = prev.includes(id) ? prev.filter(x => x !== id) : [id, ...prev]; save('favourites', next); return next; });
   const [tab, setTab] = useState('home');
   const [stack, setStack] = useState([]); // overlays: category / ready / game / result
   const [sheet, setSheet] = useState(false);
@@ -126,7 +134,8 @@ function App() {
   const openReady = (item, domain) => {
     tap(); deckRef.current = null;
     const info = leafInfo(item);
-    setStack(s => [...s.filter(x => x.name === 'category'), { name: 'ready', item, domain: domain || info.domain, group: info.group }]);
+    if (item.type !== 'challenge') setRecent(prev => { const next = [item.id, ...prev.filter(id => id !== item.id)].slice(0, 20); save('recent', next); return next; });
+    setStack(s => [...s.filter(x => x.name === 'category'), { name: 'ready', item, domain: domain || info.domain || 'sports', group: info.group }]);
   };
   const quick = () => { const r = randomChallenge(null, settings.region); openReady(r.item, r.domain); };
 
@@ -134,7 +143,7 @@ function App() {
     if (!deckRef.current) return;
     initAudio(); playSound('pop');
     setVideo({ status: 'off' });
-    push({ name: 'game', item: top.item, domain: top.domain, group: top.group, deck: deckRef.current });
+    push({ name: 'game', item: top.item, domain: top.domain, group: top.group, deck: deckRef.current, mode: top.item.mode || settings.mode || 'strict' });
   };
 
   const finishGame = ({ slots, timeMs, recording }) => {
@@ -142,8 +151,10 @@ function App() {
     markSeen(g.item, slots);
     const record = {
       id: Date.now().toString(36), title: g.item.name, itemId: g.item.id, domain: g.domain,
+      criterion: g.item.criterion || 'your favourite', mode: g.mode, direction: g.item.direction,
+      challengeCode: encodeChallenge(g.item, g.deck, g.mode),
       themeKey: g.item.themeOverride || g.domain, date: Date.now(), timeMs, fit: fitFor(g.item),
-      picks: slots.map(s => ({ name: cleanName(s.name), img: s.img })),
+      picks: slots.map(s => ({ id: s.id, name: cleanName(s.name), detail: s.detail || '', img: s.img })),
     };
     setHistory(h => { const n = [record, ...h].slice(0, 60); save('history', n); return n; });
     setStack(s => [...s.slice(0, -1).filter(x => x.name !== 'ready'), { name: 'result', record, item: g.item, domain: g.domain, group: g.group }]);
@@ -159,6 +170,8 @@ function App() {
   };
 
   const back = () => {
+    if (joining) { setJoining(false); return true; }
+    if (reporting) { setReporting(null); return true; }
     if (sheet) { setSheet(false); return true; }
     if (!top) { if (tab !== 'home') { setTab('home'); return true; } return false; }
     if (top.name === 'game') { engineRef.current.cancelRecording(); gameRef.current = { phase: 'idle', slots: [], queue: [] }; }
@@ -167,8 +180,12 @@ function App() {
   useEffect(() => { window.__onAndroidBack = () => back(); });
 
   const shareList = rec => {
-    const text = `🏆 My Blind Rank: ${displayName(rec.title)}\n\n${rec.picks.map((p, i) => `${['🥇', '🥈', '🥉'][i] || `${i + 1}.`} ${p.name}`).join('\n')}\n\nRanked blind in ${(rec.timeMs / 1000).toFixed(1)}s — can you beat my list?`;
+    const text = `🏆 My Blind Rank: ${displayName(rec.title)}\n${rankRule(rec)} · ${modeLabel(rec.mode)}\n\n${rec.picks.map((p, i) => `${['🥇', '🥈', '🥉'][i] || `${i + 1}.`} ${p.name}${p.detail ? ` — ${p.detail}` : ''}`).join('\n')}\n\nRanked blind in ${(rec.timeMs / 1000).toFixed(1)}s — can you beat my list?`;
     shareText('My Blind Rank', text).then(r => r === 'copied' && say('Ranking copied to clipboard'));
+  };
+  const shareChallenge = async rec => {
+    const result = await shareText('Blind Rank: challenge a mate', `Rank these same ten picks: ${rec.title}\n${rankRule(rec)} · ${modeLabel(rec.mode)}\nOpen Blind Rank → Challenge a mate → paste this code:\n\n${rec.challengeCode}`);
+    if (result === 'copied') say('Challenge copied — paste it to your mate');
   };
   const shareImage = async (rec, theme) => { say('Making your image…'); const r = await shareRankImage(rec, theme); if (r === 'downloaded') say('Image downloaded'); else if (r === 'failed') say('Couldn’t share the image'); };
   const onSaveVideo = async () => {
@@ -210,7 +227,7 @@ function App() {
           <div className="ambient"><i className="a1" /><i className="a2" /></div>
           <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', minHeight: 0 }} key={tab}>
             {tab === 'home' && <HomeTab camOn={camState === 'on'} onSettings={() => { tap(); setSheet(true); }} onPlay={openReady} onDomain={openDomain} onQuick={quick}
-              region={settings.region} onRegion={r => { tap(); setSetting('region', r); }} onRegionHub={() => { tap(); setDiscoverFilter(settings.region); setTab('discover'); }} />}
+              saved={<SavedChallenges all={ALL_CHALLENGES} favourites={favourites} recent={recent} onPlay={openReady} />} onJoin={() => setJoining(true)} region={settings.region} onRegion={r => { tap(); setSetting('region', r); }} onRegionHub={() => { tap(); setDiscoverFilter(settings.region); setTab('discover'); }} />}
             {tab === 'discover' && <DiscoverTab onPlay={openReady} initialFilter={discoverFilter} />}
             {tab === 'rankings' && <RankingsTab history={history} onBrowse={() => setTab('discover')} onOpen={rec => { tap(); push({ name: 'history', record: rec }); }} />}
           </div>
@@ -228,32 +245,34 @@ function App() {
         if (v.name === 'category') return <div key={i} style={{ display: isTop ? 'contents' : 'none' }}><CategoryScreen domain={v.domain} onBack={() => { tap(); pop(); }} onPlay={openReady} /></div>;
         if (hidden) return null;
         if (v.name === 'ready') return (
-          <ReadyScreen key={i + v.item.id} item={v.item} domain={v.domain} group={v.group} deckRef={deckRef}
+          <ReadyScreen key={i + v.item.id} item={v.item} domain={v.domain} group={v.group} deckRef={deckRef} mode={v.item.mode || settings.mode || 'strict'} onMode={m => setSetting('mode', m)} favourite={favourites.includes(v.item.id)} onFavourite={() => toggleFavourite(v.item.id)}
             camOn={camState === 'on'} camState={camState} camError={camError} stream={streamRef.current} faceStatus={faceStatus} micOn={settings.mic}
             onToggleCam={toggleCamera} onRetryCam={() => requestCamera()}
             onToggleMic={() => { tap(); setSetting('mic', !settings.mic); }}
             onBack={() => { tap(); pop(); }} onStart={startGame} onOptions={() => { tap(); setSheet(true); }} />
         );
         if (v.name === 'game') return (
-          <GameScreen key={i} item={v.item} theme={itemTheme(v.item, v.domain)} deck={v.deck} settings={settings}
+          <GameScreen key={i} item={v.item} theme={itemTheme(v.item, v.domain)} deck={v.deck} settings={{ ...settings, mode: v.mode }}
             engine={engineRef.current} audioTrack={streamRef.current?.getAudioTracks()[0]} camOn={camState === 'on'}
             faceStatus={faceStatus} gameRef={gameRef} cardRef={cardRef} onExit={pop} onDone={finishGame} />
         );
         if (v.name === 'result') return (
           <ResultScreen key={i} record={v.record} theme={itemTheme(v.item, v.domain)} video={video}
             onHome={() => { tap(); goHome(); }} onAgain={() => openReady(v.item, v.domain)} onShareList={() => shareList(v.record)} onShareImage={() => shareImage(v.record, itemTheme(v.item, v.domain))}
-            onSaveVideo={onSaveVideo} onShareVideo={onShareVideo} />
+            onSaveVideo={onSaveVideo} onShareVideo={onShareVideo} onChallenge={() => shareChallenge(v.record)} onReport={() => setReporting(v.record)} />
         );
         if (v.name === 'history') {
           const leaf = ALL_CHALLENGES.find(l => l.item.id === v.record.itemId && l.domain === v.record.domain);
           return (
-            <ResultScreen key={i} fromHistory record={v.record} theme={themeFor(v.record.themeKey)} video={null}
+            <ResultScreen key={i} fromHistory onChallenge={v.record.challengeCode ? () => shareChallenge(v.record) : null} onReport={() => setReporting(v.record)} record={v.record} theme={themeFor(v.record.themeKey)} video={null}
               onHome={() => { tap(); pop(); }} onAgain={leaf ? () => openReady(leaf.item, leaf.domain) : null} onShareList={() => shareList(v.record)} onShareImage={() => shareImage(v.record, themeFor(v.record.themeKey))} />
           );
         }
         return null;
       })}
 
+      {joining && <ChallengeImport onClose={() => setJoining(false)} onPlay={item => { setJoining(false); openReady(item, 'sports'); }} />}
+      {reporting && <ReportPick record={reporting} onClose={() => setReporting(null)} />}
       {sheet && (
         <SettingsSheet settings={settings} setSetting={(k, v) => { tap(); setSetting(k, v); }} camState={camState}
           camWanted={camWanted} onEnableCam={() => { tap(); if (camWanted) stopCamera(); else { setCamWanted(true); save('camWanted', true); if (inChallenge) requestCamera(); else say('Camera will switch on when you start a challenge'); } }}

@@ -1,3 +1,4 @@
+import { catalogueCompatible } from './rules.js';
 import { MENU_DATA, THEME } from './data.js';
 
 export const BRAND = { primary: '#FFB547', secondary: '#FF3D7F', tertiary: '#7B5CFF' };
@@ -53,11 +54,14 @@ function rebuildIndex() {
   }
 }
 rebuildIndex();
+const requiredIds = leaves.map(l => l.item.id);
 
 /** Swap in a pre-built catalog (all images resolved, fresh categories included). */
 export let catalogInfo = { source: 'built-in', generatedAt: null };
 export function applyCatalog(cat, source) {
-  if (!cat || !cat.menu || !Array.isArray(cat.menu.domain)) return false;
+  if (!catalogueCompatible(cat)) return false;
+  const incomingIds = new Set(Object.values(cat.menu).flat().map(x => x.id));
+  if (requiredIds.some(id => !incomingIds.has(id))) return false;
   for (const k of Object.keys(MENU_DATA)) delete MENU_DATA[k];
   Object.assign(MENU_DATA, cat.menu);
   rebuildIndex();
@@ -105,6 +109,7 @@ export function hexA(hex, a) {
 }
 
 export function sourceLabel(item) {
+  if (item.type === 'curated') return `${item.picks.length} curated picks${item.picture === 'none' ? ' · name cards' : ''}`;
   if (item.type === 'pool') {
     if (item.fresh) return `Updated daily · ${item.pool.length} picks`;
     const n = item.pool.length;
@@ -120,11 +125,12 @@ export function sourceLabel(item) {
 }
 
 export function searchText(item) {
-  const names = item.pool ? item.pool.map(p => p[0]) : item.items ? item.items : item.queries ? item.queries.map(q => q.n) : [];
+  const names = item.picks ? item.picks.map(p => p.name + ' ' + (p.detail || '')) : item.pool ? item.pool.map(p => p[0]) : item.items ? item.items : item.queries ? item.queries.map(q => q.n) : [];
   return [item.name, ...names.slice(0, 60)].join(' ').toLowerCase();
 }
 
 export function poolSize(item) {
+  if (item.picks) return item.picks.length;
   if (item.pool) return item.pool.length;
   return item.type === 'custom' ? item.queries.length : item.type === 'wiki' ? item.items.length : null;
 }

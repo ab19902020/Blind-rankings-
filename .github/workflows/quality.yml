@@ -1,0 +1,36 @@
+name: Game quality
+on:
+  push:
+    branches: [app-v2, 'codex/**', 'ccr-**']
+    paths: ['app/**', '.github/workflows/quality.yml']
+  pull_request:
+    paths: ['app/**', '.github/workflows/quality.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - working-directory: app
+        run: npm ci --no-audit --no-fund
+      - working-directory: app
+        run: npm test && npm run build
+      - working-directory: app
+        run: npx playwright install --with-deps chromium
+      - working-directory: app
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-test-evidence
+          path: |
+            app/test-results
+            app/playwright-report

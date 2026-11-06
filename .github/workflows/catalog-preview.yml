@@ -5,7 +5,7 @@ name: Catalog preview
 on:
   push:
     branches: ['ccr-**']
-    paths: ['app/src/data.js', 'app/src/data-more.js', 'app/build-catalog.mjs', '.github/workflows/catalog-preview.yml']
+    paths: ['app/src/data.js', 'app/src/data-more.js', 'app/src/data-expansion.js', 'app/src/rules.js', 'app/build-catalog.mjs', '.github/workflows/catalog-preview.yml']
   workflow_dispatch:
 
 concurrency:

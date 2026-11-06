@@ -1,3 +1,4 @@
+import { rankRule, modeLabel } from './rules.js';
 // Renders a 1080x1920 "My Top 10" card and shares it.
 import { preload } from './api.js';
 import { displayName, inkOn, safeSecondary } from './catalog.js';
@@ -25,7 +26,7 @@ export async function renderRankImage(record, theme) {
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
   c.fillStyle = '#fff'; c.font = `900 54px ${FONT}`; c.fillText('BLIND RANK', W / 2, 120);
   c.fillStyle = '#FFB300'; c.font = `900 26px ${FONT}`; c.fillText('P R O   U L T R A', W / 2, 162);
-  c.fillStyle = prim; c.font = `900 30px ${FONT}`; c.fillText('M Y   T O P   1 0', W / 2, 250);
+  c.fillStyle = prim; c.font = `900 30px ${FONT}`; c.fillText(rankRule(record).toUpperCase(), W / 2, 250, W - 100);
   c.fillStyle = '#fff'; c.font = `900 72px ${FONT}`; c.fillText(displayName(record.title), W / 2, 330, W - 120);
 
   // #1 hero card
@@ -36,7 +37,8 @@ export async function renderRankImage(record, theme) {
   rr(c, cx, cy, cw, ch, 34); c.lineWidth = 8; g = c.createLinearGradient(cx, cy, cx + cw, cy + ch); g.addColorStop(0, '#FFE58A'); g.addColorStop(1, '#F59E0B'); c.strokeStyle = g; c.stroke();
   rr(c, cx - 22, cy - 22, 96, 96, 26); c.fillStyle = g; c.fill();
   c.fillStyle = '#3A2000'; c.font = `900 italic 64px ${FONT}`; c.textAlign = 'center'; c.fillText('1', cx + 26, cy + 52);
-  c.fillStyle = '#fff'; c.font = `900 46px ${FONT}`; c.fillText(record.picks[0]?.name || '', W / 2, cy + ch - 34, cw - 40);
+  c.fillStyle = '#fff'; c.font = `900 46px ${FONT}`; c.fillText(record.picks[0]?.name || '', W / 2, cy + ch - 55, cw - 40);
+  c.font = `700 22px ${FONT}`; c.fillText(record.picks[0]?.detail || '', W / 2, cy + ch - 22, cw - 30);
 
   // 2-10
   const top = 960, rowH = 96;
@@ -46,11 +48,12 @@ export async function renderRankImage(record, theme) {
     c.lineWidth = 2; c.strokeStyle = 'rgba(255,255,255,0.10)'; c.stroke();
     c.textAlign = 'center'; c.fillStyle = i < 3 ? ['#FFD45C', '#D7DAE5', '#E7B48F'][i] : prim; c.font = `900 italic 44px ${FONT}`; c.fillText(String(i + 1), 128, y + 58);
     c.save(); rr(c, 180, y + 7, 68, 68, 14); c.clip(); if (imgs[i]) cover(c, imgs[i], 180, y + 7, 68, 68, record.fit); c.restore();
-    c.textAlign = 'left'; c.fillStyle = '#fff'; c.font = `800 38px ${FONT}`; c.fillText(p.name, 276, y + 54, W - 380);
+    c.textAlign = 'left'; c.fillStyle = '#fff'; c.font = `800 38px ${FONT}`; c.fillText(p.name, 276, y + (p.detail ? 36 : 54), W - 380);
+    if (p.detail) { c.font = `600 22px ${FONT}`; c.fillStyle = '#aabdd0'; c.fillText(p.detail, 276, y + 65, W - 380); }
   });
 
   c.textAlign = 'center'; c.fillStyle = 'rgba(255,255,255,0.6)'; c.font = `700 30px ${FONT}`;
-  c.fillText(`Ranked blind in ${((record.timeMs || 0) / 1000).toFixed(1)}s · can you beat my list?`, W / 2, H - 60);
+  c.fillText(`${modeLabel(record.mode)} · ${((record.timeMs || 0) / 1000).toFixed(1)}s`, W / 2, H - 60);
   return cv;
 }
 

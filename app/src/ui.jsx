@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { cachedThumb, thumbFor } from './api.js';
+import { cachedThumb, thumbFor, preload } from './api.js';
 import { displayName, sourceLabel, themeFor, inkOn, safeSecondary, domainForItem, ALL_CHALLENGES } from './catalog.js';
 import { DomainArt, HEADER_ART } from './art.jsx';
 import * as Ic from './icons.jsx';
@@ -15,13 +15,12 @@ export function itemTheme(item, domain) { return themeFor(item.themeOverride || 
 /* Lazily fetch a real image for a challenge once it scrolls into view. */
 export function useThumb(item) {
   const ref = useRef(null);
-  const [url, setUrl] = useState(() => cachedThumb(item));
+  const [url, setUrl] = useState(null);
   useEffect(() => {
-    setUrl(cachedThumb(item));
-    if (cachedThumb(item)) return;
+    setUrl(null);
     let alive = true;
     const el = ref.current;
-    const go = () => thumbFor(item).then(u => { if (alive && u) setUrl(u); });
+    const go = async () => { const u = cachedThumb(item) || await thumbFor(item); if (u && await preload(u) && alive) setUrl(u); };
     if (!el || !('IntersectionObserver' in window)) { go(); return () => { alive = false; }; }
     const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); go(); } }, { rootMargin: '200px' });
     io.observe(el);
@@ -37,6 +36,10 @@ function FadeImg({ src, className = '' }) {
   return <img src={src} alt="" className={`${className} ${loaded ? 'in' : ''}`} onLoad={() => setLoaded(true)} draggable="false" />;
 }
 
+function DebateArt({ item }) {
+  return <div className="debate-art" aria-hidden="true"><span className="da-rank da-one">1</span><span className="da-icon">{item.icon || '🏆'}</span><span className="da-rank da-ten">10</span></div>;
+}
+
 export function ChallengeRow({ item, group, domain, onClick, style, showDomain }) {
   const [ref, url] = useThumb(item);
   const t = itemTheme(item, domain);
@@ -44,11 +47,11 @@ export function ChallengeRow({ item, group, domain, onClick, style, showDomain }
   return (
     <button ref={ref} className="row fade-up" style={{ ...themeVars(t), ...style }} onClick={onClick}>
       <div className="r-media">
-        {!url && <div className="r-emoji">{item.icon}</div>}
+        {!url && (item.type === 'curated' ? <DebateArt item={item} /> : <div className="r-emoji">{item.icon}</div>)}
         <FadeImg src={url} />
       </div>
       <div className="r-body">
-        <div className="r-title">{displayName(item.name)}</div>
+        <div className="r-title">{displayName(item.name)}{item.id.startsWith('deb_') && <span className="new-badge">NEW</span>}</div>
         <div className="r-sub">{sub}</div>
       </div>
       <div className="r-go"><Ic.Chevron size={22} /></div>
@@ -61,7 +64,7 @@ export function NavRow({ item, onClick, count, style }) {
     <button className="row nav fade-up" style={style} onClick={onClick}>
       <div className="r-media"><span style={{ fontSize: 34 }}>{item.icon}</span></div>
       <div className="r-body">
-        <div className="r-title">{displayName(item.name)}</div>
+        <div className="r-title">{displayName(item.name)}{item.id.startsWith('deb_') && <span className="new-badge">NEW</span>}</div>
         <div className="r-sub">{count} challenges</div>
       </div>
       <div className="r-go"><Ic.Chevron size={22} /></div>
@@ -78,7 +81,7 @@ export function FeatureBanner({ item, domain, onClick, kicker = 'Featured' }) {
   const Art = HEADER_ART[domain];
   return (
     <button ref={ref} className="feature fade-up" style={themeVars(t)} onClick={onClick}>
-      {Art && !url && <Art className="f-art" />}
+      {!url && (item.type === 'curated' ? <DebateArt item={item} /> : Art ? <Art className="f-art" /> : null)}
       <FadeImg src={url} className="f-img" />
       <div className="f-body">
         <div className="f-kick">{kicker}</div>
@@ -93,10 +96,26 @@ export function FeatureBanner({ item, domain, onClick, kicker = 'Featured' }) {
 export function Switch({ on }) { return <span className={`switch ${on ? 'on' : ''}`} />; }
 
 export function Sheet({ onClose, children }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const prior = document.activeElement;
+    const focusable = () => [...(ref.current?.querySelectorAll('button:not(:disabled),input,textarea,select,[tabindex="0"]') || [])];
+    focusable()[0]?.focus();
+    const key = e => {
+      if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+      if (e.key === 'Tab') {
+        const list = focusable(), first = list[0], last = list.at(-1);
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+    document.addEventListener('keydown', key);
+    return () => { document.removeEventListener('keydown', key); prior?.focus(); };
+  }, []);
   return (
     <>
       <div className="sheet-back" onClick={onClose} />
-      <div className="sheet" role="dialog"><div className="grab" />{children}</div>
+      <div ref={ref} className="sheet" role="dialog" aria-modal="true"><div className="grab" /><button className="dialog-close" onClick={onClose} aria-label="Close dialog">×</button>{children}</div>
     </>
   );
 }

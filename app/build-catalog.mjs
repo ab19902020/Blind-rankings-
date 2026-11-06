@@ -1,6 +1,6 @@
 // Catalog builder — runs in GitHub Actions (nightly + on every data change).
 // Resolves a picture for every pick in every category, generates fresh "right now"
-// categories from free APIs, drops anything with fewer than 10 verified picks,
+// categories from free APIs, preserves editorial names when images are missing,
 // and writes catalog.json (served to the app via CDN + bundled in the APK).
 //
 // Accuracy rules (why a pick gets a picture):
@@ -20,6 +20,7 @@
 //   PokéAPI · Riot Data Dragon · valorant-api · akabab Superhero API · HP-API · ThronesAPI · Jolpica F1
 import fs from 'fs';
 import { MENU_DATA } from './src/data.js';
+import { CATALOG_VERSION, CONTENT_REVISION, validateMenu, identity } from './src/rules.js';
 
 const TMDB_KEY = process.env.TMDB_KEY || '3ea9e43d0b879725ac8fda707021e858';
 const UA = 'BlindRankCatalog/2.0 (https://github.com/ab19902020/Blind-rankings-; catalog bot)';
@@ -27,7 +28,7 @@ const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 const OUT = process.argv[2] || 'catalog.json';
 const NOW = new Date();
 const Y = NOW.getFullYear();
-export const CATALOG_VERSION = 4;
+export { CATALOG_VERSION };
 
 /* ---------------- polite fetch ---------------- */
 const lastHit = {};
@@ -185,8 +186,8 @@ async function wikiSearchStrict(title, name) {
   if (pageCache.has(key)) return pageCache.get(key);
   const d = await get(`${WIKI}&action=query&generator=search&gsrsearch=${encodeURIComponent(title.replace(/[()]/g, ' '))}&gsrlimit=5&${PAGE_PROPS}`);
   const pages = (d?.query?.pages || []).sort((a, b) => (a.index || 0) - (b.index || 0));
-  const want = [norm(stripParen(title)), norm(name)];
-  const p = pages.find(p => !(p.pageprops && 'disambiguation' in p.pageprops) && want.includes(norm(stripParen(p.title))));
+  const want = title.includes('(') ? [norm(title)] : [norm(title), norm(name)];
+  const p = pages.find(p => !(p.pageprops && 'disambiguation' in p.pageprops) && want.includes(norm(p.title)));
   const res = p ? pageInfo(p) : null;
   pageCache.set(key, res);
   return res;
@@ -559,8 +560,12 @@ function addGrown(id, list) { growSamples[id] = list.slice(0, 120); }
 
 async function resolveCurated(it) {
   const kind = it.img || 'any';
-  const grows = arr(it.grow);
+  const grows = []; // Membership is editorial; never top up by occupation.
   const target = it.target || TARGET;
+  if (it.type === 'curated') {
+    const images = it.picture === 'none' ? [] : await resolveWikiPicks(it.picks.map(p => ({ title: p.title, name: p.name, src: [] })), it.img || 'any');
+    return { picks: it.picks.map((p, i) => ({ ...p, img: images[i]?.img || '' })), pool: [], missing: it.picks.filter((p, i) => !images[i]?.img).map(p => p.name) };
+  }
   if (it.type === 'wiki') {
     const parsed = it.items.map(parseWiki);
     // top up from Wikidata
@@ -784,7 +789,7 @@ function generators() {
     }),
   ];
   const f1 = [
-    fresh('fs_f1grid', `F1 ${Y} Grid`, '🏁', async () => {
+    fresh('fs_f1grid', `F1 ${Y} Driver Pool`, '🏁', async () => {
       const d = await get('https://api.jolpi.ca/ergast/f1/current/drivers.json');
       const drivers = d?.MRData?.DriverTable?.Drivers || [];
       const parsed = drivers.map(x => ({ title: decodeURIComponent((x.url || '').split('/wiki/')[1] || `${x.givenName} ${x.familyName}`).replace(/_/g, ' '), name: `${x.givenName} ${x.familyName}` }));
@@ -807,10 +812,18 @@ function generators() {
 /* ---------------- build ---------------- */
 const report = [];
 function finishLeaf(base, res, extra = {}) {
+  if (base.type === 'curated') {
+    const leaf = { ...base, picks: res.picks || base.picks };
+    report.push({ id: base.id, name: base.name, found: leaf.picks.length, missing: res.missing || [], dups: [], srcs: {}, ok: leaf.picks.length >= 10, nameCards: leaf.picks.filter(p => !p.img).length });
+    return leaf.picks.length >= 10 ? leaf : null;
+  }
   const seen = new Map(); const dups = [];
-  const pool = [];
+  const pool = [], names = new Set();
   for (const p of res.pool || []) {
     if (!p[0] || !p[1]) continue;
+    const nk = identity(p[0]);
+    if (names.has(nk)) { dups.push(`${p[0]} (duplicate identity)`); continue; }
+    names.add(nk);
     const k = imgKey(p[1]);
     if (seen.has(k)) { dups.push(`${p[0]} (same picture as ${seen.get(k)})`); continue; }
     seen.set(k, p[0]); pool.push(p);
@@ -820,6 +833,7 @@ function finishLeaf(base, res, extra = {}) {
   report.push({ id: base.id, name: base.name, found: pool.length, missing, dups, srcs: srcCount, picks: res.srcs || null, grown: growSamples[base.id] || null, ok: pool.length >= 10 });
   if (pool.length < 10) return null;
   const leaf = { type: 'pool', id: base.id, name: base.name, icon: base.icon, kind: extra.kind || base.kind || base.type, pool: pool.slice(0, 120).map(([n, u]) => [n, shortImg(u)]) };
+  for (const key of ['criterion', 'direction', 'subtitle', 'eligibility', 'revision']) if (base[key]) leaf[key] = base[key];
   if (res.thumb) leaf.thumb = res.thumb;
   if (base.themeOverride) leaf.themeOverride = base.themeOverride;
   if (base.region) leaf.region = base.region;
@@ -838,7 +852,7 @@ async function main() {
   await mapLimit(curated, 3, async ([mid, i, it]) => {
     let res;
     try { res = await resolveCurated(it); } catch (e) { res = { pool: [], missing: [String(e)] }; }
-    menu[mid][i] = finishLeaf(it, res);
+    menu[mid][i] = finishLeaf(it, res) || it; // Keep exact editorial names available when image services fail.
     if (++done % 25 === 0) console.log(`curated ${done}/${curated.length}  (${Math.round((Date.now() - t0) / 1000)}s)`);
   });
   for (const k of Object.keys(menu)) menu[k] = menu[k].filter(Boolean);
@@ -873,7 +887,9 @@ async function main() {
   const emptyNav = id => !(menu[id] && menu[id].length);
   for (const k of Object.keys(menu)) menu[k] = menu[k].filter(x => x.type !== 'nav' || !emptyNav(x.id));
 
-  const out = { version: CATALOG_VERSION, generatedAt: NOW.toISOString(), menu };
+  const errors = validateMenu(menu);
+  if (errors.length) throw new Error(errors.join('\n'));
+  const out = { version: CATALOG_VERSION, contentRevision: CONTENT_REVISION, generatedAt: NOW.toISOString(), menu };
   fs.writeFileSync(OUT, JSON.stringify(out));
   const bad = report.filter(r => !r.ok);
   const totalPicks = report.reduce((n, r) => n + r.found, 0);
