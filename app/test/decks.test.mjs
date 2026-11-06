@@ -22,3 +22,15 @@ test('friend challenge keeps its exact order even when every picture fails',asyn
   const picks=Array.from({length:10},(_,i)=>({id:String(i),name:'Pick '+i,detail:'Club '+i,img:'https://image.tmdb.org/missing'}));
   const d=await loadDeck({type:'challenge',id:'friend',picks}); assert.deepEqual(d.map(p=>p.name),picks.map(p=>p.name));
 });
+
+test('bundled curated photo codes expand before display and sharing',async()=>{
+  const Original=globalThis.Image;
+  globalThis.Image=class {naturalWidth=600;set src(v){this.value=v;queueMicrotask(()=>v.startsWith('https://upload.wikimedia.org/')?this.onload?.():this.onerror?.());}get src(){return this.value;}};
+  try {
+    const picks=Array.from({length:10},(_,i)=>({id:'seed'+i,name:'Player '+i,title:'Player '+i,img:'w:commons/photo'+i+'.jpg'}));
+    const item={type:'curated',id:'seeded-photos',picks};
+    const deck=await loadDeck(item);
+    assert.ok(deck.every(p=>p.img.startsWith('https://upload.wikimedia.org/wikipedia/')&&!p.nameCard));
+    const {cachedThumb}=await import('../src/api.js');assert.equal(cachedThumb(item),'https://upload.wikimedia.org/wikipedia/commons/photo0.jpg');
+  } finally {globalThis.Image=Original;}
+});

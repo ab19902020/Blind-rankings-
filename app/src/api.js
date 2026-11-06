@@ -88,7 +88,7 @@ async function poolFor(item, need = 999) {
     const picks = orderPool(item, uniquePicks(item.picks)).slice(0, 14);
     const need = picks.filter(p => !p.img);
     const imgs = item.picture === 'none' ? {} : await bounded(wikiResolve(need.map(p => p.title), wikiCache, item.img), {});
-    return picks.map(p => ({ ...p, img: p.img || imgs[p.title] || '', nameCard: item.picture === 'none' }));
+    return picks.map(p => ({ ...p, img: expandImg(p.img || imgs[p.title]) || '', nameCard: item.picture === 'none' }));
   }
   if (item.type === 'albums') {
     const picks = orderPool(item, item.items.map(s => { const [name, artist] = s.split('|'); return { id: s, name, detail: artist || '', title: `${name} (${artist} album)` }; })).slice(0, 14);
@@ -138,7 +138,7 @@ const slot = () => new Promise(r => { if (active < 4) { active++; r(); } else wa
 const release = () => { active--; const n = waiting.shift(); if (n) { active++; n(); } };
 
 export function cachedThumb(item) {
-  if (item.type === 'curated' || item.type === 'challenge') return item.picks.find(p => p.img)?.img || null;
+  if (item.type === 'curated' || item.type === 'challenge') return expandImg(item.picks.find(p => p.img)?.img) || null;
   if (item.type === 'pool') return expandImg(item.thumb || item.pool[0]?.[1], 'w780');
   return thumbCache[itemKey(item)] || null;
 }
