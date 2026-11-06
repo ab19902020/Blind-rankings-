@@ -4,3 +4,8 @@ public
 catalog*.json
 catalog-report.*
 validation-report.*
+
+.game-bundle.mjs
+
+playwright-report
+test-results

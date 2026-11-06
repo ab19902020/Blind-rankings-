@@ -1,3 +1,4 @@
+import { rankRule, modeLabel } from './rules.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MENU_DATA, ALL_CHALLENGES, countChallenges, displayName, themeFor, dailyChallenge, DOMAIN_META, safeSecondary, featuredToday, sourceLabel, searchText, catalogInfo, REGIONS, regionPicks, regionLeaves } from './catalog.js';
 import { loadDeck, cachedThumb } from './api.js';
@@ -11,7 +12,7 @@ export function Onboarding({ onCamera, onSkip }) {
   const [i, setI] = useState(0);
   const slides = [
     { h: 'Trust your first instinct.', p: 'Ten picks appear one at a time. Lock each one into a rank from 1 to 10.', art: <HeroCards /> },
-    { h: 'No going back.', p: 'Once a pick is placed, it stays. You never know who’s coming next — that’s the fun.', art: <LockArt /> },
+    { h: 'Make your call.', p: 'Strict mode locks every pick. Casual mode lets you undo your last choice. Future picks stay hidden.', art: <LockArt /> },
     { h: 'Film your reaction.', p: 'Each pick floats above your head while we record a clip ready for TikTok, Reels or Shorts. It never leaves your phone unless you share it.', art: <CreatorArt style={{ width: '64%', maxWidth: 260 }} /> },
   ];
   const last = i === slides.length - 1;
@@ -73,7 +74,7 @@ export function Wordmark() {
 }
 
 /* ======================= Home ======================= */
-export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick, region, onRegion, onRegionHub }) {
+export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick, region, onRegion, onRegionHub, saved, onJoin }) {
   const daily = useMemo(() => dailyChallenge(new Date(), region), [region]);
   const featured = useMemo(() => featuredToday(8, new Date(), region).filter(l => l.item !== daily.item), [region]);
   const local = useMemo(() => regionPicks(region, 10), [region]);
@@ -91,8 +92,8 @@ export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick, region, 
 
         <div className="hero">
           <div className="fade-up" style={{ animationDelay: '60ms', position: 'relative', zIndex: 5 }}>
-            <h1>Trust your first instinct.</h1>
-            <p>10 picks. No going back.</p>
+            <div className="kicker">YOUR PICKS. YOUR CALL.</div><h1>Where do<br />you rank them?</h1>
+            <p>Ten surprises. One unforgettable top 10.</p>
           </div>
           <div className="fade-up" style={{ animationDelay: '120ms' }}><HeroCards small /></div>
         </div>
@@ -101,6 +102,8 @@ export function HomeTab({ camOn, onSettings, onPlay, onDomain, onQuick, region, 
           <button className="cta" onClick={onQuick}><Ic.Play size={22} /> Let’s rank</button>
         </div>
 
+        <button className="friend-banner" onClick={onJoin}><span className="friend-icon">↗</span><span><b>Challenge a mate</b><small>Same ten picks. Settle the debate.</small></span><Ic.Chevron size={24} /></button>
+        {saved}
         <div className="section-label">Featured today</div>
         <div className="carousel">
           {featured.map((l, i) => <FeatureCard key={l.item.id} leaf={l} delay={i * 50} onClick={() => onPlay(l.item, l.domain)} />)}
@@ -278,12 +281,12 @@ export function CategoryScreen({ domain, onBack, onPlay }) {
       <Ambient />
       <div className="scroll" style={{ position: 'relative', zIndex: 1 }}>
         <div className="pad top-safe wrap">
-          <div className="cat-head">
+          <div className={`cat-head ${domain === 'sports' ? 'sports-broadcast' : ''}`}>
             <button className="icon-btn ghost back" onClick={onBack} aria-label="Back"><Ic.Back size={28} /></button>
             {Art && <div className="cat-art fade-up"><Art /></div>}
             <div className="cat-title fade-up">
               {domain === 'movies' ? <ClapperIcon /> : <Ic.DomainLine name={dom.icon} className="ic" size={40} sw={2.4} />}
-              <h1>{displayName(dom.name)}</h1>
+              <h1>{domain === 'sports' ? 'The sporting debate' : displayName(dom.name)}</h1>{domain === 'sports' && <p className="helper">Legends. Flops. Hard men. Your verdict.</p>}
             </div>
           </div>
           <div className="search fade-up">
@@ -329,13 +332,14 @@ const TAGLINES = {
   history: 'Ten icons of history. One shot each.', myths: 'Ten legends. Rank them blind.',
 };
 
-export function ReadyScreen({ item, domain, group, camOn, camState, camError, stream, faceStatus, micOn, onToggleCam, onRetryCam, onToggleMic, onBack, onStart, onOptions, deckRef }) {
+export function ReadyScreen({ item, domain, group, camOn, camState, camError, stream, faceStatus, micOn, onToggleCam, onRetryCam, onToggleMic, onBack, onStart, onOptions, deckRef, mode, onMode, favourite, onFavourite }) {
   const t = itemTheme(item, domain);
   const [deck, setDeck] = useState({ status: 'loading', n: 0 });
   const [attempt, setAttempt] = useState(0);
   const [tagline] = useState(() => (Math.random() < 0.5 && TAGLINES[domain]) || GENERIC_TAGS[Math.floor(Math.random() * GENERIC_TAGS.length)]);
   useEffect(() => {
     let alive = true;
+    deckRef.current = null;
     setDeck({ status: 'loading', n: 0 });
     loadDeck(item, n => alive && setDeck(d => ({ ...d, n })))
       .then(cards => { if (!alive) return; deckRef.current = cards; setDeck({ status: 'ready', n: 10 }); })
@@ -363,7 +367,13 @@ export function ReadyScreen({ item, domain, group, camOn, camState, camError, st
           </div>
           <div className="ready-title fade-up">
             <h1>{displayName(item.name)}</h1>
-            <p>{tagline}</p>
+            <p>{item.subtitle || tagline}</p>
+            <div className="rank-rule">{rankRule(item)}</div>
+            {item.type !== 'challenge' && <button className={`save-challenge ${favourite ? 'saved' : ''}`} aria-pressed={favourite} onClick={onFavourite}>{favourite ? '♥ Saved' : '♡ Save challenge'}</button>}
+            <div className="mode-picker" role="group" aria-label="Game mode">
+              {['strict', 'casual'].map(m => <button key={m} disabled={!!item.mode} className={mode === m ? 'on' : ''} onClick={() => onMode(m)}><b>{m === 'strict' ? 'Strict' : 'Casual'}</b><small>{m === 'strict' ? 'Every placement is final' : 'Undo your last placement'}</small></button>)}
+            </div>
+            {item.mode && <p className="helper">Your friend chose {item.mode} mode for this challenge.</p>}
           </div>
           <div className="rules fade-up" style={{ animationDelay: '80ms' }}>
             <div><Ic.Eye size={24} />Reveal a pick</div>
@@ -454,6 +464,7 @@ export function SettingsSheet({ settings, setSetting, camState, camWanted, onEna
         {row('tracking', <Ic.Eye size={22} />, 'Face tracking', 'Pick floats above your head')}
       </div>
       <h4>Gameplay</h4>
+      <div className="mode-picker">{['strict', 'casual'].map(m => <button key={m} className={settings.mode === m ? 'on' : ''} onClick={() => setSetting('mode', m)}>{modeLabel(m)}</button>)}</div>
       <div className="group">
         <button className="opt" onClick={() => setSetting('region', settings.region === 'uk' ? 'us' : 'uk')}>
           <Ic.Globe size={22} />

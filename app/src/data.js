@@ -12,7 +12,8 @@
 //   img:    'person' | 'artist' | 'logo' | 'flag'  — what a correct picture looks like
 //   league: 'nfl' | 'nba' | 'mlb' | 'nhl' | 'wnba' — use official ESPN headshots
 //   region: 'us' | 'uk'                            — shown in the USA / UK hubs
-import { extendMenu, GROW } from './data-more.js';
+import { extendMenu } from './data-more.js';
+import { extendDebates } from './data-expansion.js';
 
 export const THEME = {
   movies: { primary: '#FFB800', secondary: '#FF3D5A' },
@@ -420,6 +421,20 @@ export const MENU_DATA = {
 
 /* ---------- expansion pack + picture rules ---------- */
 extendMenu(MENU_DATA);
+extendDebates(MENU_DATA);
+// Keep editorial pools bounded. A matching occupation is not category membership.
+for (const list of Object.values(MENU_DATA)) for (const it of list) {
+  delete it.grow;
+  if (it.id === 'f_pl_clubs') { it.name = 'Premier League Clubs: All Eras'; it.criterion = 'your favourite club'; }
+  if (it.id === 'f_now') it.name = 'Modern Football Stars';
+  if (it.type === 'custom' && it.queries.some(q => q.t === 'person' && q.n !== q.q)) {
+    it.type = 'curated'; it.picture = 'none'; it.curated = true; it.revision = 1;
+    it.criterion = 'your favourite character';
+    it.eligibility = 'Named characters from the original editorial list. Never actor portraits.';
+    it.picks = it.queries.map(q => ({ id: q.n, name: q.n, title: q.n, detail: '' }));
+    delete it.queries;
+  }
+}
 
 (function tagCatalog() {
   const LOGO = new Set(['f_pl_clubs', 'f_eu_clubs', 'b_teams', 'g_f1t', 'car_brands', 'fd_fast']);
@@ -434,7 +449,7 @@ extendMenu(MENU_DATA);
       if (it.type === 'nav') { visit(it.id, dom, seen); continue; }
       if (it.type === 'wiki' && !it.img) it.img = LOGO.has(it.id) ? 'logo' : FLAG.has(it.id) ? 'flag' : PERSON.has(it.id) ? 'person' : BY_DOMAIN[dom];
       if (!it.img) delete it.img;
-      if (GROW[it.id] && !it.grow) it.grow = GROW[it.id];
+
       if (!it.region && UK.has(it.id)) it.region = 'uk';
       if (!it.region && US.has(it.id)) it.region = 'us';
     }

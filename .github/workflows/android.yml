@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, app-v2]
+    branches: [main, app-v2, 'codex/**']
     paths: ['app/**', 'android/**', '.github/workflows/android.yml']
   workflow_dispatch:
 
@@ -22,25 +22,16 @@ jobs:
         with:
           node-version: 20
 
-      - name: Get latest catalog
-        run: |
-          mkdir -p app/public
-          # main / app-v2 use the published nightly catalog; other branches build their own
-          # so new categories and picture fixes are in the APK straight away.
-          if [ "$GITHUB_REF_NAME" = "app-v2" ] || [ "$GITHUB_REF_NAME" = "main" ]; then
-            if git fetch -q --depth 1 origin catalog; then git show FETCH_HEAD:catalog.json > app/public/catalog.json; fi
-          fi
-          # Only catalogs built with the strict picture checks (v4+) are good enough.
-          if [ ! -s app/public/catalog.json ] || ! node -e 'process.exit(require("./app/public/catalog.json").version >= 4 ? 0 : 1)'; then
-            (cd app && node build-catalog.mjs public/catalog.json && tail -n +1 catalog-report.md | head -40)
-          fi
-          ls -la app/public
+      - name: Prepare compatible catalog
+        working-directory: app
+        run: node prepare-catalog.mjs
 
       - name: Build web app
         working-directory: app
         run: |
           rm -f node_modules
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
+          npm test
           npm run build
           npm run build:android
 
@@ -79,6 +70,7 @@ jobs:
           path: app/dist
 
       - name: Publish test release
+        if: github.ref_name == 'main' || github.ref_name == 'app-v2'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

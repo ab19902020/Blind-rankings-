@@ -91,8 +91,13 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
       const show = st.phase === 'playing';
       if (show) {
         const t = faceTarget(sw, sh, false);
-        const tx = t ? t.x : sw / 2 + 22, ty = t ? t.y : sh * 0.34;
-        const ts = t ? Math.min(1.05, Math.max(0.68, t.w / 170)) : 1;
+        const railRight = 14 + Math.min(sw * .30, 132);
+        const available = sw - railRight - 24;
+        const ts = Math.min(t ? Math.min(1.05, Math.max(.68, t.w / 170)) : 1, available / Math.max(card.offsetWidth, 148));
+        const halfW = card.offsetWidth * ts / 2, halfH = card.offsetHeight * ts / 2;
+        const minX = railRight + halfW + 10, maxX = sw - halfW - 10;
+        const tx = Math.max(minX, Math.min(maxX, t ? t.x : (minX + maxX) / 2));
+        const ty = Math.max(116 + halfH, Math.min(sh - halfH - 48, t ? t.y : sh * .38));
         p.targetScale = ts;
         const rot = Math.max(-12, Math.min(12, (tx - p.domX) * 0.08));
         p.domX += (tx - p.domX) * 0.22; p.domY += (ty - p.domY) * 0.22;
@@ -166,6 +171,8 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
         ctx.fillStyle = i === 0 ? '#FFC93C' : prim; ctx.fill();
         ctx.fillStyle = i === 0 ? '#3A2000' : inkOn(prim); ctx.font = `900 italic 28px ${FONT}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), x + 17, y + 18);
+        ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = `800 24px ${FONT}`;
+        ctx.fillText(s.name, x + w + 14, y + h / 2, 210);
       } else {
         const eg = ctx.createLinearGradient(x, y, x + w, y + h);
         eg.addColorStop(0, i === 0 ? 'rgba(255,201,60,0.35)' : 'rgba(255,255,255,0.18)');
@@ -187,7 +194,7 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
       if (trackingOn && p.detected && p.box && video?.videoWidth) {
         const fx = p.box.x + p.box.width / 2;
         tx = CW - (cox + fx * cs); ty = coy + p.box.y * cs - p.box.height * cs * 0.62;
-        ty = Math.max(CH * 0.2, Math.min(CH * 0.84, ty)); tx = Math.max(330, Math.min(CW - 190, tx));
+        ty = Math.max(CH * 0.2, Math.min(CH * 0.84, ty)); tx = Math.max(530, Math.min(CW - 190, tx));
       }
       const rot = Math.max(-12, Math.min(12, (tx - p.cX) * 0.05));
       p.cX += (tx - p.cX) * 0.22; p.cY += (ty - p.cY) * 0.22; p.cRot += (rot - p.cRot) * 0.2;
@@ -216,6 +223,9 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
       ctx.fillStyle = ng; ctx.fill();
       ctx.fillStyle = inkOn(prim); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(name, 0, H + 58, nw - 40);
+      if (!st.rolling && active.detail) {
+        ctx.fillStyle = '#fff'; ctx.font = `800 26px ${FONT}`; ctx.fillText(active.detail, 0, H + 120, 540);
+      }
       ctx.restore();
     }
 
@@ -259,6 +269,11 @@ export function createEngine({ video, canvas, getCard, getState, onFace }) {
       const first = st.slots[0]; ctx.font = `900 50px ${FONT}`;
       ctx.fillText(first ? cleanName(first.name).toUpperCase() : '', CW - 60 - bw / 2, CH - 230, bw - 40);
     } else confetti = [];
+
+    // The recording carries the same ranking instruction as the screen.
+    ctx.fillStyle = '#0b1528'; rr(ctx, 290, 110, 730, 58, 18); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = `800 27px ${FONT}`; ctx.textAlign = 'center';
+    ctx.fillText(`#1 = ${st.criterion || 'your favourite'} · ${st.mode === 'casual' ? 'CASUAL' : 'STRICT'}`, 655, 148, 700);
 
     // watermark
     ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';

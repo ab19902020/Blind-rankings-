@@ -463,3 +463,55 @@ img { display: block; }
 .region-toggle button { height: 32px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 800; color: var(--muted); transition: all 0.2s var(--ease); }
 .region-toggle button.on { background: #fff; color: #0B0B10; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
 .region-pill { flex-shrink: 0; font-size: 14px; font-weight: 900; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.08); }
+
+/* November refresh: editorial cards, stadium lighting and readable mobile ranks. */
+.hero h1 { font-size: clamp(36px, 9.5vw, 50px); letter-spacing: -0.055em; line-height: .99; }
+.hero .kicker { color: #FFCF78; font-size: 10px; letter-spacing: .18em; margin-bottom: 14px; }
+.hero p { max-width: 210px; line-height: 1.5; }
+.tile { border: 1px solid color-mix(in srgb, var(--tp) 30%, transparent); }
+.friend-banner { width: 100%; display: flex; align-items: center; gap: 14px; padding: 18px; margin: 28px 0 24px; border-radius: 22px; border: 1px solid #36cdb966; background: linear-gradient(115deg,#103c3c,#142335); color: white; text-align: left; }
+.friend-banner > span:nth-child(2) { flex: 1; }
+.friend-banner b { display: block; font-size: 18px; }
+.friend-banner small { display: block; color: #b7d5d5; margin-top: 4px; font-size: 12px; }
+.friend-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: #44e6c6; color: #0b2926; font-size: 30px; font-weight: 900; }
+.helper { color: #b4c2d3; font-size: 13px; line-height: 1.6; }
+.section-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.section-heading h2 { font-size: 20px; margin: 0; letter-spacing: -.03em; }
+.segmented { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #ffffff08; }
+.segmented button { background: transparent; color: #b8c3d1; border: 0; padding: 8px 11px; border-radius: 9px; font-size: 12px; }
+.segmented button.on { background: #344454; color: white; }
+.saved-strip { display: flex; overflow-x: auto; gap: 10px; padding: 14px 0; scroll-snap-type: x mandatory; }
+.saved-strip button { flex: 0 0 165px; display: flex; flex-direction: column; gap: 9px; text-align: left; padding: 17px; background: linear-gradient(145deg,#1a2a3c,#121a28); border: 1px solid #364252; border-radius: 18px; color: white; scroll-snap-align: start; }
+.saved-strip span { font-size: 27px; }.saved-strip b { font-size: 14px; line-height: 1.3; }.saved-strip small { color: #9baebf; font-size: 11px; }
+.sports-broadcast { background: radial-gradient(ellipse at 90% 10%,#00d4ff45,transparent 60%), repeating-linear-gradient(105deg,transparent 0 55px,#00d4ff08 55px 56px), linear-gradient(135deg,#122c3d,#0c1724); border: 1px solid #3caed645; border-radius: 0 0 28px 28px; margin: -10px -18px 20px; padding: 24px 20px 26px; min-height: 220px; }
+.sports-broadcast .cat-title h1 { max-width: 260px; font-size: 36px; line-height: 1; letter-spacing: -.05em; text-align: left; }
+.sports-broadcast .cat-title { align-items: flex-start; }.sports-broadcast .helper { max-width: 230px; text-align: left; }
+.sports-broadcast .cat-art { opacity: .35; }
+.rank-rule { display: inline-block; padding: 10px 16px; margin: 14px 0 8px; background: color-mix(in srgb,var(--p) 14%,#101824); border: 1px solid color-mix(in srgb,var(--p) 45%,transparent); color: #f5fafc; border-radius: 12px; font-weight: 900; font-size: 14px; }
+.save-challenge { display: block; margin: 10px auto; color: #ffcf78; padding: 10px 18px; border: 1px solid #ffcf7840; border-radius: 20px; background: #ffcf780a; font-weight: 800; }.save-challenge.saved { background: #ffcf7820; }
+.mode-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 18px 0; }
+.mode-picker button { padding: 14px 10px; border: 1px solid #3d4756; color: #b4c2d3; background: #101723; border-radius: 14px; text-align: left; }
+.mode-picker button.on { background: #1b3940; border-color: #46d9bf; color: white; }
+.mode-picker b { display: block; font-size: 16px; }.mode-picker small { display: block; font-size: 11px; margin-top: 5px; line-height: 1.4; }.mode-picker button:disabled { opacity: 1; }
+.field-label { display: block; margin: 16px 0 8px; color: #d9e2ee; font-size: 13px; font-weight: 800; }
+.code-input, select { width: 100%; background: #131e2b; color: white; border: 1px solid #3f5268; border-radius: 13px; padding: 14px; font: inherit; font-size: 14px; }
+.code-input { min-height: 110px; resize: vertical; }.error-text { color: #ffb4b4; font-size: 13px; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #53ead0; outline-offset: 3px; }
+.game-rule { position: absolute; z-index: 26; top: calc(var(--sat) + 60px); left: 14px; right: 14px; padding: 9px 12px; border-radius: 12px; background: #0b1528eb; color: white; font-size: 12px; font-weight: 800; display: flex; justify-content: space-between; gap: 12px; border: 1px solid #ffffff20; }
+.game-rule span { color: #67e8cf; font-size: 10px; letter-spacing: .08em; align-self: center; }
+.slots { top: calc(var(--sat) + 106px); width: min(30vw, 132px); bottom: calc(var(--sab) + 38px); gap: 6px; }
+.slot { display: flex; justify-content: flex-start; padding: 0; background: #101a2ac9; overflow: hidden; }
+.slot .num { margin: auto; }.slot.filled img { position: relative; inset: auto; width: 42%; height: 100%; flex-shrink: 0; object-fit: cover; border-radius: 9px 0 0 9px; }.slot .tag { left: 2px; top: 2px; font-size: 10px; min-width: 16px; height: 16px; }
+.slot-label { padding: 3px 5px; color: white; font-size: clamp(9px,2.5vw,12px); font-weight: 800; line-height: 1.15; text-align: left; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.float-card .fc-name { white-space: normal; text-align: center; max-width: min(51vw,230px); font-size: 16px; line-height: 1.22; border-radius: 15px; padding: 10px 13px; }
+.fc-detail { margin-top: 6px; font-size: 12px; line-height: 1.3; font-weight: 800; text-align: center; max-width: 190px; color: white; padding: 7px 10px; background: #091324eb; border-radius: 10px; }
+.pod .nm small, .li .t small { display: block; color: #abbdd0; font-size: 11px; font-weight: 600; margin-top: 5px; }
+.res-head h1 { font-size: clamp(28px,8vw,40px); letter-spacing: -.04em; }.res-head p { font-size: 12px; }
+.cta.friend { background: linear-gradient(110deg,#62e7c3,#24b4c8); color: #082a31; }
+@media (max-width: 360px) { .section-heading { gap: 8px; }.section-heading h2 { font-size: 18px; }.float-card .fc-frame { width: 130px; height: 130px; }.float-card .fc-name { font-size: 13px; }.hud-title { padding: 0 8px; font-size: 10px; }.game-rule { font-size: 11px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+.debate-art { position: relative; width: 100%; height: 100%; min-height: 65px; overflow: hidden; background: radial-gradient(circle at 70% 10%,color-mix(in srgb,var(--p) 55%,transparent),transparent 65%),linear-gradient(145deg,#172b3d,#0b1220); display:grid; place-items:center; }
+.debate-art::before { content:''; position:absolute; inset:12%; border:1px solid #ffffff18; transform:rotate(-12deg); border-radius:10px; }.debate-art .da-icon { font-size:34px; filter:drop-shadow(0 5px 6px #0008); z-index:1; }.debate-art .da-rank { position:absolute; font-size:11px; font-weight:900; color:#fff9; border:1px solid #ffffff30; border-radius:5px; width:19px; height:24px; display:grid; place-items:center; transform:rotate(-12deg); }.debate-art .da-one { left:8%; top:12%; }.debate-art .da-ten { right:8%; bottom:12%; transform:rotate(12deg); }
+.feature > .debate-art { position:absolute; inset:0; opacity:.8; }.feature > .debate-art .da-icon { font-size:100px; position:absolute; right:20px; top:24px; opacity:.65; }.feature > .debate-art .da-rank { width:48px; height:65px; font-size:32px; }.feature > .debate-art .da-one { left:auto; right:130px; top:15px; }.feature > .debate-art .da-ten { right:12px; bottom:12px; }.feature .f-body { position:relative; z-index:2; }
+.new-badge { display:inline-block; margin-left:7px; color:#75ebd7; font-size:9px; letter-spacing:.08em; vertical-align:middle; }.row .r-title { line-height:1.25; }
+.dialog-close { position: absolute; right: 16px; top: 12px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ffffff30; color: white; background: #ffffff0a; font-size: 24px; }.sheet h2 { padding-right: 35px; }

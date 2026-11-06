@@ -20,4 +20,4 @@ function guessRegion() {
   return 'us';
 }
 
-export const DEFAULT_SETTINGS = { sound: true, haptics: true, record: true, countdown: true, region: guessRegion() };
+export const DEFAULT_SETTINGS = { sound: true, haptics: true, record: true, countdown: true, mode: 'strict', region: guessRegion() };

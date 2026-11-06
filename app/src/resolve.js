@@ -5,8 +5,9 @@ const WIKI = 'https://en.wikipedia.org/w/api.php?format=json&origin=*&formatvers
 
 export async function fetchTMDB(endpoint, page = 1) {
   try {
+    if (typeof endpoint !== 'string' || !endpoint.startsWith('/')) return null;
     const sep = endpoint.includes('?') ? '&' : '?';
-    const res = await fetch(`https://api.themoviedb.org/3${endpoint}${sep}api_key=${TMDB_KEY}&language=en-US&page=${page}&include_adult=false`);
+    const res = await fetch(`https://api.themoviedb.org/3${endpoint}${sep}api_key=${TMDB_KEY}&language=en-US&page=${page}&include_adult=false`, { signal: AbortSignal.timeout(8000) });
     return res.ok ? await res.json() : null;
   } catch (e) { return null; }
 }
@@ -32,7 +33,7 @@ const fileOk = (url, kind) => {
 async function wikiBatch(titles, kind) {
   // pilicense=any so posters, logos, crests and character art are included.
   const url = `${WIKI}&action=query&redirects=1&prop=pageimages|pageprops&ppprop=disambiguation&piprop=thumbnail&pithumbsize=600&pilimit=50&pilicense=any&titles=${encodeURIComponent(titles.join('|'))}`;
-  const data = await (await fetch(url)).json();
+  const data = await (await fetch(url, { signal: AbortSignal.timeout(8000) })).json();
   const q = data.query || {};
   const norm2 = {}; (q.normalized || []).forEach(n => { norm2[n.from] = n.to; });
   const redir = {}; (q.redirects || []).forEach(r => { redir[r.from] = r; });
@@ -41,7 +42,7 @@ async function wikiBatch(titles, kind) {
   const out = {};
   for (const t of titles) {
     let k = norm2[t] || t; const r = redir[k];
-    if (r) { if (person && r.tofragment) { out[t] = null; continue; } k = r.to; }
+    if (r) { if (r.tofragment) { out[t] = null; continue; } k = r.to; }
     const img = byTitle[k] || null;
     out[t] = img && fileOk(img, kind) ? img : null;
   }
@@ -52,10 +53,10 @@ async function wikiBatch(titles, kind) {
 async function wikiSearch(title, kind) {
   try {
     const url = `${WIKI}&action=query&generator=search&gsrsearch=${encodeURIComponent(title.replace(/[()]/g, ' '))}&gsrlimit=5&prop=pageimages|pageprops&ppprop=disambiguation&piprop=thumbnail&pithumbsize=600&pilicense=any`;
-    const data = await (await fetch(url)).json();
-    const want = norm(stripParen(title));
+    const data = await (await fetch(url, { signal: AbortSignal.timeout(8000) })).json();
+    const want = norm(title);
     const p = (data.query?.pages || []).sort((a, b) => (a.index || 0) - (b.index || 0))
-      .find(p => p.thumbnail && !(p.pageprops && 'disambiguation' in p.pageprops) && norm(stripParen(p.title)) === want);
+      .find(p => p.thumbnail && !(p.pageprops && 'disambiguation' in p.pageprops) && norm(p.title) === want);
     return p && fileOk(p.thumbnail.source, kind) ? p.thumbnail.source : null;
   } catch (e) { return null; }
 }
@@ -63,7 +64,7 @@ async function wikiSearch(title, kind) {
 /** titles -> { title: imageUrl|null } */
 export async function wikiResolve(titles, cache, kind) {
   const result = {};
-  const need = titles.filter(t => { if (cache && cache.has(t)) { result[t] = cache.get(t); return false; } return true; });
+  const need = titles.filter(t => { if (cache && cache.has(`${kind || 'any'}:${t}`)) { result[t] = cache.get(`${kind || 'any'}:${t}`); return false; } return true; });
   for (let i = 0; i < need.length; i += 50) {
     try { Object.assign(result, await wikiBatch(need.slice(i, i + 50), kind)); } catch (e) {}
   }
@@ -71,7 +72,7 @@ export async function wikiResolve(titles, cache, kind) {
   for (let i = 0; i < misses.length; i += 3) {
     await Promise.all(misses.slice(i, i + 3).map(async t => { result[t] = await wikiSearch(t, kind); }));
   }
-  if (cache) for (const t of need) if (result[t]) cache.set(t, result[t]);
+  if (cache) for (const t of need) if (result[t]) cache.set(`${kind || 'any'}:${t}`, result[t]);
   // Two picks can never share a picture.
   const seen = new Set();
   for (const t of titles) { const u = result[t]; if (!u) continue; const k = decodeURIComponent(u.split('/').pop()).replace(/^\d+px-/, ''); if (seen.has(k)) result[t] = null; else seen.add(k); }
