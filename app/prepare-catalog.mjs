@@ -6,7 +6,7 @@ import { CATALOG_VERSION, CONTENT_REVISION, catalogueCompatible, validateMenu } 
 const candidates = ['public/catalog.json', 'catalog-seed.json'];
 let seed;
 for (const file of candidates) {
-  try { const cat = JSON.parse(fs.readFileSync(file, 'utf8')); if (catalogueCompatible(cat)) { seed = cat; break; } } catch {}
+  try { const cat = JSON.parse(fs.readFileSync(file, 'utf8')); if (catalogueCompatible(cat) && (!seed || cat.generatedAt > seed.generatedAt)) seed = cat; } catch {}
 }
 const resolved = new Map(Object.values(seed?.menu || {}).flat().map(it => [it.id, it]));
 const menu = structuredClone(MENU_DATA);

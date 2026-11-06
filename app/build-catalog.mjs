@@ -1,6 +1,6 @@
 // Catalog builder — runs in GitHub Actions (nightly + on every data change).
 // Resolves a picture for every pick in every category, generates fresh "right now"
-// categories from free APIs, drops anything with fewer than 10 verified picks,
+// categories from free APIs, preserves editorial names when images are missing,
 // and writes catalog.json (served to the app via CDN + bundled in the APK).
 //
 // Accuracy rules (why a pick gets a picture):
@@ -186,8 +186,8 @@ async function wikiSearchStrict(title, name) {
   if (pageCache.has(key)) return pageCache.get(key);
   const d = await get(`${WIKI}&action=query&generator=search&gsrsearch=${encodeURIComponent(title.replace(/[()]/g, ' '))}&gsrlimit=5&${PAGE_PROPS}`);
   const pages = (d?.query?.pages || []).sort((a, b) => (a.index || 0) - (b.index || 0));
-  const want = [norm(stripParen(title)), norm(name)];
-  const p = pages.find(p => !(p.pageprops && 'disambiguation' in p.pageprops) && want.includes(norm(stripParen(p.title))));
+  const want = title.includes('(') ? [norm(title)] : [norm(title), norm(name)];
+  const p = pages.find(p => !(p.pageprops && 'disambiguation' in p.pageprops) && want.includes(norm(p.title)));
   const res = p ? pageInfo(p) : null;
   pageCache.set(key, res);
   return res;
